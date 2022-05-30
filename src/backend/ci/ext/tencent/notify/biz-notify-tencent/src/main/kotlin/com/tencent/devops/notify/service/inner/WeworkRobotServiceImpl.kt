@@ -35,6 +35,7 @@ import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.apm.OpentelemetryConfiguration
 import com.tencent.devops.common.notify.enums.WeworkReceiverType
 import com.tencent.devops.common.notify.enums.WeworkTextType
+import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.notify.EXCHANGE_NOTIFY
 import com.tencent.devops.notify.ROUTE_WEWORK
 import com.tencent.devops.notify.dao.WeworkNotifyDao
@@ -71,24 +72,31 @@ class WeworkRobotServiceImpl @Autowired constructor(
     private val gauge: Gauge
 ) : WeworkService {
     override fun sendMqMsg(message: WeworkNotifyMessageWithOperation) {
-
-        counter.inc()
-        gauge.inc()
         val trace = opentelemetryConfiguration.trace
+        logger.info("$pushGateway $counter $gauge")
         val buildCount = Counter.build().name("build_count_test").create()
         buildCount.inc()
+        logger.info("build_count: ${buildCount.get()}")
+
+        val beansCount = SpringContextUtil.getBean(Counter::class.java)
+        beansCount.inc()
+        logger.info("build_count: ${beansCount.get()}")
 
 //        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
         val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
         rabbitTemplate.convertAndSend(EXCHANGE_NOTIFY, ROUTE_WEWORK, message)
-        logger.info("count: ${counter.get()}")
-        logger.info("gauge: ${gauge.get()}")
-        logger.info("build_count: ${gauge.get()}")
-        logger.info("pg: $pushGateway")
+        if (counter != null && gauge != null) {
+            counter.inc()
+            gauge.inc()
+            logger.info("count: ${counter.get()}")
+            logger.info("gauge: ${gauge.get()}")
+            logger.info("pg: $pushGateway")
+            pushGateway.push(counter, "notify_count_test")
+            pushGateway.push(gauge, "notify_gauge_test")
+        }
         span.end()
-        pushGateway.push(counter, "notify_count_test")
-        pushGateway.push(gauge, "notify_gauge_test")
         pushGateway.push(buildCount, "notify_build_count_test")
+        pushGateway.push(beansCount, "notify_beans_count_test")
     }
 
     @Value("\${wework.apiUrl:https://qyapi.weixin.qq.com}")

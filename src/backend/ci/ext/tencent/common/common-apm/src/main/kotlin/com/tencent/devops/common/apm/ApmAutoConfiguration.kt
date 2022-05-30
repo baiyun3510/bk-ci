@@ -54,7 +54,7 @@ class ApmAutoConfiguration {
 
 
     @Bean
-    open fun getPushGateway(): PushGateway? {
+    fun getPushGateway(): PushGateway? {
         return PushGateway("10.0.1.59:4318")
     }
 
