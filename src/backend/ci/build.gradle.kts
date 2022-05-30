@@ -99,6 +99,23 @@ allprojects {
             }
             dependency("com.perforce:p4java:${Versions.p4}")
             dependency("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${Versions.JacksonDatatypeJsr}")
+            dependency("io.prometheus:simpleclient_pushgateway:${Versions.pushGateway}")
+
+//            dependency("io.opentelemetry:opentelemetry-bom:${Versions.openTelemetryVersion}")
+//            dependency("io.opentelemetry:opentelemetry-bom-alpha:${Versions.openTelemetryAlphaVersion}")
+            dependencySet("io.opentelemetry:${Versions.openTelemetryVersion}") {
+                entry("opentelemetry-api")
+                entry("opentelemetry-sdk")
+                entry("opentelemetry-exporter-logging")
+                entry("opentelemetry-semconv")
+                entry("opentelemetry-exporter-otlp")
+            }
+            dependencySet("io.opentelemetry:${Versions.openTelemetryAlphaVersion}") {
+                entry("opentelemetry-exporter-prometheus")
+                entry("opentelemetry-sdk-log")
+                entry("opentelemetry-semconv")
+                entry("opentelemetry-sdk-extension-autoconfigure")
+            }
         }
     }
 

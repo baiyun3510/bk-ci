@@ -24,17 +24,29 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-dependencies {
-    api(project(":core:common:common-service"))
-    api(project(":core:common:common-api"))
-    api("io.github.openfeign:feign-jaxrs")
-    api("io.github.openfeign:feign-okhttp")
-    api("io.github.openfeign:feign-jackson")
-    api("io.github.openfeign.form:feign-form")
-    api("io.github.openfeign.form:feign-form-spring")
-    api("io.github.openfeign:feign-spring4")
-    api("io.opentelemetry:opentelemetry-api")
-    api("io.opentelemetry:opentelemetry-sdk")
-    api("io.opentelemetry:opentelemetry-exporter-otlp")
-    api("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
+
+package com.tencent.devops.common.apm
+
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
+import org.springframework.boot.autoconfigure.AutoConfigureOrder
+import org.springframework.cloud.consul.ConsulAutoConfiguration
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.PropertySource
+import org.springframework.core.Ordered
+
+@Configuration
+@PropertySource("classpath:/common-service.properties")
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+@AutoConfigureBefore(ConsulAutoConfiguration::class)
+class ApmAutoConfiguration {
+
+    @Bean
+    fun opentelemertry() = OpentelemetryConfiguration()
+
+    @Bean
+    fun opentelemertryFilter(
+        opentelemetryConfiguration: OpentelemetryConfiguration
+    ) = OpenTelemetryFilter(opentelemetryConfiguration)
+
 }

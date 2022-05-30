@@ -24,17 +24,34 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-dependencies {
-    api(project(":core:common:common-service"))
-    api(project(":core:common:common-api"))
-    api("io.github.openfeign:feign-jaxrs")
-    api("io.github.openfeign:feign-okhttp")
-    api("io.github.openfeign:feign-jackson")
-    api("io.github.openfeign.form:feign-form")
-    api("io.github.openfeign.form:feign-form-spring")
-    api("io.github.openfeign:feign-spring4")
-    api("io.opentelemetry:opentelemetry-api")
-    api("io.opentelemetry:opentelemetry-sdk")
-    api("io.opentelemetry:opentelemetry-exporter-otlp")
-    api("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
+
+package com.tencent.devops.common.service.apm
+
+import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.api.trace.StatusCode
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
+import javax.servlet.Filter
+import javax.servlet.FilterChain
+import javax.servlet.ServletRequest
+import javax.servlet.ServletResponse
+import javax.servlet.http.HttpServletRequest
+
+@Component
+class OpenTelemetryFilter @Autowired constructor(
+    val opentelemetryConfiguration: OpentelemetryConfiguration,
+) : Filter{
+    override fun doFilter(request: ServletRequest?, response: ServletResponse?, chain: FilterChain) {
+        val httpServletRequest = request as HttpServletRequest
+        val trace = opentelemetryConfiguration.trace
+        val span = trace.spanBuilder(httpServletRequest.requestURL.toString()).setSpanKind(SpanKind.SERVER).startSpan()
+        try {
+            chain.doFilter(request, response)
+        } catch (ex: Exception) {
+            span.setStatus(StatusCode.ERROR)
+            throw ex
+        }finally {
+            span.end()
+        }
+    }
 }

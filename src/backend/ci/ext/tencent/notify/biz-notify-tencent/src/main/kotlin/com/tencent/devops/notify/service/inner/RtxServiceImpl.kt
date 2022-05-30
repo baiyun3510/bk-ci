@@ -30,6 +30,7 @@ import com.google.common.collect.Lists
 import com.google.common.collect.Sets
 import com.tencent.devops.common.api.util.DateTimeUtil
 import com.tencent.devops.common.api.util.UUIDUtil
+import com.tencent.devops.common.apm.OpentelemetryConfiguration
 import com.tencent.devops.common.notify.enums.EnumNotifyPriority
 import com.tencent.devops.common.notify.enums.EnumNotifySource
 import com.tencent.devops.common.notify.pojo.RtxNotifyPost
@@ -50,13 +51,19 @@ import com.tencent.devops.notify.pojo.RtxNotifyMessage
 import com.tencent.devops.notify.service.RtxService
 import com.tencent.devops.common.notify.utils.TOFService.Companion.RTX_URL
 import com.tencent.devops.notify.pojo.TOF4SecurityInfo
+import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.context.Context
+import io.opentelemetry.context.propagation.TextMapGetter
+import io.opentelemetry.context.propagation.TextMapPropagator
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.Enumeration
 import java.util.LinkedList
 import java.util.stream.Collectors
+import javax.servlet.http.HttpServletRequest
 
 @Service
 class RtxServiceImpl @Autowired constructor(
@@ -64,7 +71,8 @@ class RtxServiceImpl @Autowired constructor(
     private val rtxNotifyDao: RtxNotifyDao,
     private val rabbitTemplate: RabbitTemplate,
     private val tofConfiguration: TOFConfiguration,
-    private val tof4Service: TOF4Service
+    private val tof4Service: TOF4Service,
+    private val opentelemetryConfiguration: OpentelemetryConfiguration
 ) : RtxService {
     private val logger = LoggerFactory.getLogger(RtxServiceImpl::class.java)
 
@@ -75,7 +83,12 @@ class RtxServiceImpl @Autowired constructor(
     private var tof4EncryptKey: String? = tofConfiguration.getDefaultSystem()?.get("encrypt-key-tof4")
 
     override fun sendMqMsg(message: RtxNotifyMessage) {
+        val trace = opentelemetryConfiguration.trace
+
+//        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
+        val span = trace.spanBuilder("sendRtx").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
         rabbitTemplate.convertAndSend(EXCHANGE_NOTIFY, ROUTE_RTX, message)
+        span.end()
     }
 
     /**
@@ -83,7 +96,10 @@ class RtxServiceImpl @Autowired constructor(
      * @param rtxNotifyMessageWithOperation 消息对象
      */
     override fun sendMessage(rtxNotifyMessageWithOperation: RtxNotifyMessageWithOperation) {
+        val trace = opentelemetryConfiguration.trace
+        val span = trace.spanBuilder("sendRtx").setParent(Context.current()).setSpanKind(SpanKind.CONSUMER).startSpan()
         val rtxNotifyPosts = generateRtxNotifyPost(rtxNotifyMessageWithOperation)
+        try {
         if (rtxNotifyPosts.isEmpty()) {
             logger.warn("List<RtxNotifyPost> is empty after being processed, RtxNotifyMessageWithOperation: $rtxNotifyMessageWithOperation")
             return
@@ -166,6 +182,9 @@ class RtxServiceImpl @Autowired constructor(
                     )
                 }
             }
+        }
+        } finally {
+            span.end()
         }
     }
 

@@ -32,6 +32,7 @@ import com.tencent.devops.common.api.exception.OperationException
 import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
+import com.tencent.devops.common.apm.OpentelemetryConfiguration
 import com.tencent.devops.common.notify.enums.WeworkReceiverType
 import com.tencent.devops.common.notify.enums.WeworkTextType
 import com.tencent.devops.notify.EXCHANGE_NOTIFY
@@ -46,6 +47,11 @@ import com.tencent.devops.notify.pojo.WeworkRobotSingleTextMessage
 import com.tencent.devops.notify.pojo.WeworkSendMessageResp
 import com.tencent.devops.notify.pojo.WeworkRobotContentMessage
 import com.tencent.devops.notify.service.WeworkService
+import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.context.Context
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.PushGateway
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
@@ -53,15 +59,33 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import java.util.Optional
+import kotlin.math.log
 
 @Configuration
 @ConditionalOnProperty(prefix = "notify", name = ["weworkChannel"], havingValue = "weworkRobot")
 class WeworkRobotServiceImpl @Autowired constructor(
     private val rabbitTemplate: RabbitTemplate,
-    private val weworkNotifyDao: WeworkNotifyDao
+    private val weworkNotifyDao: WeworkNotifyDao,
+    private val opentelemetryConfiguration: OpentelemetryConfiguration,
+    private val pushGateway: PushGateway,
+    private val counter: Counter,
+    private val gauge: Gauge
 ) : WeworkService {
     override fun sendMqMsg(message: WeworkNotifyMessageWithOperation) {
+
+        counter.inc()
+        gauge.inc()
+        val trace = opentelemetryConfiguration.trace
+
+//        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
+        val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
         rabbitTemplate.convertAndSend(EXCHANGE_NOTIFY, ROUTE_WEWORK, message)
+        logger.info("count: ${counter.get()}")
+        logger.info("gauge: ${gauge.get()}")
+        logger.info("pg: $pushGateway")
+        span.end()
+        pushGateway.push(counter, "notify_count_test")
+        pushGateway.push(gauge, "notify_gauge_test")
     }
 
     @Value("\${wework.apiUrl:https://qyapi.weixin.qq.com}")
@@ -75,56 +99,62 @@ class WeworkRobotServiceImpl @Autowired constructor(
     }
 
     override fun sendTextMessage(weworkNotifyTextMessage: WeworkNotifyTextMessage) {
-        val sendRequest = mutableListOf<WeweokRobotBaseMessage>()
-        val content = if (checkMessageSize(weworkNotifyTextMessage.message)) {
-            weworkNotifyTextMessage.message.replace("\\n", "\n")
-        } else {
-            weworkNotifyTextMessage.message.replace("\\n", "\n").substring(0, WEWORK_MAX_SIZE - 1) +
-                "...(消息长度超$WEWORK_MAX_SIZE 已截断,请控制消息长度)"
-        }
-        weworkNotifyTextMessage.message = content
-        when (weworkNotifyTextMessage.receiverType) {
-            WeworkReceiverType.group -> {
-                return
+        val trace = opentelemetryConfiguration.trace
+        val span = trace.spanBuilder("sendRtx_CUS").setParent(Context.current()).setSpanKind(SpanKind.CONSUMER).startSpan()
+        try {
+            val sendRequest = mutableListOf<WeweokRobotBaseMessage>()
+            val content = if (checkMessageSize(weworkNotifyTextMessage.message)) {
+                weworkNotifyTextMessage.message.replace("\\n", "\n")
+            } else {
+                weworkNotifyTextMessage.message.replace("\\n", "\n").substring(0, WEWORK_MAX_SIZE - 1) +
+                    "...(消息长度超$WEWORK_MAX_SIZE 已截断,请控制消息长度)"
             }
-            WeworkReceiverType.single -> {
-                weworkNotifyTextMessage.receivers.forEach {
-                    if (weworkNotifyTextMessage.textType == WeworkTextType.text) {
-                        sendRequest.add(
-                            WeworkRobotSingleTextMessage(
-                                chatid = it,
-                                text = WeworkRobotContentMessage(
-                                    content = content,
-                                    mentionedList = null,
-                                    mentionedMobileList = null
-                                ),
-                                visibleToUser = null,
-                                postId = null
+            weworkNotifyTextMessage.message = content
+            when (weworkNotifyTextMessage.receiverType) {
+                WeworkReceiverType.group -> {
+                    return
+                }
+                WeworkReceiverType.single -> {
+                    weworkNotifyTextMessage.receivers.forEach {
+                        if (weworkNotifyTextMessage.textType == WeworkTextType.text) {
+                            sendRequest.add(
+                                WeworkRobotSingleTextMessage(
+                                    chatid = it,
+                                    text = WeworkRobotContentMessage(
+                                        content = content,
+                                        mentionedList = null,
+                                        mentionedMobileList = null
+                                    ),
+                                    visibleToUser = null,
+                                    postId = null
+                                )
                             )
-                        )
-                    } else if (weworkNotifyTextMessage.textType == WeworkTextType.markdown) {
-                        sendRequest.add(
-                            WeworkRobotMarkdownMessage(
-                                chatid = it,
-                                markdown = WeworkRobotContentMessage(
-                                    content = content,
-                                    mentionedList = null,
-                                    mentionedMobileList = null
-                                ),
-                                postId = null
+                        } else if (weworkNotifyTextMessage.textType == WeworkTextType.markdown) {
+                            sendRequest.add(
+                                WeworkRobotMarkdownMessage(
+                                    chatid = it,
+                                    markdown = WeworkRobotContentMessage(
+                                        content = content,
+                                        mentionedList = null,
+                                        mentionedMobileList = null
+                                    ),
+                                    postId = null
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
-        }
-        try {
-            doSendRequest(sendRequest)
-            logger.info("send message success, $weworkNotifyTextMessage")
-            saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", true, null)
-        } catch (e: Exception) {
-            logger.warn("send message fail, $weworkNotifyTextMessage")
-            saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", false, e.message)
+            try {
+                doSendRequest(sendRequest)
+                logger.info("send message success, $weworkNotifyTextMessage")
+                saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", true, null)
+            } catch (e: Exception) {
+                logger.warn("send message fail, $weworkNotifyTextMessage")
+                saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", false, e.message)
+            }
+        } finally {
+            span.end()
         }
     }
 
