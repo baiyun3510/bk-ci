@@ -27,8 +27,11 @@
 
 package com.tencent.devops.common.apm.pro
 
+import io.prometheus.client.Collector
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.Base64
+import io.prometheus.client.exporter.DefaultHttpConnectionFactory
+import io.prometheus.client.exporter.HttpConnectionFactory
 import io.prometheus.client.exporter.PushGateway
 import io.prometheus.client.exporter.common.TextFormat
 import java.io.BufferedWriter
@@ -41,11 +44,23 @@ import java.net.URLEncoder
 
 class BkPushGateway(address: String?, token: String) : PushGateway(address) {
 
+    private val connectionFactory: HttpConnectionFactory = DefaultHttpConnectionFactory()
+
     private val MILLISECONDS_PER_SECOND = 1000
 
     private val token = token
 
-    override fun doRequest(
+    override fun push(registry: CollectorRegistry?, job: String?) {
+        doRequest(registry!!, job!!, null, "PUT")
+    }
+
+    override fun push(collector: Collector?, job: String?) {
+        val registry = CollectorRegistry()
+        collector!!.register<Collector>(registry)
+        push(registry, job)
+    }
+
+    private fun doRequest(
         registry: CollectorRegistry?,
         job: String?,
         groupingKey: MutableMap<String, String>?,
