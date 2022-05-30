@@ -33,6 +33,7 @@ import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.apm.OpentelemetryConfiguration
+import com.tencent.devops.common.apm.pro.BkPushGateway
 import com.tencent.devops.common.notify.enums.WeworkReceiverType
 import com.tencent.devops.common.notify.enums.WeworkTextType
 import com.tencent.devops.common.service.utils.SpringContextUtil
@@ -67,7 +68,7 @@ class WeworkRobotServiceImpl @Autowired constructor(
     private val rabbitTemplate: RabbitTemplate,
     private val weworkNotifyDao: WeworkNotifyDao,
     private val opentelemetryConfiguration: OpentelemetryConfiguration,
-    private val pushGateway: PushGateway,
+    private val pushGateway: BkPushGateway,
     private val counter: Counter,
     private val gauge: Gauge
 ) : WeworkService {

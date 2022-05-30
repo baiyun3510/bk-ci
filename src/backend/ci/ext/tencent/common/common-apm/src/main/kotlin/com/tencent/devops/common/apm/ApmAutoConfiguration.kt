@@ -27,6 +27,7 @@
 
 package com.tencent.devops.common.apm
 
+import com.tencent.devops.common.apm.pro.BkPushGateway
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.PushGateway
@@ -54,8 +55,8 @@ class ApmAutoConfiguration {
 
 
     @Bean
-    fun getPushGateway(): PushGateway? {
-        return PushGateway("10.0.1.59:4318")
+    fun getPushGateway(): BkPushGateway? {
+        return BkPushGateway("bkmonitor-http-report-paasee.woa.com:4318", "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD\n")
     }
 
     @Bean
