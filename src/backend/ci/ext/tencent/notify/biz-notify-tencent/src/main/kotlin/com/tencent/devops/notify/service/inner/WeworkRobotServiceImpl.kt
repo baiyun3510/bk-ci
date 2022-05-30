@@ -59,7 +59,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import java.util.Optional
-import kotlin.math.log
 
 @Configuration
 @ConditionalOnProperty(prefix = "notify", name = ["weworkChannel"], havingValue = "weworkRobot")
@@ -76,16 +75,20 @@ class WeworkRobotServiceImpl @Autowired constructor(
         counter.inc()
         gauge.inc()
         val trace = opentelemetryConfiguration.trace
+        val buildCount = Counter.build().name("build_count_test").create()
+        buildCount.inc()
 
 //        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
         val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
         rabbitTemplate.convertAndSend(EXCHANGE_NOTIFY, ROUTE_WEWORK, message)
         logger.info("count: ${counter.get()}")
         logger.info("gauge: ${gauge.get()}")
+        logger.info("build_count: ${gauge.get()}")
         logger.info("pg: $pushGateway")
         span.end()
         pushGateway.push(counter, "notify_count_test")
         pushGateway.push(gauge, "notify_gauge_test")
+        pushGateway.push(buildCount, "notify_build_count_test")
     }
 
     @Value("\${wework.apiUrl:https://qyapi.weixin.qq.com}")

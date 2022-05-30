@@ -27,6 +27,9 @@
 
 package com.tencent.devops.common.apm
 
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.PushGateway
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.cloud.consul.ConsulAutoConfiguration
@@ -49,4 +52,26 @@ class ApmAutoConfiguration {
         opentelemetryConfiguration: OpentelemetryConfiguration
     ) = OpenTelemetryFilter(opentelemetryConfiguration)
 
+
+    @Bean
+    open fun getPushGateway(): PushGateway? {
+        return PushGateway("10.0.1.59:4318")
+    }
+
+    @Bean
+    fun getCounter(): Counter? {
+        return Counter.build()
+            .name("fitz_test_count") //
+            .labelNames("fitz_test_count") //
+            .help("fitz test") //这个名字随便起
+            .register() //注：通常只能注册1次，1个实例中重复注册会报错
+    }
+
+    @Bean
+    fun getGauge(): Gauge? {
+        return Gauge.build()
+            .name("fitz_test_gauge") //
+            .help("fitz_test_gauge")
+            .register()
+    }
 }
