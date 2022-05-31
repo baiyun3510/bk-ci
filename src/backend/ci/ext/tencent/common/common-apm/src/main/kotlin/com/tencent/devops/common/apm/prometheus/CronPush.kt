@@ -25,57 +25,49 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.apm
+package com.tencent.devops.common.apm.prometheus
 
-import com.tencent.devops.common.apm.prometheus.BkPushGateway
+import com.tencent.devops.common.service.utils.SpringContextUtil
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.AutoConfigureBefore
-import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.cloud.consul.ConsulAutoConfiguration
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.PropertySource
-import org.springframework.core.Ordered
+import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import javax.annotation.PostConstruct
 
-@Configuration
-@PropertySource("classpath:/common-service.properties")
-@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
-@AutoConfigureBefore(ConsulAutoConfiguration::class)
-class ApmAutoConfiguration {
-
+@Service
+class CronPush @Autowired constructor(
+    val pushGateway: BkPushGateway
+) {
     @Value("\${spring.application.name:#{null}}")
     val applicationName: String? = null
 
-    @Bean
-    fun opentelemertry() = OpentelemetryConfiguration()
+    private val executorService = Executors.newSingleThreadExecutor()
 
-//    @Bean
-//    fun opentelemertryFilter(
-//        opentelemetryConfiguration: OpentelemetryConfiguration
-//    ) = OpenTelemetryFilter(opentelemetryConfiguration)
-
-
-    @Bean
-    fun getPushGateway(): BkPushGateway? {
-        return BkPushGateway("bkmonitor-http-report-paasee.woa.com:4318", "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD\n")
+    @PostConstruct
+    fun startPusth() {
+        executorService.submit(pushThread())
     }
 
-    @Bean
-    fun getCounter(): Counter? {
-        return Counter.build()
-            .name("$applicationName-counter") //
-            .labelNames("$applicationName-counter") //
-            .help("fitz test") //这个名字随便起
-            .register() //注：通常只能注册1次，1个实例中重复注册会报错
+    fun pushThread(): Callable<Int> {
+        while (true) {
+            logger.info("start push")
+            val counter = SpringContextUtil.getBean(Counter::class.java)
+            val gauge = SpringContextUtil.getBean(Gauge::class.java)
+            pushGateway.push(counter, "$applicationName-counter")
+            pushGateway.push(gauge, "$applicationName-gauge")
+            logger.info("end push")
+
+            // 每10s上报一次数据
+            Thread.sleep(SLEEP_TIME)
+        }
     }
 
-    @Bean
-    fun getGauge(): Gauge? {
-        return Gauge.build()
-            .name("$applicationName-gauge") //
-            .help("$applicationName-gauge")
-            .register()
+    companion object {
+        val logger = LoggerFactory.getLogger(CronPush::class.java)
+        const val SLEEP_TIME = 10 * 1000L
     }
 }

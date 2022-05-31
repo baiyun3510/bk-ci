@@ -33,7 +33,6 @@ import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.apm.OpentelemetryConfiguration
-import com.tencent.devops.common.apm.pro.BkPushGateway
 import com.tencent.devops.common.notify.enums.WeworkReceiverType
 import com.tencent.devops.common.notify.enums.WeworkTextType
 import com.tencent.devops.common.service.utils.SpringContextUtil
@@ -53,7 +52,6 @@ import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
-import io.prometheus.client.exporter.PushGateway
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
@@ -67,37 +65,18 @@ import java.util.Optional
 class WeworkRobotServiceImpl @Autowired constructor(
     private val rabbitTemplate: RabbitTemplate,
     private val weworkNotifyDao: WeworkNotifyDao,
-    private val opentelemetryConfiguration: OpentelemetryConfiguration,
-    private val pushGateway: BkPushGateway,
+//    private val opentelemetryConfiguration: OpentelemetryConfiguration,
     private val counter: Counter,
     private val gauge: Gauge
 ) : WeworkService {
     override fun sendMqMsg(message: WeworkNotifyMessageWithOperation) {
-        val trace = opentelemetryConfiguration.trace
-        logger.info("$pushGateway $counter $gauge")
-        val buildCount = Counter.build().name("build_count_test").create()
-        buildCount.inc()
-        logger.info("build_count: ${buildCount.get()}")
-
-        val beansCount = SpringContextUtil.getBean(Counter::class.java)
-        beansCount.inc()
-        logger.info("build_count: ${beansCount.get()}")
-
+//        val trace = opentelemetryConfiguration.trace
+        counter.labels("sendRTX").inc()
+        gauge.inc()
 //        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
-        val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
+//        val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
         rabbitTemplate.convertAndSend(EXCHANGE_NOTIFY, ROUTE_WEWORK, message)
-        if (counter != null && gauge != null) {
-            counter.inc()
-            gauge.inc()
-            logger.info("count: ${counter.get()}")
-            logger.info("gauge: ${gauge.get()}")
-            logger.info("pg: $pushGateway")
-            pushGateway.push(counter, "notify_count_test")
-            pushGateway.push(gauge, "notify_gauge_test")
-        }
-        span.end()
-        pushGateway.push(buildCount, "notify_build_count_test")
-        pushGateway.push(beansCount, "notify_beans_count_test")
+//        span.end()
     }
 
     @Value("\${wework.apiUrl:https://qyapi.weixin.qq.com}")
@@ -111,8 +90,8 @@ class WeworkRobotServiceImpl @Autowired constructor(
     }
 
     override fun sendTextMessage(weworkNotifyTextMessage: WeworkNotifyTextMessage) {
-        val trace = opentelemetryConfiguration.trace
-        val span = trace.spanBuilder("sendRtx_CUS").setParent(Context.current()).setSpanKind(SpanKind.CONSUMER).startSpan()
+//        val trace = opentelemetryConfiguration.trace
+//        val span = trace.spanBuilder("sendRtx_CUS").setParent(Context.current()).setSpanKind(SpanKind.CONSUMER).startSpan()
         try {
             val sendRequest = mutableListOf<WeweokRobotBaseMessage>()
             val content = if (checkMessageSize(weworkNotifyTextMessage.message)) {
@@ -166,7 +145,7 @@ class WeworkRobotServiceImpl @Autowired constructor(
                 saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", false, e.message)
             }
         } finally {
-            span.end()
+//            span.end()
         }
     }
 

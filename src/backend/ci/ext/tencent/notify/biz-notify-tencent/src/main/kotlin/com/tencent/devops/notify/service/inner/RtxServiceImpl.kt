@@ -53,17 +53,13 @@ import com.tencent.devops.common.notify.utils.TOFService.Companion.RTX_URL
 import com.tencent.devops.notify.pojo.TOF4SecurityInfo
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
-import io.opentelemetry.context.propagation.TextMapGetter
-import io.opentelemetry.context.propagation.TextMapPropagator
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.Enumeration
 import java.util.LinkedList
 import java.util.stream.Collectors
-import javax.servlet.http.HttpServletRequest
 
 @Service
 class RtxServiceImpl @Autowired constructor(

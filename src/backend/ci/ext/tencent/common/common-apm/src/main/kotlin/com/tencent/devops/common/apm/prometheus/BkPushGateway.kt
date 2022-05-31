@@ -25,7 +25,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.apm.pro
+package com.tencent.devops.common.apm.prometheus
 
 import io.prometheus.client.Collector
 import io.prometheus.client.CollectorRegistry
