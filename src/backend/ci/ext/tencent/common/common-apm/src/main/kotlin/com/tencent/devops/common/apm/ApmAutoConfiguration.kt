@@ -49,7 +49,7 @@ class ApmAutoConfiguration {
     val applicationName: String? = null
 
     @Bean
-    fun opentelemertry() = OpentelemetryConfiguration()
+    fun opentelemertry() = OpenTelemetryConfiguration()
 
 //    @Bean
 //    fun opentelemertryFilter(
