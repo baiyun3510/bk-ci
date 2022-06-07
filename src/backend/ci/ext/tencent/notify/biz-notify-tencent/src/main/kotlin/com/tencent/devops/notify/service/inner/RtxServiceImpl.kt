@@ -30,7 +30,7 @@ import com.google.common.collect.Lists
 import com.google.common.collect.Sets
 import com.tencent.devops.common.api.util.DateTimeUtil
 import com.tencent.devops.common.api.util.UUIDUtil
-import com.tencent.devops.common.apm.OpentelemetryConfiguration
+import com.tencent.devops.common.apm.OpenTelemetryConfiguration
 import com.tencent.devops.common.notify.enums.EnumNotifyPriority
 import com.tencent.devops.common.notify.enums.EnumNotifySource
 import com.tencent.devops.common.notify.pojo.RtxNotifyPost
@@ -68,7 +68,7 @@ class RtxServiceImpl @Autowired constructor(
     private val rabbitTemplate: RabbitTemplate,
     private val tofConfiguration: TOFConfiguration,
     private val tof4Service: TOF4Service,
-    private val opentelemetryConfiguration: OpentelemetryConfiguration
+    private val openTelemetryConfiguration: OpenTelemetryConfiguration
 ) : RtxService {
     private val logger = LoggerFactory.getLogger(RtxServiceImpl::class.java)
 
@@ -79,7 +79,7 @@ class RtxServiceImpl @Autowired constructor(
     private var tof4EncryptKey: String? = tofConfiguration.getDefaultSystem()?.get("encrypt-key-tof4")
 
     override fun sendMqMsg(message: RtxNotifyMessage) {
-        val trace = opentelemetryConfiguration.trace
+        val trace = openTelemetryConfiguration.trace
 
 //        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
         val span = trace.spanBuilder("sendRtx").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
@@ -92,7 +92,7 @@ class RtxServiceImpl @Autowired constructor(
      * @param rtxNotifyMessageWithOperation 消息对象
      */
     override fun sendMessage(rtxNotifyMessageWithOperation: RtxNotifyMessageWithOperation) {
-        val trace = opentelemetryConfiguration.trace
+        val trace = openTelemetryConfiguration.trace
         val span = trace.spanBuilder("sendRtx").setParent(Context.current()).setSpanKind(SpanKind.CONSUMER).startSpan()
         val rtxNotifyPosts = generateRtxNotifyPost(rtxNotifyMessageWithOperation)
         try {

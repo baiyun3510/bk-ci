@@ -42,7 +42,7 @@ import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 
 @Component
-class OpentelemetryConfiguration {
+class OpenTelemetryConfiguration {
 
     @Value("\${apm.endpoint:#{null}}")
     val apmEndPoint = "http://bk-otlp-report-bkop-01.woa.com:4317"
@@ -60,7 +60,7 @@ class OpentelemetryConfiguration {
     @PostConstruct
     fun initOpenTelemetry() : OpenTelemetry {
         val grpcSpanExporter = OtlpGrpcSpanExporter.builder()
-            .setEndpoint("$apmEndPoint") //配置.setEndpoin
+            .setEndpoint(apmEndPoint)
             .build()
 
         val tracerProvider = SdkTracerProvider.builder()
