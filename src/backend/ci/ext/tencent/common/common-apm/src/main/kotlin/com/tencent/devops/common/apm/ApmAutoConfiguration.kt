@@ -69,7 +69,7 @@ class ApmAutoConfiguration {
     @Bean
     fun getCounter(): Counter {
         return Counter.build()
-            .name( applicationName + "_counter") //
+            .name( applicationName + "_counter_total") //
             .labelNames(applicationName + "_counter") //
             .help(applicationName + "_counter") //这个名字随便起
             .withExemplars()
