@@ -28,11 +28,14 @@
 package com.tencent.devops.common.apm
 
 import com.tencent.devops.common.apm.prometheus.BkPushGateway
+import com.tencent.devops.common.apm.prometheus.CronPush
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
+import org.aspectj.lang.annotation.After
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cloud.consul.ConsulAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -58,24 +61,30 @@ class ApmAutoConfiguration {
 
 
     @Bean
-    fun getPushGateway(): BkPushGateway? {
-        return BkPushGateway("bkmonitor-http-report-paasee.woa.com:4318", "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD\n")
+    fun getPushGateway(): BkPushGateway {
+        return BkPushGateway("bkmonitor-http-report-paasee.woa.com:4318", "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD")
     }
 
     @Bean
-    fun getCounter(): Counter? {
+    fun getCounter(): Counter {
         return Counter.build()
-            .name("$applicationName:counter") //
-            .labelNames("${applicationName}_counter") //
-            .help("fitz test") //这个名字随便起
+            .name( applicationName + "_counter") //
+            .labelNames(applicationName + "_counter") //
+            .help(applicationName + "_counter") //这个名字随便起
             .register() //注：通常只能注册1次，1个实例中重复注册会报错
     }
 
     @Bean
-    fun getGauge(): Gauge? {
+    fun getGauge(): Gauge {
         return Gauge.build()
-            .name("$applicationName:gauge") //
-            .help("${applicationName}_counter")
+            .name(applicationName + "_gauge") //
+            .help(applicationName + "_gauge")
             .register()
+    }
+
+    @Bean
+    @ConditionalOnBean(Counter::class)
+    fun cronPush(pushGateway: BkPushGateway, counter: Counter, gauge: Gauge): CronPush {
+        return CronPush(pushGateway = pushGateway, counter = counter, gauge = gauge)
     }
 }
