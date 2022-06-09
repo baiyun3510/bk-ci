@@ -81,7 +81,6 @@ class ApmAutoConfiguration {
         return Gauge.build()
             .name(applicationName + "_gauge") //
             .help(applicationName + "_gauge")
-            .withExemplars()
             .register()
     }
 
