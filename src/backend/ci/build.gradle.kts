@@ -17,6 +17,10 @@ allprojects {
     // 版本管理
     dependencyManagement {
         setApplyMavenExclusions(false)
+        imports {
+            mavenBom("io.prometheus:simpleclient_bom:${Versions.pushGateway}")
+            mavenBom("io.opentelemetry:opentelemetry-bom:${Versions.openTelemetryVersion}")
+        }
         dependencies {
             dependency("org.mockito:mockito-all:${Versions.Mockito}")
             dependency("com.nhaarman:mockito-kotlin-kt1.1:${Versions.MockitoKt}")
@@ -57,6 +61,12 @@ allprojects {
             dependency("org.bouncycastle:bcprov-ext-jdk15on:${Versions.BouncyCastle}")
             dependency("org.mybatis:mybatis:${Versions.MyBatis}")
             dependency("commons-io:commons-io:${Versions.CommonIo}")
+            dependencySet("io.opentelemetry:${Versions.openTelemetryAlphaVersion}") {
+                entry("opentelemetry-exporter-prometheus")
+                entry("opentelemetry-sdk-log")
+                entry("opentelemetry-semconv")
+                entry("opentelemetry-sdk-extension-autoconfigure")
+            }
             dependencySet("org.glassfish.jersey.containers:${Versions.Jersey}") {
                 entry("jersey-container-servlet-core")
                 entry("jersey-container-servlet")
@@ -99,23 +109,6 @@ allprojects {
             }
             dependency("com.perforce:p4java:${Versions.p4}")
             dependency("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${Versions.JacksonDatatypeJsr}")
-            dependency("io.prometheus:simpleclient_pushgateway:${Versions.pushGateway}")
-
-//            dependency("io.opentelemetry:opentelemetry-bom:${Versions.openTelemetryVersion}")
-//            dependency("io.opentelemetry:opentelemetry-bom-alpha:${Versions.openTelemetryAlphaVersion}")
-            dependencySet("io.opentelemetry:${Versions.openTelemetryVersion}") {
-                entry("opentelemetry-api")
-                entry("opentelemetry-sdk")
-                entry("opentelemetry-exporter-logging")
-                entry("opentelemetry-semconv")
-                entry("opentelemetry-exporter-otlp")
-            }
-            dependencySet("io.opentelemetry:${Versions.openTelemetryAlphaVersion}") {
-                entry("opentelemetry-exporter-prometheus")
-                entry("opentelemetry-sdk-log")
-                entry("opentelemetry-semconv")
-                entry("opentelemetry-sdk-extension-autoconfigure")
-            }
         }
     }
 
