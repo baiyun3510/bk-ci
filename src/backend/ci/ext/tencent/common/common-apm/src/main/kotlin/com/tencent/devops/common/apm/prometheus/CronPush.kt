@@ -27,43 +27,48 @@
 
 package com.tencent.devops.common.apm.prometheus
 
-import com.tencent.devops.common.service.utils.SpringContextUtil
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
-import java.util.concurrent.Callable
+import org.springframework.scheduling.annotation.Scheduled
 import java.util.concurrent.Executors
-import javax.annotation.PostConstruct
 
-@Service
 class CronPush @Autowired constructor(
-    val pushGateway: BkPushGateway
+    val pushGateway: BkPushGateway,
+    val counter: Counter,
+    val gauge: Gauge
 ) {
     @Value("\${spring.application.name:#{null}}")
     val applicationName: String? = null
 
     private val executorService = Executors.newSingleThreadExecutor()
 
-    @PostConstruct
-    fun startPusth() {
-        executorService.submit(pushThread())
-    }
+//    @PostConstruct
+//    fun startPusth() {
+//        executorService.submit(pushThread())
+//    }
 
-    fun pushThread(): Callable<Int> {
-        while (true) {
-            logger.info("start push")
-            val counter = SpringContextUtil.getBean(Counter::class.java)
-            val gauge = SpringContextUtil.getBean(Gauge::class.java)
-            pushGateway.push(counter, "$applicationName-counter")
-            pushGateway.push(gauge, "$applicationName-gauge")
-            logger.info("end push")
+//    @Scheduled(cron = "0 0/2 * * * ?")
+//    fun pushThread(): Callable<Int> {
+//        while (true) {
+//            logger.info("start push")
+//            pushGateway.push(counter, "$applicationName-counter")
+//            pushGateway.push(gauge, "$applicationName-gauge")
+//            logger.info("end push")
+//
+//            // 每10s上报一次数据
+//            Thread.sleep(SLEEP_TIME)
+//        }
+//    }
 
-            // 每10s上报一次数据
-            Thread.sleep(SLEEP_TIME)
-        }
+    @Scheduled(cron = "0/5 * * * * ?")
+    fun pushThread() {
+        logger.info("start push")
+        pushGateway.push(counter, "$applicationName-counter")
+        pushGateway.push(gauge, "$applicationName-gauge")
+        logger.info("end push")
     }
 
     companion object {

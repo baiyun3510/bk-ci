@@ -31,7 +31,7 @@ import com.tencent.devops.common.apm.prometheus.BkPushGateway
 import com.tencent.devops.common.apm.prometheus.CronPush
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
-import org.aspectj.lang.annotation.After
+import io.prometheus.client.exporter.HTTPServer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.Ordered
+
 
 @Configuration
 @PropertySource("classpath:/common-service.properties")
@@ -86,5 +87,12 @@ class ApmAutoConfiguration {
     @ConditionalOnBean(Counter::class)
     fun cronPush(pushGateway: BkPushGateway, counter: Counter, gauge: Gauge): CronPush {
         return CronPush(pushGateway = pushGateway, counter = counter, gauge = gauge)
+    }
+
+    @Bean
+    fun prometheusHttpServer(): HTTPServer {
+        return HTTPServer.Builder()
+            .withPort(1234)
+            .build()
     }
 }

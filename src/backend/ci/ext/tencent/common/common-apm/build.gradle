@@ -31,4 +31,5 @@ dependencies {
     api("io.opentelemetry:opentelemetry-sdk")
     api("io.opentelemetry:opentelemetry-exporter-otlp")
     api("io.prometheus:simpleclient_pushgateway")
+    api("io.prometheus:simpleclient_httpserver")
 }
