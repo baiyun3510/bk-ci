@@ -72,6 +72,7 @@ class ApmAutoConfiguration {
             .name( applicationName + "_counter") //
             .labelNames(applicationName + "_counter") //
             .help(applicationName + "_counter") //这个名字随便起
+            .withExemplars()
             .register() //注：通常只能注册1次，1个实例中重复注册会报错
     }
 
@@ -80,6 +81,7 @@ class ApmAutoConfiguration {
         return Gauge.build()
             .name(applicationName + "_gauge") //
             .help(applicationName + "_gauge")
+            .withExemplars()
             .register()
     }
 
