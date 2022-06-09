@@ -66,7 +66,7 @@ class ApmAutoConfiguration {
     fun getCounter(): Counter? {
         return Counter.build()
             .name("$applicationName:counter") //
-            .labelNames("$applicationName:counter") //
+            .labelNames("$applicationName_counter") //
             .help("fitz test") //这个名字随便起
             .register() //注：通常只能注册1次，1个实例中重复注册会报错
     }
@@ -75,7 +75,7 @@ class ApmAutoConfiguration {
     fun getGauge(): Gauge? {
         return Gauge.build()
             .name("$applicationName:gauge") //
-            .help("$applicationName:gauge")
+            .help("$applicationName_gauge")
             .register()
     }
 }
