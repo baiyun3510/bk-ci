@@ -65,8 +65,8 @@ class ApmAutoConfiguration {
     @Bean
     fun getCounter(): Counter? {
         return Counter.build()
-            .name("$applicationName-counter") //
-            .labelNames("$applicationName-counter") //
+            .name("$applicationName:counter") //
+            .labelNames("$applicationName:counter") //
             .help("fitz test") //这个名字随便起
             .register() //注：通常只能注册1次，1个实例中重复注册会报错
     }
@@ -74,8 +74,8 @@ class ApmAutoConfiguration {
     @Bean
     fun getGauge(): Gauge? {
         return Gauge.build()
-            .name("$applicationName-gauge") //
-            .help("$applicationName-gauge")
+            .name("$applicationName:gauge") //
+            .help("$applicationName:gauge")
             .register()
     }
 }
