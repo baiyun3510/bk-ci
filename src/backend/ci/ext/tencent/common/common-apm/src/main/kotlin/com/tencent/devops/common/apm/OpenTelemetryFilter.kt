@@ -41,8 +41,6 @@ import javax.servlet.ServletRequest
 import javax.servlet.ServletResponse
 import javax.servlet.http.HttpServletRequest
 
-
-@Component
 class OpenTelemetryFilter @Autowired constructor(
     val opentelemetryConfiguration: OpenTelemetryConfiguration,
 ) : Filter{

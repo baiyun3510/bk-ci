@@ -29,6 +29,8 @@ package com.tencent.devops.common.apm.prometheus
 
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.PushGateway
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -36,7 +38,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import java.util.concurrent.Executors
 
 class CronPush @Autowired constructor(
-    val pushGateway: BkPushGateway,
+    val pushGateway: PushGateway,
     val counter: Counter,
     val gauge: Gauge
 ) {
@@ -45,25 +47,7 @@ class CronPush @Autowired constructor(
 
     private val executorService = Executors.newSingleThreadExecutor()
 
-//    @PostConstruct
-//    fun startPusth() {
-//        executorService.submit(pushThread())
-//    }
-
-//    @Scheduled(cron = "0 0/2 * * * ?")
-//    fun pushThread(): Callable<Int> {
-//        while (true) {
-//            logger.info("start push")
-//            pushGateway.push(counter, "$applicationName-counter")
-//            pushGateway.push(gauge, "$applicationName-gauge")
-//            logger.info("end push")
-//
-//            // 每10s上报一次数据
-//            Thread.sleep(SLEEP_TIME)
-//        }
-//    }
-
-    @Scheduled(cron = "0/5 * * * * ?")
+    @Scheduled(cron = "0/30 * * * * ?")
     fun pushThread() {
         logger.info("start push")
         pushGateway.push(counter, "$applicationName-counter")
@@ -72,7 +56,7 @@ class CronPush @Autowired constructor(
     }
 
     companion object {
-        val logger = LoggerFactory.getLogger(CronPush::class.java)
+        val logger: Logger = LoggerFactory.getLogger(CronPush::class.java)
         const val SLEEP_TIME = 10 * 1000L
     }
 }

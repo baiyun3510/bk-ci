@@ -27,15 +27,15 @@
 
 package com.tencent.devops.common.apm
 
-import com.tencent.devops.common.apm.prometheus.BkPushGateway
+import com.tencent.devops.common.apm.prometheus.BkConnectionFactory
 import com.tencent.devops.common.apm.prometheus.CronPush
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.HTTPServer
+import io.prometheus.client.exporter.PushGateway
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cloud.consul.ConsulAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -53,23 +53,23 @@ class ApmAutoConfiguration {
     val applicationName: String? = null
 
     @Bean
-    fun opentelemertry() = OpenTelemetryConfiguration()
-
-//    @Bean
-//    fun opentelemertryFilter(
-//        opentelemetryConfiguration: OpentelemetryConfiguration
-//    ) = OpenTelemetryFilter(opentelemetryConfiguration)
-
+    fun getPushGateway(): PushGateway {
+        val pushGateway = PushGateway("bkmonitor-http-report-paasee.woa.com:4318")
+        val bkConnectionFactory =
+            BkConnectionFactory("Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD")
+        pushGateway.setConnectionFactory(bkConnectionFactory)
+        return pushGateway
+    }
 
     @Bean
-    fun getPushGateway(): BkPushGateway {
-        return BkPushGateway("bkmonitor-http-report-paasee.woa.com:4318", "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD")
+    fun cronPush(pushGateway: PushGateway, counter: Counter, gauge: Gauge): CronPush {
+        return CronPush(pushGateway = pushGateway, counter = counter, gauge = gauge)
     }
 
     @Bean
     fun getCounter(): Counter {
         return Counter.build()
-            .name( applicationName + "_counter_total") //
+            .name(applicationName + "_counter_total") //
             .labelNames(applicationName + "_counter") //
             .help(applicationName + "_counter") //这个名字随便起
             .withExemplars()
@@ -82,12 +82,6 @@ class ApmAutoConfiguration {
             .name(applicationName + "_gauge") //
             .help(applicationName + "_gauge")
             .register()
-    }
-
-    @Bean
-    @ConditionalOnBean(Counter::class)
-    fun cronPush(pushGateway: BkPushGateway, counter: Counter, gauge: Gauge): CronPush {
-        return CronPush(pushGateway = pushGateway, counter = counter, gauge = gauge)
     }
 
     @Bean
