@@ -8,8 +8,9 @@ class BkConnectionFactory(
     private val token: String
 ) : HttpConnectionFactory {
     override fun create(url: String?): HttpURLConnection {
-        val httpURLConnection = URL(url).openConnection() as HttpURLConnection
-        httpURLConnection.setRequestProperty("X-BK-TOKEN", token)
-        return httpURLConnection
+//        val httpURLConnection = URL(url).openConnection() as HttpURLConnection
+//        httpURLConnection.setRequestProperty("X-BK-TOKEN", token)
+//        return httpURLConnection
+        return URL("$url?X-BK-TOKEN=$token").openConnection() as HttpURLConnection
     }
 }
