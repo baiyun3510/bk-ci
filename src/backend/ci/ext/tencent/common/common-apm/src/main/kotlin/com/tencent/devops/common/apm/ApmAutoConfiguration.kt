@@ -27,10 +27,10 @@
 
 package com.tencent.devops.common.apm
 
-import com.tencent.devops.common.apm.prometheus.BkConnectionFactory
 import com.tencent.devops.common.apm.prometheus.CronPush
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.DefaultHttpConnectionFactory
 import io.prometheus.client.exporter.HTTPServer
 import io.prometheus.client.exporter.PushGateway
 import org.springframework.beans.factory.annotation.Value
@@ -54,10 +54,11 @@ class ApmAutoConfiguration {
 
     @Bean
     fun getPushGateway(): PushGateway {
-        val pushGateway = PushGateway("bkmonitor-http-report-paasee.woa.com:4318")
-        val bkConnectionFactory =
-            BkConnectionFactory("Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD")
-        pushGateway.setConnectionFactory(bkConnectionFactory)
+        val token = "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD"
+        val pushGateway = PushGateway("bkmonitor-http-report-paasee.woa.com:4318?X-BK-TOKEN=$token")
+//        val connectionFactory = BkConnectionFactory(token)
+        val connectionFactory = DefaultHttpConnectionFactory()
+        pushGateway.setConnectionFactory(connectionFactory)
         return pushGateway
     }
 
