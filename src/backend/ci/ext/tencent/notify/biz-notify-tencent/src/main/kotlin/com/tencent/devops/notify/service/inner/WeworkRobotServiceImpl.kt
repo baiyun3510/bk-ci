@@ -32,10 +32,8 @@ import com.tencent.devops.common.api.exception.OperationException
 import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
-import com.tencent.devops.common.apm.OpenTelemetryConfiguration
 import com.tencent.devops.common.notify.enums.WeworkReceiverType
 import com.tencent.devops.common.notify.enums.WeworkTextType
-import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.notify.EXCHANGE_NOTIFY
 import com.tencent.devops.notify.ROUTE_WEWORK
 import com.tencent.devops.notify.dao.WeworkNotifyDao
@@ -43,13 +41,12 @@ import com.tencent.devops.notify.model.WeworkNotifyMessageWithOperation
 import com.tencent.devops.notify.pojo.WeweokRobotBaseMessage
 import com.tencent.devops.notify.pojo.WeworkNotifyMediaMessage
 import com.tencent.devops.notify.pojo.WeworkNotifyTextMessage
+import com.tencent.devops.notify.pojo.WeworkRobotContentMessage
 import com.tencent.devops.notify.pojo.WeworkRobotMarkdownMessage
 import com.tencent.devops.notify.pojo.WeworkRobotSingleTextMessage
 import com.tencent.devops.notify.pojo.WeworkSendMessageResp
-import com.tencent.devops.notify.pojo.WeworkRobotContentMessage
 import com.tencent.devops.notify.service.WeworkService
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.context.Context
+import io.opentelemetry.api.trace.Span
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import org.slf4j.LoggerFactory
@@ -71,7 +68,9 @@ class WeworkRobotServiceImpl @Autowired constructor(
 ) : WeworkService {
     override fun sendMqMsg(message: WeworkNotifyMessageWithOperation) {
 //        val trace = opentelemetryConfiguration.trace
-        counter.labels("sendRTX").inc()
+        val spanContext = Span.current().spanContext
+        counter.labels("sendRTX")
+            .incWithExemplar(mapOf("traceID" to spanContext.traceId, "spanID" to spanContext.spanId))
         gauge.inc()
 //        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
 //        val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
@@ -98,7 +97,7 @@ class WeworkRobotServiceImpl @Autowired constructor(
                 weworkNotifyTextMessage.message.replace("\\n", "\n")
             } else {
                 weworkNotifyTextMessage.message.replace("\\n", "\n").substring(0, WEWORK_MAX_SIZE - 1) +
-                    "...(消息长度超$WEWORK_MAX_SIZE 已截断,请控制消息长度)"
+                        "...(消息长度超$WEWORK_MAX_SIZE 已截断,请控制消息长度)"
             }
             weworkNotifyTextMessage.message = content
             when (weworkNotifyTextMessage.receiverType) {
@@ -142,7 +141,12 @@ class WeworkRobotServiceImpl @Autowired constructor(
                 saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", true, null)
             } catch (e: Exception) {
                 logger.warn("send message fail, $weworkNotifyTextMessage")
-                saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", false, e.message)
+                saveResult(
+                    weworkNotifyTextMessage.receivers,
+                    "type:${weworkNotifyTextMessage.message}\n",
+                    false,
+                    e.message
+                )
             }
         } finally {
 //            span.end()
