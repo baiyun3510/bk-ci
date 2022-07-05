@@ -1,10 +1,10 @@
-{{ if .Values.statistics.enabled -}}
+{{ if .Values.support.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "bkci.names.fullname" . }}-statistics
+  name: {{ include "bkci.names.fullname" . }}-support
   labels: {{- include "bkci.labels.standard" . | nindent 4 }}
-    app.kubernetes.io/name: statistics
+    app.kubernetes.io/name: support
     app.kubernetes.io/component: support
     {{- if .Values.commonLabels }}
       {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
@@ -16,7 +16,7 @@ spec:
   type: ClusterIP
   selector: {{- include "bkci.labels.matchLabels" . | nindent 4 }}
     app.kubernetes.io/component: support
-    app.kubernetes.io/name: statistics
+    app.kubernetes.io/name: support
   ports:
     - name: http
       port: 80
