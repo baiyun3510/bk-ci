@@ -85,7 +85,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         user = "__INFLUXDB_USERNAME__",
         password = "__INFLUXDB_PASSWORD__"
     },
-    itlogin = {ip = "__BKCI_ITLOGIN_IP__", port = "__BKCI_ITLOGIN_PORT__", host = "__BKCI_ITLOGIN_HOST__"},
+    itlogin = {port = "__BKCI_ITLOGIN_PORT__", host = "__BKCI_ITLOGIN_HOST__"},
     bkrepo = {
         domain = "__BKREPO_HOST__",
         user = "__BKREPO_USER__",
