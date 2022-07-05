@@ -171,7 +171,8 @@
                             text: this.$t('applyPermission')
                         }
                     ]
-                }
+                },
+                element: {}
             }
         },
 
@@ -343,6 +344,9 @@
             isLatestBuild () {
                 const { execDetail } = this
                 return execDetail && execDetail.buildNum === execDetail.latestBuildNum && execDetail.curVersion === execDetail.latestVersion
+            },
+            projectId () {
+                return this.$route.params.projectId
             }
         },
 
@@ -362,10 +366,14 @@
                     this.isLoading = false
                     this.hasNoPermission = true
                 }
+            },
+            pipeline (val) {
+                if (val && val.instanceFromTemplate) this.requestMatchTemplateRules(val.templateId)
             }
         },
 
         mounted () {
+            this.requestPipeline(this.$route.params)
             this.requestPipelineExecDetail(this.routerParams)
             this.$store.dispatch('common/requestInterceptAtom', {
                 projectId: this.routerParams.projectId,
@@ -391,10 +399,10 @@
                 'setPipelineDetail',
                 'getInitLog',
                 'getAfterLog',
-                'pausePlugin'
+                'pausePlugin',
+                'requestPipeline'
             ]),
             ...mapActions('common', [
-                'startDebugDocker',
                 'requestInterceptAtom'
             ]),
             convertMStoStringByRule,
@@ -415,7 +423,34 @@
                     }
                 })
             },
-            async qualityCheck ({ elementId, action }, done) {
+
+            getRelativeRuleHashId (rules) {
+                const result = []
+                rules.map(rule => {
+                    if (rule.taskId === this.element.atomCode && rule.ruleList.every(rule => !rule.gatewayId)) {
+                        result.push(rule)
+                    } else if (rule.taskId === this.element.atomCode
+                        && rule.ruleList.some(val => this.element.name.indexOf(val.gatewayId) > -1)) {
+                        const temp = {
+                            ...rule,
+                            ruleList: rule.ruleList.filter(item => this.element.name.indexOf(item.gatewayId) > -1)
+                        }
+                        return result.push(temp)
+                    }
+                    return false
+                })
+
+                const hashIds = []
+                result.forEach(item => {
+                    item.ruleList.forEach(rule => {
+                        hashIds.push(rule.ruleHashId)
+                    })
+                })
+
+                return hashIds
+            },
+
+            async qualityCheck ({ elementId, action, stageIndex, containerIndex, containerGroupIndex, atomIndex }, done) {
                 try {
                     const data = {
                         projectId: this.routerParams.projectId,
@@ -424,6 +459,20 @@
                         elementId,
                         action
                     }
+
+                    let elementIndex = 0
+                    if (containerGroupIndex !== undefined) {
+                        const curAtom = this.execDetail.model.stages[stageIndex].containers[containerIndex].groupContainers[containerGroupIndex].elements[atomIndex]
+                        curAtom.atomCode === 'qualityGateInTask' ? elementIndex = atomIndex + 1 : elementIndex = atomIndex - 1
+                        this.element = this.execDetail.model.stages[stageIndex].containers[containerIndex].groupContainers[containerGroupIndex].elements[elementIndex]
+                    } else {
+                        const curAtom = this.execDetail.model.stages[stageIndex].containers[containerIndex].elements[atomIndex]
+                        curAtom.atomCode === 'qualityGateInTask' ? elementIndex = atomIndex + 1 : elementIndex = atomIndex - 1
+                        this.element = this.execDetail.model.stages[stageIndex].containers[containerIndex].elements[elementIndex]
+                    }
+
+                    data.ruleIds = this.getRelativeRuleHashId(this.curMatchRules)
+                    
                     const res = await this.reviewExcuteAtom(data)
                     if (res) {
                         this.$showTips({
@@ -550,54 +599,15 @@
                     this.skipTask = false
                 }
             },
-            async debugDocker ({ stageIndex, containerIndex, container, isPubDevcloud, isDocker }) {
+            async debugDocker ({ stageIndex, containerIndex, container }) {
                 const vmSeqId = container.containerId || this.getRealSeqId(this.execDetail.model.stages, stageIndex, containerIndex)
                 const { projectId, pipelineId, buildNo: buildId } = this.$route.params
-                const url = `${WEB_URL_PREFIX}/pipeline/${projectId}/dockerConsole/?pipelineId=${pipelineId}&vmSeqId=${vmSeqId}`
-                const { dispatchType = {}, dockerBuildVersion, buildEnv } = container
+                const buildResourceType = container.dispatchType?.buildType
+                const buildIdStr = buildId ? `&buildId=${buildId}` : ''
+
                 const tab = window.open('about:blank')
-                try {
-                    if (isDocker) {
-                        const res = await this.startDebugDocker({
-                            projectId: projectId,
-                            pipelineId: pipelineId,
-                            vmSeqId,
-                            imageCode: dispatchType.imageCode,
-                            imageVersion: dispatchType.imageVersion,
-                            imageName: dispatchType.value ? dispatchType.value : dockerBuildVersion,
-                            buildEnv,
-                            imageType: dispatchType.imageType || 'BKDEVOPS',
-                            credentialId: dispatchType.credentialId || ''
-                        })
-                        if (res === true) {
-                            tab.location = url
-                        }
-                    } else if (isPubDevcloud) {
-                        const buildIdStr = buildId ? `&buildId=${buildId}` : ''
-                        tab.location = `${url}&type=DEVCLOUD${buildIdStr}`
-                    }
-                } catch (err) {
-                    tab.close()
-                    if (err.code === 403) {
-                        this.$showAskPermissionDialog({
-                            noPermissionList: [{
-                                actionId: this.$permissionActionMap.edit,
-                                resourceId: this.$permissionResourceMap.pipeline,
-                                instanceId: [{
-                                    id: pipelineId,
-                                    name: pipelineId
-                                }],
-                                projectId
-                            }],
-                            applyPermissionUrl: `/backend/api/perm/apply/subsystem/?client_id=pipeline&project_code=${projectId}&service_code=pipeline&role_manager=pipeline:${pipelineId}`
-                        })
-                    } else {
-                        this.$showTips({
-                            theme: 'error',
-                            message: err.message || err
-                        })
-                    }
-                }
+                const url = `${WEB_URL_PREFIX}/pipeline/${projectId}/dockerConsole/?pipelineId=${pipelineId}&dispatchType=${buildResourceType}&vmSeqId=${vmSeqId}${buildIdStr}`
+                tab.location = url
             },
             switchTab (tabType = 'executeDetail') {
                 this.$router.push({
@@ -606,6 +616,12 @@
                         ...this.routerParams,
                         type: tabType
                     }
+                })
+            },
+            requestMatchTemplateRules (templateId) {
+                this.$store.dispatch('common/requestMatchTemplateRuleList', {
+                    projectId: this.projectId,
+                    templateId
                 })
             }
         }
