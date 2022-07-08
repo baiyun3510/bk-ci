@@ -5,7 +5,7 @@ metadata:
   name: {{ include "bkci.names.fullname" . }}-support
   labels: {{- include "bkci.labels.standard" . | nindent 4 }}
     app.kubernetes.io/name: support
-    app.kubernetes.io/component: support
+    app.kubernetes.io/component: microservice
     {{- if .Values.commonLabels }}
       {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
     {{- end }}
@@ -15,7 +15,7 @@ metadata:
 spec:
   type: ClusterIP
   selector: {{- include "bkci.labels.matchLabels" . | nindent 4 }}
-    app.kubernetes.io/component: support
+    app.kubernetes.io/component: microservice
     app.kubernetes.io/name: support
   ports:
     - name: http
