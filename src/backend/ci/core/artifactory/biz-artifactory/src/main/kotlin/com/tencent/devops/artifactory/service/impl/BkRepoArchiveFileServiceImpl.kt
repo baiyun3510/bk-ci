@@ -53,7 +53,6 @@ import com.tencent.devops.common.api.util.ShaUtils
 import com.tencent.devops.common.archive.util.MimeUtil
 import com.tencent.devops.common.auth.api.AuthPermission
 import com.tencent.devops.common.auth.api.AuthResourceType
-import com.tencent.devops.process.api.service.ServiceBuildResource
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -211,29 +210,22 @@ class BkRepoArchiveFileServiceImpl @Autowired constructor(
         searchProps.fileNames?.forEach {
             fileNameSet.add(it)
         }
-        val metadata = searchProps.props
+
         val nodeList = defaultBkRepoClient.queryByNameAndMetadata(
             userId = userId,
             projectId = projectId,
             repoNames = listOf(BkRepoUtils.REPO_NAME_PIPELINE, BkRepoUtils.REPO_NAME_CUSTOM),
             fileNames = listOf(),
-            metadata = metadata,
+            metadata = searchProps.props,
             page = page ?: 1,
             pageSize = pageSize ?: DEFAULT_PAGESIZE
         )
-        val artifactListInfos = client.get(ServiceBuildResource::class).getArtifactoryInfo(
-            userId = userId,
-            projectId = projectId,
-            pipelineId = metadata["pipelineId"] ?: "",
-            buildId = metadata["buildId"] ?: ""
-        ).data?.toMutableList() ?: mutableListOf()
-        artifactListInfos.addAll(nodeList.map { it.toFileInfo() })
         return Page(
             count = nodeList.size.toLong(),
             page = page ?: 1,
             pageSize = pageSize ?: DEFAULT_PAGESIZE,
             totalPages = 1,
-            records = artifactListInfos
+            records = nodeList.map { it.toFileInfo() }
         )
     }
 

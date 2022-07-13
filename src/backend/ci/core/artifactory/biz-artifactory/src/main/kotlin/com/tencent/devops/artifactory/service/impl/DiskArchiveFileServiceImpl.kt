@@ -49,7 +49,6 @@ import com.tencent.devops.common.archive.FileDigestUtils
 import com.tencent.devops.common.archive.util.MimeUtil
 import com.tencent.devops.common.auth.api.AuthPermission
 import com.tencent.devops.common.auth.api.AuthResourceType
-import com.tencent.devops.process.api.service.ServiceBuildResource
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -250,13 +249,6 @@ class DiskArchiveFileServiceImpl : ArchiveFileServiceImpl() {
                 )
             )
         }
-        val artifactListInfos = client.get(ServiceBuildResource::class).getArtifactoryInfo(
-            userId = userId,
-            projectId = projectId,
-            pipelineId = props["pipelineId"] ?: "",
-            buildId = props["buildId"] ?: ""
-        ).data ?: listOf()
-        fileInfoList.addAll(artifactListInfos.toList())
         val totalPages = PageUtil.calTotalPage(pageSize, fileCount)
         return Page(
             count = fileCount,

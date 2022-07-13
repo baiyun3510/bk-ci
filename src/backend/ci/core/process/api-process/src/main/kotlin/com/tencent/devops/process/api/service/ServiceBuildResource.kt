@@ -358,11 +358,11 @@ interface ServiceBuildResource {
         channelCode: ChannelCode
     ): Result<BuildHistoryWithVars>
 
-    @ApiOperation("获取流水线插件构建制品")
+    @ApiOperation("获取流水线插件构建制品信息")
     @GET
     @Path("/{projectId}/{pipelineId}/{buildId}/artifactory/info")
     fun getArtifactoryInfo(
-        @ApiParam(value = "用户ID", required = false, defaultValue = AUTH_HEADER_USER_ID_DEFAULT_VALUE)
+        @ApiParam(value = "用户ID", required = true, defaultValue = AUTH_HEADER_USER_ID_DEFAULT_VALUE)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
         @ApiParam("项目ID", required = true)
