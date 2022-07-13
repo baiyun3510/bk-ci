@@ -41,6 +41,7 @@ import com.tencent.devops.artifactory.pojo.FilePipelineInfo
 import com.tencent.devops.artifactory.pojo.FolderSize
 import com.tencent.devops.artifactory.pojo.Property
 import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType.*
 import com.tencent.devops.artifactory.service.JFrogService
 import com.tencent.devops.artifactory.service.PipelineService
 import com.tencent.devops.artifactory.service.RepoService
@@ -112,24 +113,26 @@ class ArtifactoryService @Autowired constructor(
     ): List<FileInfo> {
         logger.info("list, userId: $userId, projectId: $projectId, artifactoryType: $artifactoryType, path: $path")
         return when (artifactoryType) {
-            ArtifactoryType.PIPELINE -> {
+            PIPELINE -> {
                 artifactoryPipelineDirService.list(userId, projectId, path)
             }
-            ArtifactoryType.CUSTOM_DIR -> {
+            CUSTOM_DIR -> {
                 artifactoryCustomDirService.list(userId, projectId, path)
             }
+            IMAGE -> TODO()
         }
     }
 
     override fun show(userId: String, projectId: String, artifactoryType: ArtifactoryType, path: String): FileDetail {
         logger.info("show, userId: $userId, projectId: $projectId, artifactoryType: $artifactoryType, path: $path")
         return when (artifactoryType) {
-            ArtifactoryType.PIPELINE -> {
+            PIPELINE -> {
                 artifactoryPipelineDirService.show(userId, projectId, path)
             }
-            ArtifactoryType.CUSTOM_DIR -> {
+            CUSTOM_DIR -> {
                 artifactoryCustomDirService.show(userId, projectId, path)
             }
+            IMAGE -> TODO()
         }
     }
 
@@ -264,14 +267,14 @@ class ArtifactoryService @Autowired constructor(
             .getPipelineInfo(projectId, pipelineId, null).data!!.lastModifyUser
         if (!crossProjectId.isNullOrBlank()) {
             targetProjectId = crossProjectId!!
-            if (artifactoryType == ArtifactoryType.CUSTOM_DIR && !pipelineService.hasPermission(
+            if (artifactoryType == CUSTOM_DIR && !pipelineService.hasPermission(
                     lastModifyUser,
                     targetProjectId
                 )
             ) {
                 throw BadRequestException("用户（$lastModifyUser) 没有项目（$targetProjectId）下载权限)")
             }
-            if (artifactoryType == ArtifactoryType.PIPELINE) {
+            if (artifactoryType == PIPELINE) {
                 targetPipelineId = crossPipineId ?: throw BadRequestException("invalid pipelineId")
                 pipelineService.validatePermission(
                     lastModifyUser,
@@ -304,7 +307,7 @@ class ArtifactoryService @Autowired constructor(
         pathArray.forEach { path ->
             val normalizedPath = JFrogUtil.normalize(path)
             val realPath = if (path.startsWith("/")) normalizedPath else "/$normalizedPath" // /path/*.txt
-            val pathPrefix = if (artifactoryType == ArtifactoryType.PIPELINE) {
+            val pathPrefix = if (artifactoryType == PIPELINE) {
                 "/" + JFrogUtil.getPipelinePathPrefix(targetProjectId)
                     .removePrefix(repoPathPrefix) + "$targetPipelineId/$targetBuildId/" + JFrogUtil.getParentFolder(
                     realPath
@@ -485,7 +488,7 @@ class ArtifactoryService @Autowired constructor(
 
     override fun show(projectId: String, artifactoryType: ArtifactoryType, path: String): FileDetail {
         logger.info("show, projectId: $projectId, artifactoryType: $artifactoryType, path: $path")
-        val realPath = if (artifactoryType == ArtifactoryType.PIPELINE) {
+        val realPath = if (artifactoryType == PIPELINE) {
             JFrogUtil.getPipelinePath(projectId, path)
         } else {
             JFrogUtil.getCustomDirPath(projectId, path)
@@ -555,7 +558,7 @@ class ArtifactoryService @Autowired constructor(
             JFrogUtil.getCustomDirPath(targetProjectId, "/share/$projectId/${normalizeTargetPath.removePrefix("/")}")
 
         val repoPathPrefix = JFrogUtil.getRepoPath()
-        val pathPrefix = if (artifactoryType == ArtifactoryType.PIPELINE) {
+        val pathPrefix = if (artifactoryType == PIPELINE) {
             "/" + JFrogUtil.getPipelinePathPrefix(projectId).removePrefix(repoPathPrefix) + JFrogUtil.getParentFolder(
                 normalizePath
             ).removePrefix("/")
@@ -571,7 +574,7 @@ class ArtifactoryService @Autowired constructor(
         logger.info("across project copy match: $jFrogFileInfoList")
         val fileInfoList = transferJFrogAQLFileInfo(projectId, jFrogFileInfoList, emptyList(), false)
         fileInfoList.forEach {
-            val sourcePath = if (it.artifactoryType == ArtifactoryType.PIPELINE) {
+            val sourcePath = if (it.artifactoryType == PIPELINE) {
                 JFrogUtil.getPipelinePath(projectId, it.fullPath)
             } else {
                 JFrogUtil.getCustomDirPath(projectId, it.fullPath)
@@ -658,7 +661,7 @@ class ArtifactoryService @Autowired constructor(
                                 folder = false,
                                 modifiedTime = LocalDateTime.parse(it.modified, DateTimeFormatter.ISO_DATE_TIME)
                                     .timestamp(),
-                                artifactoryType = ArtifactoryType.PIPELINE,
+                                artifactoryType = PIPELINE,
                                 properties = properties,
                                 appVersion = appVersion,
                                 shortUrl = shortUrl,
@@ -678,7 +681,7 @@ class ArtifactoryService @Autowired constructor(
                             folder = false,
                             modifiedTime = LocalDateTime.parse(it.modified, DateTimeFormatter.ISO_DATE_TIME)
                                 .timestamp(),
-                            artifactoryType = ArtifactoryType.CUSTOM_DIR,
+                            artifactoryType = CUSTOM_DIR,
                             properties = properties,
                             appVersion = appVersion,
                             md5 = DigestUtils.md5Hex(path + it.modified)

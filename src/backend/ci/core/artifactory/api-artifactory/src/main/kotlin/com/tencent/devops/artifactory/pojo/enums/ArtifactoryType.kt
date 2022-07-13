@@ -35,8 +35,8 @@ enum class ArtifactoryType {
     fun toFileType(): FileTypeEnum {
         return when (this) {
             PIPELINE -> FileTypeEnum.BK_ARCHIVE
-            IMAGE -> FileTypeEnum.BK_IMAGE
             CUSTOM_DIR -> FileTypeEnum.BK_CUSTOM
+            IMAGE -> TODO()
         }
     }
 }

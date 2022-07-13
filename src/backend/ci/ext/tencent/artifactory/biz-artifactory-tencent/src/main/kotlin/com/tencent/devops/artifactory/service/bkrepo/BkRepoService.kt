@@ -39,6 +39,7 @@ import com.tencent.devops.artifactory.pojo.FilePipelineInfo
 import com.tencent.devops.artifactory.pojo.FolderSize
 import com.tencent.devops.artifactory.pojo.Property
 import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType.*
 import com.tencent.devops.artifactory.service.PipelineService
 import com.tencent.devops.artifactory.service.RepoService
 import com.tencent.devops.artifactory.service.ShortUrlService
@@ -96,12 +97,13 @@ class BkRepoService @Autowired constructor(
     ): List<FileInfo> {
         logger.info("list, userId: $userId, projectId: $projectId, artifactoryType: $artifactoryType, path: $path")
         return when (artifactoryType) {
-            ArtifactoryType.PIPELINE -> {
+            PIPELINE -> {
                 bkRepoPipelineDirService.list(userId, projectId, path)
             }
-            ArtifactoryType.CUSTOM_DIR -> {
+            CUSTOM_DIR -> {
                 bkRepoCustomDirService.list(userId, projectId, path)
             }
+            IMAGE -> TODO()
         }
     }
 
@@ -199,7 +201,7 @@ class BkRepoService @Autowired constructor(
             .getPipelineInfo(projectId, pipelineId, null).data!!.lastModifyUser
         if (!crossProjectId.isNullOrBlank()) {
             targetProjectId = crossProjectId
-            if (artifactoryType == ArtifactoryType.PIPELINE) {
+            if (artifactoryType == PIPELINE) {
                 targetPipelineId = crossPipineId ?: throw BadRequestException("Invalid Parameter pipelineId")
                 val targetBuild = client.get(ServiceBuildResource::class).getSingleHistoryBuild(
                     projectId = targetProjectId,
@@ -212,7 +214,7 @@ class BkRepoService @Autowired constructor(
         }
         logger.info("targetProjectId: $targetProjectId, targetPipelineId: $targetPipelineId, targetBuildId: $targetBuildId")
 
-        if (artifactoryType == ArtifactoryType.CUSTOM_DIR && !pipelineService.hasPermission(
+        if (artifactoryType == CUSTOM_DIR && !pipelineService.hasPermission(
                 lastModifyUser,
                 targetProjectId
             )
@@ -224,7 +226,7 @@ class BkRepoService @Autowired constructor(
                 )
             )
         }
-        if (artifactoryType == ArtifactoryType.PIPELINE) {
+        if (artifactoryType == PIPELINE) {
             pipelineService.validatePermission(
                 userId = lastModifyUser,
                 projectId = targetProjectId,
@@ -243,7 +245,7 @@ class BkRepoService @Autowired constructor(
         val resultList = mutableListOf<FileDetail>()
         pathArray.forEach { path ->
             val absPath = "/${JFrogUtil.normalize(path).removePrefix("/")}"
-            val filePath = if (artifactoryType == ArtifactoryType.PIPELINE) {
+            val filePath = if (artifactoryType == PIPELINE) {
                 "/$targetPipelineId/$targetBuildId/${
                     JFrogUtil.getParentFolder(absPath).removePrefix("/")
                 }" // /$projectId/$pipelineId/$buildId/path/
@@ -592,10 +594,10 @@ class BkRepoService @Autowired constructor(
             bkRepoClient.copy(
                 userId,
                 projectId,
-                RepoUtils.getRepoByType(ArtifactoryType.PIPELINE),
+                RepoUtils.getRepoByType(PIPELINE),
                 "$fromPath/$fileName",
                 projectId,
-                RepoUtils.getRepoByType(ArtifactoryType.CUSTOM_DIR),
+                RepoUtils.getRepoByType(CUSTOM_DIR),
                 "$toPath/$fileName"
             )
         }
@@ -639,7 +641,7 @@ class BkRepoService @Autowired constructor(
             bkRepoClient.copy(
                 userId,
                 projectId,
-                if (artifactoryType == ArtifactoryType.PIPELINE) RepoUtils.PIPELINE_REPO else RepoUtils.CUSTOM_REPO,
+                if (artifactoryType == PIPELINE) RepoUtils.PIPELINE_REPO else RepoUtils.CUSTOM_REPO,
                 srcFile,
                 targetProjectId,
                 RepoUtils.CUSTOM_REPO,

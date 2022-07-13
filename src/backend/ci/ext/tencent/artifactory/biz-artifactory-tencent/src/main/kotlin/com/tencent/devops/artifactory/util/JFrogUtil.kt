@@ -29,6 +29,7 @@ package com.tencent.devops.artifactory.util
 
 import com.tencent.devops.artifactory.pojo.FileInfo
 import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType.*
 import java.nio.file.Paths
 
 object JFrogUtil {
@@ -78,12 +79,13 @@ object JFrogUtil {
 
     fun getRealPath(projectId: String, artifactoryType: ArtifactoryType, path: String): String {
         return when (artifactoryType) {
-            ArtifactoryType.PIPELINE -> {
+            PIPELINE -> {
                 getPipelinePath(projectId, path)
             }
-            ArtifactoryType.CUSTOM_DIR -> {
+            CUSTOM_DIR -> {
                 getCustomDirPath(projectId, path)
             }
+            IMAGE -> TODO()
         }
     }
 
