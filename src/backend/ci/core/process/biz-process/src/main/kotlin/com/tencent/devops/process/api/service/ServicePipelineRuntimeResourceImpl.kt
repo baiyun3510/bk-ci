@@ -97,7 +97,7 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
                 fullPath = reportData.path,
                 size = reportData.size,
                 modifiedTime = System.currentTimeMillis(),
-                artifactoryType = reportData.artifactoryType,
+                artifactoryType = reportData.type,
                 folder = reportData.folder
             )
         )

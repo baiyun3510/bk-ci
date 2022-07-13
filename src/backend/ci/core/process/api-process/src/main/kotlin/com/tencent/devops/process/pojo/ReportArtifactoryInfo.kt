@@ -13,7 +13,7 @@ data class ReportArtifactoryInfo(
     @ApiModelProperty("构件大小", required = true)
     val size: Long,
     @ApiModelProperty("仓库类型", required = true)
-    val artifactoryType: ArtifactoryType,
+    val type: ArtifactoryType,
     @ApiModelProperty("是否文件夹", required = true)
     val folder: Boolean,
     @ApiModelProperty("项目ID", required = true)

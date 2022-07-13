@@ -27,6 +27,7 @@
 
 package com.tencent.devops.process.service.builds
 
+import com.tencent.devops.artifactory.pojo.FileInfo
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.exception.ParamBlankException
 import com.tencent.devops.common.api.model.SQLPage
@@ -1549,6 +1550,10 @@ class PipelineBuildFacadeService(
         } finally {
             jmxApi.execute(ProcessJmxApi.LIST_NEW_BUILDS_DETAIL, System.currentTimeMillis() - apiStartEpoch)
         }
+    }
+
+    fun getArtifactList(projectId: String, pipelineId: String, buildId: String): List<FileInfo> {
+        return pipelineRuntimeService.getArtifactList(projectId, pipelineId, buildId)
     }
 
     fun updateRemark(userId: String, projectId: String, pipelineId: String, buildId: String, remark: String?) {

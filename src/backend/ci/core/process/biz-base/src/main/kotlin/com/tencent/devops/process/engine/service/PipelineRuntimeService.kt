@@ -30,6 +30,7 @@ package com.tencent.devops.process.engine.service
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
 import com.tencent.devops.common.api.constant.BUILD_QUEUE
 import com.tencent.devops.common.api.pojo.ErrorInfo
 import com.tencent.devops.common.api.util.DateTimeUtil
@@ -1569,6 +1570,22 @@ class PipelineRuntimeService @Autowired constructor(
             oldBuildStatus = oldStatus,
             newBuildStatus = BuildStatus.QUEUE
         )
+    }
+
+    fun getArtifactList(projectId: String, pipelineId: String, buildId: String): List<FileInfo> {
+        val artifactInfo = pipelineBuildDao.getArtifactInfo(
+            dslContext = dslContext,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        )
+        val fileInfos = mutableListOf<FileInfo>()
+            JsonUtil.to(artifactInfo, Array<FileInfo>::class.java).map {
+            if (it.artifactoryType != ArtifactoryType.PIPELINE) {
+                fileInfos.add(it)
+            }
+        }
+        return fileInfos
     }
 
     fun updateArtifactList(
