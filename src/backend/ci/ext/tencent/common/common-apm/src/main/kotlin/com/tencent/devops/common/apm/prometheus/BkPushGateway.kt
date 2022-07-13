@@ -19,10 +19,10 @@ class BkPushGateway(
     private val address: String
 ) : PushGateway(address) {
 
-    private var connectionFactory: HttpConnectionFactory? = DefaultHttpConnectionFactory()
+    private var connectionFactory: HttpConnectionFactory = DefaultHttpConnectionFactory()
     private val MILLISECONDS_PER_SECOND = 1000
 
-    override fun setConnectionFactory(connectionFactory: HttpConnectionFactory?) {
+    override fun setConnectionFactory(connectionFactory: HttpConnectionFactory) {
         this.connectionFactory = connectionFactory
     }
 
