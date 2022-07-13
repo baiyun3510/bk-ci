@@ -872,6 +872,21 @@ class PipelineBuildDao {
         }
     }
 
+    fun getArtifactInfo(
+        dslContext: DSLContext,
+        projectId: String,
+        pipelineId: String,
+        buildId: String
+    ): String {
+        return with(T_PIPELINE_BUILD_HISTORY) {
+            dslContext.select(ARTIFACT_INFO).from(this)
+                .where(PROJECT_ID.eq(projectId))
+                .and(PIPELINE_ID.eq(pipelineId))
+                .and(BUILD_ID.eq(buildId))
+                .fetchOne(0,String::class.java) ?: "[]"
+        }
+    }
+
     fun updateBuildMaterial(dslContext: DSLContext, projectId: String, buildId: String, material: String?) {
         with(T_PIPELINE_BUILD_HISTORY) {
             dslContext.update(this)

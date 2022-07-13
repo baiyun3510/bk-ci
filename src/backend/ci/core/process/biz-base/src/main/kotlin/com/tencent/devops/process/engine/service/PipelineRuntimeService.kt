@@ -1575,11 +1575,26 @@ class PipelineRuntimeService @Autowired constructor(
         projectId: String,
         pipelineId: String,
         buildId: String,
-        artifactListJsonString: String
+        artifactoryFileList: List<FileInfo>
     ): Boolean {
+        val artifactInfo = pipelineBuildDao.getArtifactInfo(
+            dslContext = dslContext,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        )
+        val fileInfoArray = JsonUtil.to(artifactInfo, Array<FileInfo>::class.java)
+        val fileInfoList = if (fileInfoArray.isEmpty()) {
+            artifactoryFileList
+        } else {
+            val fileInfos = mutableListOf<FileInfo>()
+            fileInfos.addAll(artifactoryFileList)
+            fileInfos.addAll(fileInfoArray)
+            fileInfos
+        }
         return pipelineBuildDao.updateArtifactList(
             dslContext = dslContext,
-            artifactList = artifactListJsonString,
+            artifactList = JsonUtil.toJson(fileInfoList, formatted = false),
             projectId = projectId,
             pipelineId = pipelineId,
             buildId = buildId
