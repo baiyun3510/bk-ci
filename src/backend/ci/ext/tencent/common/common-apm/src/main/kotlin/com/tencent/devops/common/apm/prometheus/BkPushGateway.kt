@@ -4,6 +4,7 @@ import io.prometheus.client.Collector
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.Base64
 import io.prometheus.client.exporter.DefaultHttpConnectionFactory
+import io.prometheus.client.exporter.HttpConnectionFactory
 import io.prometheus.client.exporter.PushGateway
 import io.prometheus.client.exporter.common.TextFormat
 import java.io.BufferedWriter
@@ -18,8 +19,12 @@ class BkPushGateway(
     private val address: String
 ) : PushGateway(address) {
 
-    private val connectionFactory = DefaultHttpConnectionFactory()
+    private var connectionFactory: HttpConnectionFactory? = DefaultHttpConnectionFactory()
     private val MILLISECONDS_PER_SECOND = 1000
+
+    override fun setConnectionFactory(connectionFactory: HttpConnectionFactory?) {
+        this.connectionFactory = connectionFactory
+    }
 
     override fun push(collector: Collector?, job: String?) {
         val registry = CollectorRegistry()
