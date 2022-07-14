@@ -10,8 +10,6 @@ data class ReportArtifactoryInfo(
     val tag: String? = null,
     @ApiModelProperty("构件仓库路径", required = true)
     val path: String,
-    @ApiModelProperty("文件全路径", required = true)
-    val fullPath: String,
     @ApiModelProperty("构件大小", required = true)
     val size: Long,
     @ApiModelProperty("仓库类型", required = true)
