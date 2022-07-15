@@ -27,7 +27,7 @@ class BkPushGateway(
     }
 
     override fun push(collector: Collector?, job: String?) {
-        val registry = CollectorRegistry()
+        val registry = CollectorRegistry(true)
         collector!!.register<Collector>(registry)
         val method = "PUT"
 
