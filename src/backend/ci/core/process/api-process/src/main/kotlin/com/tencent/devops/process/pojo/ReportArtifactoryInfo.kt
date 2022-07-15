@@ -8,8 +8,10 @@ data class ReportArtifactoryInfo(
     val name: String,
     @ApiModelProperty("构件tag", required = false)
     val tag: String? = null,
-    @ApiModelProperty("构件仓库路径", required = true)
+    @ApiModelProperty("相对路径", required = true)
     val path: String,
+    @ApiModelProperty("仓库完整路径", required = true)
+    val fullPath: String,
     @ApiModelProperty("构件大小", required = true)
     val size: Long,
     @ApiModelProperty("仓库类型", required = true)
