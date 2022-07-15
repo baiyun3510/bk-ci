@@ -28,7 +28,6 @@ class BkPushGateway(
 
     override fun push(collector: Collector?, job: String?) {
         val registry = CollectorRegistry.defaultRegistry
-        collector!!.register<Collector>(registry)
         val method = "PUT"
 
         var url = gatewayBaseURL
