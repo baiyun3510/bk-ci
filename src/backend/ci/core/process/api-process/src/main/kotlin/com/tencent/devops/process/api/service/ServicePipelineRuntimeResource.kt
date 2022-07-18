@@ -71,9 +71,9 @@ interface ServicePipelineRuntimeResource {
         artifactoryFileList: List<FileInfo>
     ): Result<BuildHistory>
 
-    @ApiOperation("流水线插件镜像构件信息上报")
+    @ApiOperation("流水线镜像构件信息上报")
     @POST
-    @Path("/atom/artifactory/image/report")
+    @Path("/image/data/report")
     fun reportPipelineAtomArtifactoryImageInfo(
         @ApiParam("上报流水线插件构件信息数据", required = true)
         reportData: ReportArtifactoryImageInfo

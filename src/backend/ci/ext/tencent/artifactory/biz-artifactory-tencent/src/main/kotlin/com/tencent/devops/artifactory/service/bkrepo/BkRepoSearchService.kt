@@ -88,7 +88,8 @@ class BkRepoSearchService @Autowired constructor(
         logger.info("pipelineHasPermissionList is $pipelineHasPermissionList")
         logger.info("nodeList is $nodeList")
         val fileInfoList = bkRepoService.transferFileInfo(projectId, nodeList, pipelineHasPermissionList)
-        val artifactInfos = client.get(ServiceBuildResource::class).getArtifactoryInfo(
+        //  获取流水线插件镜像构件信息
+        val imageArtifactInfos = client.get(ServiceBuildResource::class).getArtifactoryInfo(
             userId = userId,
             projectId = projectId,
             pipelineId = searchProps.props["pipelineId"] ?: "",
@@ -96,7 +97,7 @@ class BkRepoSearchService @Autowired constructor(
         ).data ?: listOf()
         val result = mutableListOf<FileInfo>()
         result.addAll(fileInfoList)
-        result.addAll(artifactInfos)
+        result.addAll(imageArtifactInfos)
         return Pair(LocalDateTime.now().timestamp(), result)
     }
 
