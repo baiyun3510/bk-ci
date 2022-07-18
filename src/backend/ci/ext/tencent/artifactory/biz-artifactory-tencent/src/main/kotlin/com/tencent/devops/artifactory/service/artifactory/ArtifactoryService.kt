@@ -119,7 +119,6 @@ class ArtifactoryService @Autowired constructor(
             CUSTOM_DIR -> {
                 artifactoryCustomDirService.list(userId, projectId, path)
             }
-            IMAGE -> TODO()
         }
     }
 
@@ -132,7 +131,6 @@ class ArtifactoryService @Autowired constructor(
             CUSTOM_DIR -> {
                 artifactoryCustomDirService.show(userId, projectId, path)
             }
-            IMAGE -> TODO()
         }
     }
 

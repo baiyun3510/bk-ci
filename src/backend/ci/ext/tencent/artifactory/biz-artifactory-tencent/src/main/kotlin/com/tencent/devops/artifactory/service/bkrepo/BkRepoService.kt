@@ -103,7 +103,6 @@ class BkRepoService @Autowired constructor(
             CUSTOM_DIR -> {
                 bkRepoCustomDirService.list(userId, projectId, path)
             }
-            IMAGE -> TODO()
         }
     }
 

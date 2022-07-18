@@ -38,7 +38,7 @@ import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_UPDATE_FAILE
 import com.tencent.devops.process.engine.service.PipelineRuntimeService
 import com.tencent.devops.process.websocket.service.PipelineWebsocketService
 import com.tencent.devops.process.pojo.BuildHistory
-import com.tencent.devops.process.pojo.ReportArtifactoryImageInfo
+import com.tencent.devops.process.pojo.ReportImageInfo
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
@@ -89,25 +89,26 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
         )
     }
 
-    override fun reportPipelineAtomArtifactoryImageInfo(reportData: ReportArtifactoryImageInfo): Result<Boolean> {
+    override fun reportPipelineImageData(reportImageInfo: ReportImageInfo): Result<Boolean> {
         val artifactoryFileList = listOf(
             FileInfo(
-                name = reportData.name,
-                fullName = reportData.name,
-                path = reportData.path,
-                fullPath = reportData.path,
-                size = reportData.size,
+                name = reportImageInfo.name,
+                fullName = reportImageInfo.name,
+                path = reportImageInfo.path,
+                fullPath = reportImageInfo.path,
+                size = reportImageInfo.size,
                 modifiedTime = System.currentTimeMillis(),
-                artifactoryType = ArtifactoryType.IMAGE,
-                folder = false
+                artifactoryType = ArtifactoryType.CUSTOM_DIR,
+                folder = false,
+                fileType = reportImageInfo.fileType
             )
         )
 
         return Result(
                 pipelineRuntimeService.updateArtifactList(
-                projectId = reportData.projectId,
-                pipelineId = reportData.pipelineId,
-                buildId = reportData.buildId,
+                projectId = reportImageInfo.projectId,
+                pipelineId = reportImageInfo.pipelineId,
+                buildId = reportImageInfo.buildId,
                 artifactoryFileList = artifactoryFileList
             )
         )

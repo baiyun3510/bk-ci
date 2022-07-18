@@ -49,7 +49,6 @@ object RepoUtils {
         return when (repoType) {
             PIPELINE -> PIPELINE_REPO
             CUSTOM_DIR -> CUSTOM_REPO
-            IMAGE -> TODO()
         }
     }
 

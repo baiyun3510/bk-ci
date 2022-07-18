@@ -85,7 +85,6 @@ object JFrogUtil {
             CUSTOM_DIR -> {
                 getCustomDirPath(projectId, path)
             }
-            IMAGE -> TODO()
         }
     }
 

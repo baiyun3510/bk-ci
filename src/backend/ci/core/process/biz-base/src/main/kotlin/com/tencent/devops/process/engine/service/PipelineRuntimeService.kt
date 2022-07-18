@@ -1581,7 +1581,7 @@ class PipelineRuntimeService @Autowired constructor(
         )
         val fileInfos = mutableListOf<FileInfo>()
             JsonUtil.to(artifactInfo, Array<FileInfo>::class.java).map {
-            if (it.artifactoryType != ArtifactoryType.PIPELINE) {
+            if (it.artifactoryType != ArtifactoryType.CUSTOM_DIR && it.fileType.equals("image")) {
                 fileInfos.add(it)
             }
         }
