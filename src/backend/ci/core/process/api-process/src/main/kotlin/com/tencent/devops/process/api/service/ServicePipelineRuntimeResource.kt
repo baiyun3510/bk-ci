@@ -32,7 +32,7 @@ import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID_DEFAULT_VALUE
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.process.pojo.BuildHistory
-import com.tencent.devops.process.pojo.ReportArtifactoryInfo
+import com.tencent.devops.process.pojo.ReportArtifactoryImageInfo
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -71,11 +71,11 @@ interface ServicePipelineRuntimeResource {
         artifactoryFileList: List<FileInfo>
     ): Result<BuildHistory>
 
-    @ApiOperation("流水线插件构件信息上报")
+    @ApiOperation("流水线插件镜像构件信息上报")
     @POST
-    @Path("/atom/artifactory/report")
-    fun reportPipelineAtomArtifactoryInfo(
+    @Path("/atom/artifactory/image/report")
+    fun reportPipelineAtomArtifactoryImageInfo(
         @ApiParam("上报流水线插件构件信息数据", required = true)
-        reportData: ReportArtifactoryInfo
+        reportData: ReportArtifactoryImageInfo
     ): Result<Boolean>
 }

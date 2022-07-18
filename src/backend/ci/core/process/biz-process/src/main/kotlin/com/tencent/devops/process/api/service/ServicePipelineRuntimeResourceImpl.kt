@@ -28,6 +28,7 @@
 package com.tencent.devops.process.api.service
 
 import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
@@ -37,7 +38,7 @@ import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_UPDATE_FAILE
 import com.tencent.devops.process.engine.service.PipelineRuntimeService
 import com.tencent.devops.process.websocket.service.PipelineWebsocketService
 import com.tencent.devops.process.pojo.BuildHistory
-import com.tencent.devops.process.pojo.ReportArtifactoryInfo
+import com.tencent.devops.process.pojo.ReportArtifactoryImageInfo
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
@@ -88,7 +89,7 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
         )
     }
 
-    override fun reportPipelineAtomArtifactoryInfo(reportData: ReportArtifactoryInfo): Result<Boolean> {
+    override fun reportPipelineAtomArtifactoryImageInfo(reportData: ReportArtifactoryImageInfo): Result<Boolean> {
         val artifactoryFileList = listOf(
             FileInfo(
                 name = reportData.name,
@@ -97,7 +98,7 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
                 fullPath = reportData.fullPath,
                 size = reportData.size,
                 modifiedTime = System.currentTimeMillis(),
-                artifactoryType = reportData.type,
+                artifactoryType = reportData.type.toUpperCase() as ArtifactoryType,
                 folder = reportData.folder ?: false
             )
         )

@@ -54,6 +54,7 @@ object BkRepoUtils {
     const val REPO_NAME_REPORT = "report"
     const val REPO_NAME_PLUGIN = "plugin"
     const val REPO_NAME_STATIC = "static"
+    const val REPO_NAME_IMAGE = "image"
 
     fun parseArtifactoryInfo(path: String): ArtifactInfo {
         val normalizedPath = path.trim().removePrefix("/").removePrefix("./")
@@ -91,6 +92,7 @@ object BkRepoUtils {
         return when (artifactoryType) {
             ArtifactoryType.PIPELINE -> REPO_NAME_PIPELINE
             ArtifactoryType.CUSTOM_DIR -> REPO_NAME_CUSTOM
+            ArtifactoryType.IMAGE -> REPO_NAME_IMAGE
             else -> BKREPO_COMMOM_REPO
         }
     }
