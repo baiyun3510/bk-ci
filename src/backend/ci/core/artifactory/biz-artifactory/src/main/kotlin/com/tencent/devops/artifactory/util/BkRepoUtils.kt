@@ -92,7 +92,6 @@ object BkRepoUtils {
         return when (artifactoryType) {
             ArtifactoryType.PIPELINE -> REPO_NAME_PIPELINE
             ArtifactoryType.CUSTOM_DIR -> REPO_NAME_CUSTOM
-            ArtifactoryType.IMAGE -> REPO_NAME_IMAGE
             else -> BKREPO_COMMOM_REPO
         }
     }
