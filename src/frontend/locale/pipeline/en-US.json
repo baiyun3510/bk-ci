@@ -246,7 +246,8 @@
     "createTime": "Create time",
     "restoreSuc": "Restored successfully",
     "emptyTitle": "No pipeline can be restored",
-    "emptyDesc": "You can restore the pipeline deleted in last a month"
+    "emptyDesc": "You can restore the pipeline deleted in last a month",
+    "restoreSearchTips": "Enter pipeline name to search"
   },
   "atomManage": {
     "installedAtom": "Installed plugins",
@@ -543,7 +544,10 @@
     "fileUnit": "{0} files",
     "completedLog": "full-log",
     "artifactList": "Artifacts",
-    "showAll": "Show all"
+    "showAll": "Show all",
+    "copyToCustomArtifactory": "Copy to custom artifactory",
+    "downloading": "Downloading ",
+    "copySuc": " Copy {0} to custom artifactory successfully"
   },
   "preview": {
     "build": "Build",
@@ -809,6 +813,7 @@
     "archived": " Custom reports are archived",
     "baseRule": " Basic rules",
     "crontabTitle": "Advanced custom crontab expression",
+    "cronWeekHint": "Please tick the weekly trigger time",
     "planRule": " Plan rule",
     "crontabExpression": " Please fill in the correct crontab expression and break them if there are many",
     "triggerEmptyTips": " Basic rule and custom expression can't be left empty at the same time",
@@ -837,7 +842,7 @@
     "githubAppTips": "Need to install xxx before enabling this plugin",
     "paramInputTips": " Please enter parameters",
     "paramEmptyTips": " No parameters exist in this sub-pipeline",
-    "remoteCurlTips": " After this plugin is added, the current pipeline can be triggered for building through specific URL ( the person who activate it is the one who last edited the pipeline) ",
+    "remoteCurlTips": " After this plugin is added, the current pipeline can be triggered for building through specific URL ( the person who activate it is the one who last edited the pipeline, the trigger person can be passed in via X-DEVOPS-UID ) ",
     "example": "Example",
     "confirmMsg": " If leave, the data of new edition will be lost",
     "confirmTitle": "Confirm exit",
