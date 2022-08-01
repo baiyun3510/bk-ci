@@ -124,6 +124,15 @@ class StoreMemberDao {
         }
     }
 
+    fun getMemberId(dslContext: DSLContext, storeCode: String, storeType: Byte): List<String> {
+        with(TStoreMember.T_STORE_MEMBER) {
+            return dslContext.select(ID).from(this)
+                .where(STORE_CODE.eq(storeCode))
+                .and(STORE_TYPE.eq(storeType))
+                .fetchInto(String::class.java)
+        }
+    }
+
     /**
      * 获取store组件成员
      */
