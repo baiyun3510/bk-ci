@@ -5,6 +5,7 @@ import com.tencent.devops.auth.pojo.DeptInfo
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.store.dao.common.PublishersDao
@@ -12,6 +13,7 @@ import com.tencent.devops.store.dao.common.StoreDockingPlatformDao
 import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import com.tencent.devops.store.pojo.common.enums.PublisherType
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.PublishersDataService
 import com.tencent.devops.store.service.common.StoreMemberService
 import org.jooq.DSLContext
@@ -24,7 +26,6 @@ class PublishersDataServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val publishersDao: PublishersDao,
     private val client: Client,
-//    private val storeMemberService: StoreMemberService,
     private val storeDockingPlatformDao: StoreDockingPlatformDao
 ) : PublishersDataService {
     override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
@@ -59,18 +60,20 @@ class PublishersDataServiceImpl @Autowired constructor(
             storePublisherInfo.createTime = LocalDateTime.now()
             storePublisherInfo.updateTime = LocalDateTime.now()
             storePublisherInfoRecords.add(storePublisherInfo)
-//            if (it.publishersType == PublisherType.ORGANIZATION) {
-//                storeMemberService.getMemberId(it.publishersCode, it.storeType, it.members).data?.map { memberId ->
-//                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
-//                    storePublisherMemberRel.id = UUIDUtil.generate()
-//                    storePublisherMemberRel.publisherId = storePublisherInfoId
-//                    storePublisherMemberRel.memberId = memberId
-//                    storePublisherMemberRel.creator = userId
-//                    storePublisherMemberRel.createTime = LocalDateTime.now()
-//                    storePublisherMemberRel.modifier = userId
-//                    storePublisherMemberRel.updateTime = LocalDateTime.now()
-//                }
-//            }
+            if (it.publishersType == PublisherType.ORGANIZATION) {
+                getStoreMemberService(it.storeType)
+                    .getMemberId(it.publishersCode, it.storeType, it.members)
+                    .data?.map { memberId ->
+                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
+                    storePublisherMemberRel.id = UUIDUtil.generate()
+                    storePublisherMemberRel.publisherId = storePublisherInfoId
+                    storePublisherMemberRel.memberId = memberId
+                    storePublisherMemberRel.creator = userId
+                    storePublisherMemberRel.createTime = LocalDateTime.now()
+                    storePublisherMemberRel.modifier = userId
+                    storePublisherMemberRel.updateTime = LocalDateTime.now()
+                }
+            }
         }
         val batchCreateCount = publishersDao.batchCreate(dslContext, storePublisherInfoRecords)
         publishersDao.batchCreatePublisherMemberRel(dslContext, storePublisherMemberRelRecords)
@@ -162,5 +165,10 @@ class PublishersDataServiceImpl @Autowired constructor(
             }
         }
         return deptInfos
+    }
+
+    private fun getStoreMemberService(storeType: StoreTypeEnum): StoreMemberService {
+        return SpringContextUtil.getBean(StoreMemberService::class.java,
+            "${storeType.name.toLowerCase()}MemberService")
     }
 }
