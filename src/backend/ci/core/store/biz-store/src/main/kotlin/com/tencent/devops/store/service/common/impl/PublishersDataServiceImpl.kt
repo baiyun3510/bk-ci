@@ -19,12 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
-@Service("PublishersDataDataService")
+@Service
 class PublishersDataServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val publishersDao: PublishersDao,
     private val client: Client,
-    private val storeMemberService: StoreMemberService,
+//    private val storeMemberService: StoreMemberService,
     private val storeDockingPlatformDao: StoreDockingPlatformDao
 ) : PublishersDataService {
     override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
@@ -59,18 +59,18 @@ class PublishersDataServiceImpl @Autowired constructor(
             storePublisherInfo.createTime = LocalDateTime.now()
             storePublisherInfo.updateTime = LocalDateTime.now()
             storePublisherInfoRecords.add(storePublisherInfo)
-            if (it.publishersType == PublisherType.ORGANIZATION) {
-                storeMemberService.getMemberId(it.publishersCode, it.storeType, it.members).data?.map { memberId ->
-                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
-                    storePublisherMemberRel.id = UUIDUtil.generate()
-                    storePublisherMemberRel.publisherId = storePublisherInfoId
-                    storePublisherMemberRel.memberId = memberId
-                    storePublisherMemberRel.creator = userId
-                    storePublisherMemberRel.createTime = LocalDateTime.now()
-                    storePublisherMemberRel.modifier = userId
-                    storePublisherMemberRel.updateTime = LocalDateTime.now()
-                }
-            }
+//            if (it.publishersType == PublisherType.ORGANIZATION) {
+//                storeMemberService.getMemberId(it.publishersCode, it.storeType, it.members).data?.map { memberId ->
+//                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
+//                    storePublisherMemberRel.id = UUIDUtil.generate()
+//                    storePublisherMemberRel.publisherId = storePublisherInfoId
+//                    storePublisherMemberRel.memberId = memberId
+//                    storePublisherMemberRel.creator = userId
+//                    storePublisherMemberRel.createTime = LocalDateTime.now()
+//                    storePublisherMemberRel.modifier = userId
+//                    storePublisherMemberRel.updateTime = LocalDateTime.now()
+//                }
+//            }
         }
         val batchCreateCount = publishersDao.batchCreate(dslContext, storePublisherInfoRecords)
         publishersDao.batchCreatePublisherMemberRel(dslContext, storePublisherMemberRelRecords)
