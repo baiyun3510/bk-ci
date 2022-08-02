@@ -1,11 +1,10 @@
 package com.tencent.devops.store.dao.common
 
-import com.tencent.devops.common.api.constant.NAME
 import com.tencent.devops.model.store.tables.TStorePublisherInfo
 import com.tencent.devops.model.store.tables.TStorePublisherMemberRel
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
-import com.tencent.devops.store.pojo.common.Publishers
+import com.tencent.devops.store.pojo.common.PublishersRequest
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
 
@@ -18,7 +17,7 @@ class PublishersDao {
         }
     }
 
-    fun batchDelete(dslContext: DSLContext, publishers: List<Publishers>): Int {
+    fun batchDelete(dslContext: DSLContext, publishers: List<PublishersRequest>): Int {
         with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
             return dslContext.batch(publishers.map {
                 dslContext.deleteFrom(this)

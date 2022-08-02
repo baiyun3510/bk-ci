@@ -4,7 +4,7 @@ import com.tencent.devops.store.pojo.common.enums.PublisherType
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import io.swagger.annotations.ApiModelProperty
 
-data class Publishers(
+data class PublishersRequest(
     @ApiModelProperty("发布者标识", required = true)
     val publishersCode: String,
     @ApiModelProperty("发布者名称", required = true)

@@ -1,15 +1,15 @@
 package com.tencent.devops.store.service.common
 
-import com.tencent.devops.store.pojo.common.Publishers
+import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 
-interface PublishersService {
+interface PublishersDataService {
 
-    fun createPublisherData(userId: String, publishers: List<Publishers>): Int
+    fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int
 
-    fun deletePublisherData(userId: String, publishers: List<Publishers>): Int
+    fun deletePublisherData(userId: String, publishers: List<PublishersRequest>): Int
 
-    fun updatePublisherData(userId: String, publishers: List<Publishers>): Int
+    fun updatePublisherData(userId: String, publishers: List<PublishersRequest>): Int
 
     fun createPlatformsData(userId: String, storeDockingPlatformRequests: List<StoreDockingPlatformRequest>): Int
 

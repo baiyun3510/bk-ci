@@ -2,8 +2,7 @@ package com.tencent.devops.store.api.common
 
 import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_USER_ID
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.store.pojo.common.Publishers
-import com.tencent.devops.store.pojo.common.StoreDockingPlatformInfo
+import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -29,7 +28,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
-        publishers: List<Publishers>
+        publishers: List<PublishersRequest>
     ): Result<Int>
 
     @ApiOperation("同步删除发布者信息")
@@ -39,7 +38,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
-        publishers: List<Publishers>
+        publishers: List<PublishersRequest>
     ): Result<Int>
 
     @ApiOperation("同步更新发布者信息")
@@ -49,7 +48,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
-        publishers: List<Publishers>
+        publishers: List<PublishersRequest>
     ): Result<Int>
 
     @ApiOperation("同步新增工具平台信息")
