@@ -28,6 +28,7 @@
 package com.tencent.devops.store.dao.common
 
 import com.tencent.devops.common.api.util.DateTimeUtil
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.model.store.tables.TStoreDockingPlatform
 import com.tencent.devops.model.store.tables.records.TStoreDockingPlatformRecord
@@ -60,7 +61,8 @@ class StoreDockingPlatformDao {
                 CREATOR,
                 MODIFIER,
                 OWNER_DEPT_NAME,
-                OWNERS
+                OWNERS,
+                LABELS
             )
                 .values(
                     UUIDUtil.generate(),
@@ -73,7 +75,8 @@ class StoreDockingPlatformDao {
                     userId,
                     userId,
                     storeDockingPlatformRequest.ownerDeptName,
-                    storeDockingPlatformRequest.owner
+                    storeDockingPlatformRequest.owner,
+                    storeDockingPlatformRequest.labels?.joinToString(",")
                 ).execute()
         }
     }
@@ -97,7 +100,8 @@ class StoreDockingPlatformDao {
                         CREATOR,
                         MODIFIER,
                         OWNER_DEPT_NAME,
-                        OWNERS
+                        OWNERS,
+                        LABELS
                     )
                         .values(
                             UUIDUtil.generate(),
@@ -110,7 +114,8 @@ class StoreDockingPlatformDao {
                             userId,
                             userId,
                             storeDockingPlatformRequest.ownerDeptName,
-                            storeDockingPlatformRequest.owner
+                            storeDockingPlatformRequest.owner,
+                            storeDockingPlatformRequest.labels?.joinToString(",")
                         )
                 }
             ).execute().size
@@ -131,6 +136,7 @@ class StoreDockingPlatformDao {
                 .set(SUMMARY, storeDockingPlatformRequest.summary)
                 .set(PRINCIPAL, storeDockingPlatformRequest.principal)
                 .set(LOGO_URL, storeDockingPlatformRequest.logoUrl)
+                .set(LABELS, storeDockingPlatformRequest.labels?.joinToString(","))
                 .set(UPDATE_TIME, LocalDateTime.now())
                 .set(MODIFIER, userId)
                 .set(OWNER_DEPT_NAME, storeDockingPlatformRequest.ownerDeptName)
@@ -153,6 +159,7 @@ class StoreDockingPlatformDao {
                     .set(LOGO_URL, storeDockingPlatformRequest.logoUrl)
                     .set(PLATFORM_NAME, storeDockingPlatformRequest.platformName)
                     .set(WEBSITE, storeDockingPlatformRequest.website)
+                    .set(LABELS, storeDockingPlatformRequest.labels?.joinToString(","))
                     .set(UPDATE_TIME, LocalDateTime.now())
                     .set(MODIFIER, userId)
                     .set(OWNER_DEPT_NAME, storeDockingPlatformRequest.ownerDeptName)

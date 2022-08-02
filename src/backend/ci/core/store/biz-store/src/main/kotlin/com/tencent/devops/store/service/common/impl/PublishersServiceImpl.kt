@@ -39,7 +39,7 @@ class PublishersServiceImpl @Autowired constructor(
             storePublisherInfo.publisherCode = it.publishersCode
             storePublisherInfo.publisherName = it.name
             storePublisherInfo.publisherType = it.publishersType.name
-            storePublisherInfo.owners = JsonUtil.toJson(it.owners)
+            storePublisherInfo.owners = it.owners[0]
             storePublisherInfo.helper = it.helper
             storePublisherInfo.firstLevelDeptId = deptInfos[0].id.toLong()
             storePublisherInfo.firstLevelDeptName = deptInfos[0].name
@@ -47,8 +47,10 @@ class PublishersServiceImpl @Autowired constructor(
             storePublisherInfo.secondLevelDeptName = deptInfos[1].name
             storePublisherInfo.thirdLevelDeptId = deptInfos[2].id.toLong()
             storePublisherInfo.thirdLevelDeptName = deptInfos[2].name
-            storePublisherInfo.fourthLevelDeptId = deptInfos[3].id.toLong()
-            storePublisherInfo.fourthLevelDeptName = deptInfos[3].name
+            if (deptInfos.size > 3) {
+                storePublisherInfo.fourthLevelDeptId = deptInfos[3].id.toLong()
+                storePublisherInfo.fourthLevelDeptName = deptInfos[3].name
+            }
             storePublisherInfo.organizationName = it.organization
             storePublisherInfo.ownerDeptName = it.ownerDeptName
             storePublisherInfo.certificationFlag = it.certificationFlag
@@ -59,7 +61,7 @@ class PublishersServiceImpl @Autowired constructor(
             storePublisherInfo.updateTime = LocalDateTime.now()
             storePublisherInfoRecords.add(storePublisherInfo)
             if (it.publishersType == PublisherType.ORGANIZATION) {
-                storeMemberService.getMemberId(it.publishersCode, it.storeType).data?.map { memberId ->
+                storeMemberService.getMemberId(it.publishersCode, it.storeType, it.members).data?.map { memberId ->
                     val storePublisherMemberRel = TStorePublisherMemberRelRecord()
                     storePublisherMemberRel.id = UUIDUtil.generate()
                     storePublisherMemberRel.publisherId = storePublisherInfoId

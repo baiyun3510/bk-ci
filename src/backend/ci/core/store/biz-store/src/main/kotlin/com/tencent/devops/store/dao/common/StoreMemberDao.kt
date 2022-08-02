@@ -124,11 +124,12 @@ class StoreMemberDao {
         }
     }
 
-    fun getMemberId(dslContext: DSLContext, storeCode: String, storeType: Byte): List<String> {
+    fun getMemberId(dslContext: DSLContext, storeCode: String, storeType: Byte, userName: List<String>): List<String> {
         with(TStoreMember.T_STORE_MEMBER) {
             return dslContext.select(ID).from(this)
                 .where(STORE_CODE.eq(storeCode))
                 .and(STORE_TYPE.eq(storeType))
+                .and(USERNAME.`in`(userName))
                 .fetchInto(String::class.java)
         }
     }
