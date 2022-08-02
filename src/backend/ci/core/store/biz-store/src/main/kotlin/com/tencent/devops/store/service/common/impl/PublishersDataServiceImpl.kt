@@ -9,26 +9,25 @@ import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.store.dao.common.PublishersDao
 import com.tencent.devops.store.dao.common.StoreDockingPlatformDao
-import com.tencent.devops.store.pojo.common.Publishers
-import com.tencent.devops.store.pojo.common.StoreDockingPlatformInfo
+import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import com.tencent.devops.store.pojo.common.enums.PublisherType
-import com.tencent.devops.store.service.common.PublishersService
+import com.tencent.devops.store.service.common.PublishersDataService
 import com.tencent.devops.store.service.common.StoreMemberService
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
-@Service
-class PublishersServiceImpl @Autowired constructor(
+@Service("PublishersDataDataService")
+class PublishersDataServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val publishersDao: PublishersDao,
     private val client: Client,
     private val storeMemberService: StoreMemberService,
     private val storeDockingPlatformDao: StoreDockingPlatformDao
-) : PublishersService {
-    override fun createPublisherData(userId: String, publishers: List<Publishers>): Int  {
+) : PublishersDataService {
+    override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
         val storePublisherInfoRecords = mutableListOf<TStorePublisherInfoRecord>()
         val storePublisherMemberRelRecords = mutableListOf<TStorePublisherMemberRelRecord>()
         publishers.forEach {
@@ -78,7 +77,7 @@ class PublishersServiceImpl @Autowired constructor(
         return batchCreateCount
     }
 
-    override fun deletePublisherData(userId: String, publishers: List<Publishers>): Int  {
+    override fun deletePublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
         val batchDeletePublisherCount = publishersDao.batchDelete(dslContext, publishers)
         val organizePublishers = mutableListOf<String>()
         publishers.map {
@@ -93,7 +92,7 @@ class PublishersServiceImpl @Autowired constructor(
         return batchDeletePublisherCount
     }
 
-    override fun updatePublisherData(userId: String, publishers: List<Publishers>): Int  {
+    override fun updatePublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
         val storePublisherInfoRecords = mutableListOf<TStorePublisherInfoRecord>()
         publishers.forEach {
             val deptInfos = analysisDept(userId, it.organization)
