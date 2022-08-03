@@ -108,8 +108,10 @@ class PublishersDataServiceImpl @Autowired constructor(
             records.secondLevelDeptId = deptInfos[1].id.toLong()
             records.thirdLevelDeptId = deptInfos[2].id.toLong()
             records.thirdLevelDeptName = deptInfos[2].name
-            records.fourthLevelDeptName = deptInfos[3].name
-            records.fourthLevelDeptId = deptInfos[3].id.toLong()
+            if (deptInfos.size > 3) {
+                records.fourthLevelDeptId = deptInfos[3].id.toLong()
+                records.fourthLevelDeptName = deptInfos[3].name
+            }
             records.publisherType = it.publishersType.name
             records.owners = JsonUtil.toJson(it.owners)
             records.certificationFlag = it.certificationFlag
