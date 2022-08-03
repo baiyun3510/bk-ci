@@ -150,7 +150,7 @@ class PublishersDataServiceImpl @Autowired constructor(
         val deptInfos = mutableListOf<DeptInfo>()
         deptNames.forEachIndexed(){ index, deptName ->
             val result = client.get(ServiceDeptResource::class).getDeptByName(userId, deptName).data
-            result?.let { it -> deptInfos[index] = it.results[0] }
+            result?.let { it -> deptInfos.add(index, it.results[0] ) }
         }
         return deptInfos
     }
