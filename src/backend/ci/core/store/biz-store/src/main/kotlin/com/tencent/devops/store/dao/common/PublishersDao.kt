@@ -24,6 +24,7 @@ class PublishersDao {
                     .where(PUBLISHER_CODE.eq(it.publishersCode)
                         .and(PUBLISHER_TYPE.eq(it.publishersType.name))
                         .and(STORE_TYPE.eq(it.storeType.type.toByte())))
+                        .and(OWNER_DEPT_NAME.eq(it.ownerDeptName))
                 }
             ).execute().size
         }

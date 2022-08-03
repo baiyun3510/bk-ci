@@ -187,6 +187,7 @@ class StoreDockingPlatformDao {
             return dslContext.batch(storeDockingPlatformRequests.map {
                 dslContext.deleteFrom(this)
                     .where(PLATFORM_CODE.eq(it.platformCode))
+                    .and(OWNER_DEPT_NAME.eq(it.ownerDeptName))
             }).execute().size
         }
     }

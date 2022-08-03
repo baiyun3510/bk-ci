@@ -80,8 +80,8 @@ class PublishersDataServiceImpl @Autowired constructor(
         return batchCreateCount
     }
 
-    override fun deletePublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
-        val batchDeletePublisherCount = publishersDao.batchDelete(dslContext, publishers)
+    override fun deletePublisherData(userId: String, publishers: List<PublishersRequest>): Int {
+
         val organizePublishers = mutableListOf<String>()
         publishers.map {
             if (it.publishersType == PublisherType.ORGANIZATION) {
@@ -89,10 +89,10 @@ class PublishersDataServiceImpl @Autowired constructor(
             }
         }
         if (organizePublishers.isNotEmpty()) {
-            val organizePublishersIds =publishersDao.getPublisherIdByCode(dslContext, organizePublishers)
+            val organizePublishersIds = publishersDao.getPublisherIdByCode(dslContext, organizePublishers)
             publishersDao.batchDeletePublisherMemberRelById(dslContext, organizePublishersIds)
         }
-        return batchDeletePublisherCount
+        return publishersDao.batchDelete(dslContext, publishers)
     }
 
     override fun updatePublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
