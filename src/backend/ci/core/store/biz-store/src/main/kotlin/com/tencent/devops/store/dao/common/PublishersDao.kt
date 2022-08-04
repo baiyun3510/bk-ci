@@ -1,13 +1,17 @@
 package com.tencent.devops.store.dao.common
 
+import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.model.store.tables.TStorePublisherInfo
 import com.tencent.devops.model.store.tables.TStorePublisherMemberRel
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.store.pojo.common.PublisherInfo
 import com.tencent.devops.store.pojo.common.PublishersRequest
+import com.tencent.devops.store.pojo.common.enums.PublisherType
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 class PublishersDao {
@@ -124,7 +128,30 @@ class PublishersDao {
         with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
             return dslContext.selectFrom(this)
                 .where(ID.eq(publisherId))
-                .fetchOne(0, PublisherInfo::class.java)
+                .fetchOne { PublisherInfo(
+                    id = it.id,
+                    publisherCode = it.publisherCode,
+                    publisherName = it.publisherName,
+                    publisherType = PublisherType.valueOf(it.publisherType),
+                    owners = it.owners,
+                    helper = it.helper,
+                    firstLevelDeptId = it.firstLevelDeptId.toInt(),
+                    firstLevelDeptName = it.firstLevelDeptName,
+                    secondLevelDeptId = it.secondLevelDeptId.toInt(),
+                    secondLevelDeptName = it.secondLevelDeptName,
+                    thirdLevelDeptId = it.thirdLevelDeptId.toInt(),
+                    thirdLevelDeptName = it.thirdLevelDeptName,
+                    fourthLevelDeptId = it.fourthLevelDeptId.toInt(),
+                    fourthLevelDeptName = it.fourthLevelDeptName,
+                    organizationName = it.organizationName,
+                    ownerDeptName = it.ownerDeptName,
+                    certificationFlag = it.certificationFlag,
+                    storeType = StoreTypeEnum.getStoreTypeObj(it.storeType.toInt())!!,
+                    creator = it.creator,
+                    modifier = it.modifier,
+                    createTime = it.createTime,
+                    updateTime = it.updateTime
+                ) }
         }
     }
 
@@ -135,7 +162,30 @@ class PublishersDao {
         with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
             return dslContext.selectFrom(this)
                 .where(PUBLISHER_CODE.eq(publisherCode))
-                .fetchOne(0, PublisherInfo::class.java)
+                .fetchOne { PublisherInfo(
+                    id = it.id,
+                    publisherCode = it.publisherCode,
+                    publisherName = it.publisherName,
+                    publisherType = PublisherType.valueOf(it.publisherType),
+                    owners = it.owners,
+                    helper = it.helper,
+                    firstLevelDeptId = it.firstLevelDeptId.toInt(),
+                    firstLevelDeptName = it.firstLevelDeptName,
+                    secondLevelDeptId = it.secondLevelDeptId.toInt(),
+                    secondLevelDeptName = it.secondLevelDeptName,
+                    thirdLevelDeptId = it.thirdLevelDeptId.toInt(),
+                    thirdLevelDeptName = it.thirdLevelDeptName,
+                    fourthLevelDeptId = it.fourthLevelDeptId.toInt(),
+                    fourthLevelDeptName = it.fourthLevelDeptName,
+                    organizationName = it.organizationName,
+                    ownerDeptName = it.ownerDeptName,
+                    certificationFlag = it.certificationFlag,
+                    storeType = StoreTypeEnum.getStoreTypeObj(it.storeType.toInt())!!,
+                    creator = it.creator,
+                    modifier = it.modifier,
+                    createTime = it.createTime,
+                    updateTime = it.updateTime
+                ) }
         }
     }
 }
