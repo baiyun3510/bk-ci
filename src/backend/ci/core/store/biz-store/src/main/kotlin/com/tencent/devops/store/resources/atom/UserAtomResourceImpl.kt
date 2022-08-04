@@ -36,18 +36,14 @@ import com.tencent.devops.store.pojo.atom.AtomResp
 import com.tencent.devops.store.pojo.atom.AtomRespItem
 import com.tencent.devops.store.pojo.atom.InstalledAtom
 import com.tencent.devops.store.pojo.atom.PipelineAtom
-import com.tencent.devops.store.pojo.common.PublisherInfo
-import com.tencent.devops.store.pojo.common.VersionInfo
 import com.tencent.devops.store.pojo.common.UnInstallReq
-import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import com.tencent.devops.store.pojo.common.VersionInfo
 import com.tencent.devops.store.service.atom.AtomService
-import com.tencent.devops.store.service.common.PublishersDataService
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class UserAtomResourceImpl @Autowired constructor(
-    private val atomService: AtomService,
-    private val publishersDataService: PublishersDataService
+    private val atomService: AtomService
     ) : UserAtomResource {
 
     override fun getPipelineAtom(projectCode: String, atomCode: String, version: String): Result<PipelineAtom?> {
@@ -134,9 +130,5 @@ class UserAtomResourceImpl @Autowired constructor(
         unInstallReq: UnInstallReq
     ): Result<Boolean> {
         return atomService.uninstallAtom(userId, projectCode, atomCode, unInstallReq)
-    }
-
-    override fun getPublishers(userId: String, storeCode: String, storeType: StoreTypeEnum): Result<List<PublisherInfo>> {
-        return publishersDataService.getPublishers(userId, storeCode, storeType)
     }
 }

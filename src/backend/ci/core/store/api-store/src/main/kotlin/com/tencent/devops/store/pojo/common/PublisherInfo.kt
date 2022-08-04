@@ -2,10 +2,13 @@ package com.tencent.devops.store.pojo.common
 
 import com.tencent.devops.store.pojo.common.enums.PublisherType
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 import java.time.LocalDateTime
 
+@ApiModel("发布者信息")
 data class PublisherInfo(
+    @ApiModelProperty("ID")
     val id: String,
     @ApiModelProperty("发布者标识")
     val publisherCode: String,

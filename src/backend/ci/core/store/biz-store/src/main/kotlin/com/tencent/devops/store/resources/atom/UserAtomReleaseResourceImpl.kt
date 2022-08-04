@@ -43,7 +43,8 @@ import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class UserAtomReleaseResourceImpl @Autowired constructor(
-    private val atomReleaseService: AtomReleaseService
+    private val atomReleaseService: AtomReleaseService,
+    private val publishersDataService: PublishersDataService
 ) : UserAtomReleaseResource {
 
     override fun updateMarketAtom(
@@ -74,5 +75,7 @@ class UserAtomReleaseResourceImpl @Autowired constructor(
         return atomReleaseService.offlineAtom(userId, atomCode, atomOfflineReq)
     }
 
-
+    override fun getPublishers(userId: String, storeCode: String, storeType: StoreTypeEnum): Result<List<PublisherInfo>> {
+        return publishersDataService.getPublishers(userId, storeCode, storeType)
+    }
 }
