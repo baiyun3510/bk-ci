@@ -2,20 +2,26 @@ package com.tencent.devops.store.service.common.impl
 
 import com.tencent.devops.auth.api.service.ServiceDeptResource
 import com.tencent.devops.auth.pojo.DeptInfo
+import com.tencent.devops.common.api.constant.CommonMessageCode
+import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.store.dao.common.PublishersDao
 import com.tencent.devops.store.dao.common.StoreDockingPlatformDao
+import com.tencent.devops.store.dao.common.StoreMemberDao
+import com.tencent.devops.store.pojo.common.PublisherInfo
 import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import com.tencent.devops.store.pojo.common.enums.PublisherType
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.PublishersDataService
 import com.tencent.devops.store.service.common.StoreMemberService
+import com.tencent.devops.store.service.common.StoreUserService
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -26,7 +32,9 @@ class PublishersDataServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val publishersDao: PublishersDao,
     private val client: Client,
-    private val storeDockingPlatformDao: StoreDockingPlatformDao
+    private val storeDockingPlatformDao: StoreDockingPlatformDao,
+    private val storeMemberDao: StoreMemberDao,
+    private val storeUserService: StoreUserService
 ) : PublishersDataService {
     override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
         val storePublisherInfoRecords = mutableListOf<TStorePublisherInfoRecord>()
@@ -61,6 +69,7 @@ class PublishersDataServiceImpl @Autowired constructor(
             storePublisherInfo.updateTime = LocalDateTime.now()
             storePublisherInfoRecords.add(storePublisherInfo)
             if (it.publishersType == PublisherType.ORGANIZATION) {
+                //  生成可使用组织发布者进行发布的成员关联
                 getStoreMemberService(it.storeType)
                     .getMemberId(it.publishersCode, it.storeType, it.members)
                     .data?.map { memberId ->
@@ -84,12 +93,14 @@ class PublishersDataServiceImpl @Autowired constructor(
 
         val organizePublishers = mutableListOf<String>()
         publishers.map {
+            //  获取删除的组织发布者
             if (it.publishersType == PublisherType.ORGANIZATION) {
                 organizePublishers.add(it.publishersCode)
             }
         }
         if (organizePublishers.isNotEmpty()) {
-            val organizePublishersIds = publishersDao.getPublisherIdByCode(dslContext, organizePublishers)
+            //  删除组织发布者关联的组织成员关联
+            val organizePublishersIds = publishersDao.getPublisherIdsByCode(dslContext, organizePublishers)
             publishersDao.batchDeletePublisherMemberRelById(dslContext, organizePublishersIds)
         }
         return publishersDao.batchDelete(dslContext, publishers)
@@ -147,7 +158,71 @@ class PublishersDataServiceImpl @Autowired constructor(
         return storeDockingPlatformDao.batchUpdate(dslContext, userId, storeDockingPlatformRequests)
     }
 
-    fun analysisDept(userId: String, organization: String): List<DeptInfo> {
+    override fun getPublishers(
+        userId: String,
+        storeCode: String,
+        storeType: StoreTypeEnum
+    ): Result<List<PublisherInfo>> {
+        val publishersInfos = mutableListOf<PublisherInfo>()
+        if (!storeMemberDao.isStoreMember(
+                dslContext = dslContext,
+                userId = userId,
+                storeCode = storeCode,
+                storeType = storeType.type.toByte()
+            )) {
+            return MessageCodeUtil.generateResponseDataObject(CommonMessageCode.PERMISSION_DENIED)
+        }
+        // 查看是否能使用组织发布者进行发布
+        val viewMemberInfo = getStoreMemberService(storeType).viewMemberInfo(userId, storeCode, storeType).data
+        val organizationPublisherId =
+            publishersDao.getPublisherMemberRelById(dslContext, storeCode, viewMemberInfo!!.id)
+        if (!organizationPublisherId.isNullOrBlank()) {
+            // 获取组织发布者信息
+            val organizationPublisherInfo = publishersDao.getPublisherInfoById(dslContext, organizationPublisherId)
+            publishersInfos.add(organizationPublisherInfo!!)
+        }
+        var personPublisherInfo = publishersDao.getPublisherInfoByCode(dslContext, userId)
+        if (personPublisherInfo == null) {
+            // 如果未注册发布者则自动注册并返回
+            val userDeptIdList = storeUserService.getUserDeptList(userId)
+            val userDeptNameResult = storeUserService.getUserFullDeptName(userId)
+            if (userDeptNameResult.isNotOk()) {
+                return Result(userDeptNameResult.status, userDeptNameResult.message ?: "")
+            }
+            val deptNameList = userDeptNameResult.data!!.split("/")
+            val deptSizeFlag = (userDeptIdList.size > 3 && deptNameList.size > 3)
+            personPublisherInfo = PublisherInfo(
+                id = UUIDUtil.generate(),
+                publisherCode = userId,
+                publisherName = userId,
+                publisherType = PublisherType.PERSON,
+                owners = userId,
+                helper = userId,
+                firstLevelDeptId = userDeptIdList[0],
+                firstLevelDeptName = deptNameList[0],
+                secondLevelDeptId = userDeptIdList[1],
+                secondLevelDeptName = deptNameList[1],
+                thirdLevelDeptId = userDeptIdList[2],
+                thirdLevelDeptName = deptNameList[2],
+                fourthLevelDeptId = if (deptSizeFlag) userDeptIdList[3] else null,
+                fourthLevelDeptName = if (deptSizeFlag) deptNameList[3] else null,
+                organizationName = userDeptNameResult.data!!,
+                ownerDeptName = deptNameList[0],
+                certificationFlag = false,
+                storeType = storeType,
+                creator = userId,
+                modifier = userId,
+                createTime = LocalDateTime.now(),
+                updateTime = LocalDateTime.now()
+            )
+            publishersDao.create(dslContext, personPublisherInfo)
+        }
+        publishersInfos.add(personPublisherInfo)
+        return Result(publishersInfos)
+    }
+
+    private fun analysisDept(userId: String, organization: String): List<DeptInfo> {
+        //  根据解析组织名称获取组织ID
         val deptNames = organization.split("/")
         val deptInfos = mutableListOf<DeptInfo>()
         deptNames.forEachIndexed(){ index, deptName ->

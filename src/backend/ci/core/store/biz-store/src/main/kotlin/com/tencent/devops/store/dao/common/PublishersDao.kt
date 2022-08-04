@@ -4,6 +4,7 @@ import com.tencent.devops.model.store.tables.TStorePublisherInfo
 import com.tencent.devops.model.store.tables.TStorePublisherMemberRel
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
+import com.tencent.devops.store.pojo.common.PublisherInfo
 import com.tencent.devops.store.pojo.common.PublishersRequest
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
@@ -12,8 +13,35 @@ import org.springframework.stereotype.Repository
 class PublishersDao {
 
     fun batchCreate(dslContext: DSLContext, storePublisherInfos: List<TStorePublisherInfoRecord>): Int {
+        return dslContext.batchInsert(storePublisherInfos).execute().size
+    }
+
+    fun create(dslContext: DSLContext, publisherInfo: PublisherInfo): Int {
         with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
-            return dslContext.batchInsert(storePublisherInfos).execute().size
+            return dslContext.insertInto(this)
+                .set(ID, publisherInfo.id)
+                    .set(PUBLISHER_CODE, publisherInfo.publisherCode)
+                    .set(PUBLISHER_NAME, publisherInfo.publisherName)
+                    .set(PUBLISHER_TYPE, publisherInfo.publisherType.name)
+                    .set(OWNERS, publisherInfo.owners)
+                    .set(HELPER, publisherInfo.helper)
+                    .set(FIRST_LEVEL_DEPT_ID, publisherInfo.firstLevelDeptId.toLong())
+                    .set(FIRST_LEVEL_DEPT_NAME, publisherInfo.firstLevelDeptName)
+                    .set(SECOND_LEVEL_DEPT_ID, publisherInfo.secondLevelDeptId.toLong())
+                    .set(SECOND_LEVEL_DEPT_NAME,  publisherInfo.secondLevelDeptName)
+                    .set(THIRD_LEVEL_DEPT_ID, publisherInfo.thirdLevelDeptId.toLong())
+                    .set(THIRD_LEVEL_DEPT_NAME,  publisherInfo.thirdLevelDeptName)
+                    .set(FOURTH_LEVEL_DEPT_ID,  publisherInfo.fourthLevelDeptId?.toLong())
+                    .set(FOURTH_LEVEL_DEPT_NAME,  publisherInfo.fourthLevelDeptName)
+                    .set(ORGANIZATION_NAME, publisherInfo.organizationName)
+                    .set(OWNER_DEPT_NAME, publisherInfo.ownerDeptName)
+                    .set(CERTIFICATION_FLAG, publisherInfo.certificationFlag)
+                    .set(STORE_TYPE, publisherInfo.storeType.type.toByte())
+                    .set(CREATOR, publisherInfo.creator)
+                    .set(MODIFIER, publisherInfo.modifier)
+                    .set(CREATE_TIME, publisherInfo.createTime)
+                    .set(UPDATE_TIME, publisherInfo.updateTime)
+                .execute()
         }
     }
 
@@ -72,11 +100,42 @@ class PublishersDao {
         }
     }
 
-    fun getPublisherIdByCode(dslContext: DSLContext, publisherCodes: List<String>): List<String> {
+    fun getPublisherIdsByCode(dslContext: DSLContext, publisherCodes: List<String>): List<String> {
         with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
             return dslContext.select(ID).from(this)
                 .where(PUBLISHER_CODE.`in`(publisherCodes))
                 .fetchInto(String::class.java)
+        }
+    }
+    fun getPublisherMemberRelById(dslContext: DSLContext, storeCode: String, memberId: String): String? {
+        with(TStorePublisherMemberRel.T_STORE_PUBLISHER_MEMBER_REL) {
+            return dslContext.select(PUBLISHER_ID)
+                .from(this)
+                .where(MEMBER_ID.eq(memberId))
+                .fetchOne(0, String::class.java)
+        }
+
+    }
+
+    fun getPublisherInfoById(
+        dslContext: DSLContext,
+        publisherId: String
+    ): PublisherInfo? {
+        with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
+            return dslContext.selectFrom(this)
+                .where(ID.eq(publisherId))
+                .fetchOne(0, PublisherInfo::class.java)
+        }
+    }
+
+    fun getPublisherInfoByCode(
+        dslContext: DSLContext,
+        publisherCode: String
+    ): PublisherInfo? {
+        with(TStorePublisherInfo.T_STORE_PUBLISHER_INFO) {
+            return dslContext.selectFrom(this)
+                .where(PUBLISHER_CODE.eq(publisherCode))
+                .fetchOne(0, PublisherInfo::class.java)
         }
     }
 }
