@@ -83,6 +83,7 @@ class PublishersDataServiceImpl @Autowired constructor(
                     storePublisherMemberRel.createTime = LocalDateTime.now()
                     storePublisherMemberRel.modifier = userId
                     storePublisherMemberRel.updateTime = LocalDateTime.now()
+                    storePublisherMemberRelRecords.add(storePublisherMemberRel)
                 }
             }
         }
