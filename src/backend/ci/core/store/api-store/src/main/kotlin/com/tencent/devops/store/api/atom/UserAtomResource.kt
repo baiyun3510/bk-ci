@@ -40,8 +40,10 @@ import com.tencent.devops.store.pojo.atom.AtomRespItem
 import com.tencent.devops.store.pojo.atom.InstalledAtom
 import com.tencent.devops.store.pojo.atom.PipelineAtom
 import com.tencent.devops.store.pojo.atom.enums.AtomCategoryEnum
+import com.tencent.devops.store.pojo.common.PublisherInfo
 import com.tencent.devops.store.pojo.common.UnInstallReq
 import com.tencent.devops.store.pojo.common.VersionInfo
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -196,4 +198,19 @@ interface UserAtomResource {
         @ApiParam("卸载插件请求包体", required = true)
         unInstallReq: UnInstallReq
     ): Result<Boolean>
+
+    @ApiOperation("获取发布组件可选发布者")
+    @GET
+    @Path("/publishers/get")
+    fun getPublishers(
+        @ApiParam("userId", required = true)
+        @HeaderParam(AUTH_HEADER_USER_ID)
+        userId: String,
+        @ApiParam("storeCode", required = true)
+        @QueryParam("storeCode")
+        storeCode: String,
+        @ApiParam("storeType", required = true)
+        @QueryParam("storeType")
+        storeType: StoreTypeEnum
+    ): Result<List<PublisherInfo>>
 }
