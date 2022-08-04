@@ -136,15 +136,14 @@ interface UserAtomReleaseResource {
     ): Result<Boolean>
 
     @ApiOperation("获取发布组件可选发布者")
-    @PathParam("storeCode")
     @GET
-    @Path("/desk/atom/publishers/get/{storeCode}")
+    @Path("/desk/atom/publishers/get")
     fun getPublishers(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
         @ApiParam("storeCode", required = true)
-        @PathParam("storeCode")
+        @QueryParam("storeCode")
         storeCode: String,
         @ApiParam("storeType", required = true)
         @QueryParam("storeType")
