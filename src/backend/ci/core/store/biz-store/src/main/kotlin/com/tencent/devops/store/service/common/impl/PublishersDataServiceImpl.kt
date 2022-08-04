@@ -11,6 +11,8 @@ import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
+import com.tencent.devops.project.api.service.ServiceUserResource
+import com.tencent.devops.project.pojo.user.UserDeptDetail
 import com.tencent.devops.store.dao.common.PublishersDao
 import com.tencent.devops.store.dao.common.StoreDockingPlatformDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
@@ -185,42 +187,43 @@ class PublishersDataServiceImpl @Autowired constructor(
             publishersInfos.add(organizationPublisherInfo!!)
         }
         var personPublisherInfo = publishersDao.getPublisherInfoByCode(dslContext, userId)
+        logger.debug("getPublishers personPublisherInfo is $personPublisherInfo")
         if (personPublisherInfo == null) {
             // 如果未注册发布者则自动注册并返回
-            val userDeptIdList = storeUserService.getUserDeptList(userId)
-            val userDeptNameResult = storeUserService.getUserFullDeptName(userId)
-            if (userDeptNameResult.isNotOk()) {
-                return Result(userDeptNameResult.status, userDeptNameResult.message ?: "")
-            }
-            val deptNameList = userDeptNameResult.data!!.split("/")
-            val deptSizeFlag = (userDeptIdList.size > 3 && deptNameList.size > 3)
-            personPublisherInfo = PublisherInfo(
-                id = UUIDUtil.generate(),
-                publisherCode = userId,
-                publisherName = userId,
-                publisherType = PublisherType.PERSON,
-                owners = userId,
-                helper = userId,
-                firstLevelDeptId = userDeptIdList[0],
-                firstLevelDeptName = deptNameList[0],
-                secondLevelDeptId = userDeptIdList[1],
-                secondLevelDeptName = deptNameList[1],
-                thirdLevelDeptId = userDeptIdList[2],
-                thirdLevelDeptName = deptNameList[2],
-                fourthLevelDeptId = if (deptSizeFlag) userDeptIdList[3] else null,
-                fourthLevelDeptName = if (deptSizeFlag) deptNameList[3] else null,
-                organizationName = userDeptNameResult.data!!,
-                ownerDeptName = deptNameList[0],
-                certificationFlag = false,
-                storeType = storeType,
-                creator = userId,
-                modifier = userId,
-                createTime = LocalDateTime.now(),
-                updateTime = LocalDateTime.now()
+            val userDeptInfo = client.get(ServiceUserResource::class)
+                .getDetailFromCache(userId).data ?: UserDeptDetail(
+                "", "0", "", "0", "", "0", "", "0"
             )
-            publishersDao.create(dslContext, personPublisherInfo)
+            userDeptInfo.let {
+                personPublisherInfo = PublisherInfo(
+                    id = UUIDUtil.generate(),
+                    publisherCode = userId,
+                    publisherName = userId,
+                    publisherType = PublisherType.PERSON,
+                    owners = userId,
+                    helper = userId,
+                    firstLevelDeptId = it.bgId.toInt(),
+                    firstLevelDeptName = it.bgName,
+                    secondLevelDeptId = it.deptId.toInt(),
+                    secondLevelDeptName = it.deptName,
+                    thirdLevelDeptId = it.centerId.toInt(),
+                    thirdLevelDeptName = it.centerName,
+                    fourthLevelDeptId = it.groupId.toInt(),
+                    fourthLevelDeptName = it.groupName,
+                    organizationName = storeUserService.getUserFullDeptName(userId).data ?: "",
+                    ownerDeptName = it.deptName,
+                    certificationFlag = false,
+                    storeType = storeType,
+                    creator = userId,
+                    modifier = userId,
+                    createTime = LocalDateTime.now(),
+                    updateTime = LocalDateTime.now()
+                )
+            }
+            publishersDao.create(dslContext, personPublisherInfo!!)
         }
-        publishersInfos.add(personPublisherInfo)
+        publishersInfos.add(personPublisherInfo!!)
+        logger.debug("getPublishers $publishersInfos")
         return Result(publishersInfos)
     }
 
