@@ -141,7 +141,7 @@ class PublishersDao {
                     secondLevelDeptName = it.secondLevelDeptName,
                     thirdLevelDeptId = it.thirdLevelDeptId.toInt(),
                     thirdLevelDeptName = it.thirdLevelDeptName,
-                    fourthLevelDeptId = it.fourthLevelDeptId.toInt(),
+                    fourthLevelDeptId = it.fourthLevelDeptId?.toInt(),
                     fourthLevelDeptName = it.fourthLevelDeptName,
                     organizationName = it.organizationName,
                     ownerDeptName = it.ownerDeptName,
