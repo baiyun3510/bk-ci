@@ -23,6 +23,7 @@ import com.tencent.devops.store.service.common.PublishersDataService
 import com.tencent.devops.store.service.common.StoreMemberService
 import com.tencent.devops.store.service.common.StoreUserService
 import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -70,6 +71,7 @@ class PublishersDataServiceImpl @Autowired constructor(
             storePublisherInfoRecords.add(storePublisherInfo)
             if (it.publishersType == PublisherType.ORGANIZATION) {
                 //  生成可使用组织发布者进行发布的成员关联
+                logger.debug("CreatePublisherMemberRel publisherCode is ${it.publishersCode}, members is ${it.members}")
                 getStoreMemberService(it.storeType)
                     .getMemberId(it.publishersCode, it.storeType, it.members)
                     .data?.map { memberId ->
@@ -235,5 +237,8 @@ class PublishersDataServiceImpl @Autowired constructor(
     private fun getStoreMemberService(storeType: StoreTypeEnum): StoreMemberService {
         return SpringContextUtil.getBean(StoreMemberService::class.java,
             "${storeType.name.toLowerCase()}MemberService")
+    }
+    companion object {
+        private val logger = LoggerFactory.getLogger(PublishersDataServiceImpl::class.java)
     }
 }
