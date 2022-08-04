@@ -137,7 +137,7 @@ interface UserAtomReleaseResource {
 
     @ApiOperation("获取发布组件可选发布者")
     @GET
-    @Path("/publishers/get/{storeCode}")
+    @Path("/desk/atom/publishers/get/{storeCode}")
     fun getPublishers(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
