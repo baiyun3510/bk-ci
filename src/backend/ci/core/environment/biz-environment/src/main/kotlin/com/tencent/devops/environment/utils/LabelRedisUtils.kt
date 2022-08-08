@@ -79,10 +79,38 @@ class LabelRedisUtils @Autowired constructor(
         )
     }
 
-    fun getAllNodes(
+    /**
+     * 全量刷新项目下的所有节点信息
+     */
+    fun refreshProjectNodes(
+        projectId: String,
+        nodeIds: List<Long>
+    ): String {
+        val projectNodes = StringBuilder()
+        nodeIds.forEach {
+            projectNodes.append(NODE_SEPARATOR).append(it)
+        }
+
+        redisOperation.hset(
+            key = nodeBitMapKey(),
+            hashKey = nodeBitMapHashKey(projectId),
+            values = projectNodes.toString()
+        )
+
+        return projectNodes.toString()
+    }
+
+    fun getProjectNodes(
         projectId: String
     ): String? {
         return redisOperation.hget(
+            key = nodeBitMapKey(),
+            hashKey = nodeBitMapHashKey(projectId)
+        )
+    }
+
+    fun deleteProjectNodes(projectId: String) {
+        redisOperation.hdelete(
             key = nodeBitMapKey(),
             hashKey = nodeBitMapHashKey(projectId)
         )

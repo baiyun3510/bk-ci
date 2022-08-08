@@ -28,6 +28,7 @@
 package com.tencent.devops.environment.service.label
 
 import com.tencent.devops.environment.dao.LabelDao
+import com.tencent.devops.environment.dao.NodeDao
 import com.tencent.devops.environment.dao.NodeLabelDao
 import com.tencent.devops.environment.exception.LabelException
 import com.tencent.devops.environment.pojo.label.CalculateExpression
@@ -43,6 +44,7 @@ import kotlin.streams.toList
 
 @Service
 class LabelService @Autowired constructor(
+    private val nodeDao: NodeDao,
     private val labelDao: LabelDao,
     private val nodeLabelDao: NodeLabelDao,
     private val labelRedisUtils: LabelRedisUtils,
@@ -104,9 +106,9 @@ class LabelService @Autowired constructor(
                 }
                 Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
                     val inNodesBitMap = getInOrExistBitMap(projectId, labelIds)
-                    val allNodesBitmap = strToBitMap(labelRedisUtils.getAllNodes(projectId))
-                    allNodesBitmap.andNot(inNodesBitMap)
-                    allNodesBitmap.toArray().toList()
+                    val allProjectNodesBitmap = strToBitMap(getProjectNodes(projectId))
+                    allProjectNodesBitmap.andNot(inNodesBitMap)
+                    allProjectNodesBitmap.toArray().toList()
                 }
                 Operator.EXIST -> {
                     getInOrExistBitMap(projectId, labelIds).toArray().toList()
@@ -160,6 +162,22 @@ class LabelService @Autowired constructor(
         }
 
         return bitMapNodes
+    }
+
+    /**
+     * 获取项目下的所有节点，先读取缓存，缓存不存在则从DB取数据并刷新缓存
+     */
+    private fun getProjectNodes(projectId: String): String {
+        val bitMapProjectNodes = labelRedisUtils.getProjectNodes(projectId)
+        if (bitMapProjectNodes == null) {
+            val projectNodes = nodeDao.listNodes(dslContext, projectId)
+            return labelRedisUtils.refreshProjectNodes(
+                projectId = projectId,
+                nodeIds = projectNodes.stream().map { it.nodeId }.toList()
+            )
+        }
+
+        return bitMapProjectNodes
     }
 
     private fun strToBitMap(str: String?): Roaring64Bitmap {
