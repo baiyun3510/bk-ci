@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired
 class ServiceLabelResourceImpl @Autowired constructor(
     private val labelService: LabelService
 ) : ServiceLabelResource {
-    override fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): Result<List<Int>> {
+    override fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): Result<List<Long>> {
         return Result(labelService.calculateNodes(userId, projectId, calculateExpression))
     }
 }

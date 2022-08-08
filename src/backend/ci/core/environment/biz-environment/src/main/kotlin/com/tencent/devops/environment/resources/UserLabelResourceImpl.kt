@@ -30,6 +30,7 @@ package com.tencent.devops.environment.resources
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.environment.api.UserLabelResource
+import com.tencent.devops.environment.pojo.label.CalculateExpression
 import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.service.label.LabelService
 import org.springframework.beans.factory.annotation.Autowired
@@ -48,5 +49,9 @@ class UserLabelResourceImpl @Autowired constructor(
 
     override fun delete(userId: String, projectId: String, labelId: Long): Result<Boolean> {
         return Result(labelService.delete(userId, projectId, labelId))
+    }
+
+    override fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): Result<List<Long>> {
+        return Result(labelService.calculateNodes(userId, projectId, calculateExpression))
     }
 }

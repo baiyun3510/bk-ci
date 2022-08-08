@@ -60,5 +60,5 @@ interface ServiceLabelResource {
         projectId: String,
         @ApiParam(value = "计算表达式列表", required = true)
         calculateExpression: CalculateExpression
-    ): Result<List<Int>>
+    ): Result<List<Long>>
 }
