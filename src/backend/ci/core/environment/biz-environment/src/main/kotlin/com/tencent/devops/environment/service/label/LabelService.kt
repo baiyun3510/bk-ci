@@ -35,7 +35,7 @@ import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.pojo.label.Operator
 import com.tencent.devops.environment.utils.LabelRedisUtils
 import org.jooq.DSLContext
-import org.roaringbitmap.RoaringBitmap
+import org.roaringbitmap.longlong.Roaring64Bitmap
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -86,7 +86,7 @@ class LabelService @Autowired constructor(
         return true
     }
 
-    fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): List<Int> {
+    fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): List<Long> {
         if (calculateExpression.labelExpression.isEmpty()) {
             return emptyList()
         }
@@ -100,16 +100,16 @@ class LabelService @Autowired constructor(
 
             return when(labelExpression.operator) {
                 Operator.IN -> {
-                    getInOrExistBitMap(projectId, labelIds).toList()
+                    getInOrExistBitMap(projectId, labelIds).toArray().toList()
                 }
                 Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
                     val inNodesBitMap = getInOrExistBitMap(projectId, labelIds)
                     val allNodesBitmap = strToBitMap(labelRedisUtils.getAllNodes(projectId))
                     allNodesBitmap.andNot(inNodesBitMap)
-                    allNodesBitmap.toList()
+                    allNodesBitmap.toArray().toList()
                 }
                 Operator.EXIST -> {
-                    getInOrExistBitMap(projectId, labelIds).toList()
+                    getInOrExistBitMap(projectId, labelIds).toArray().toList()
                 }
                 else -> {
                     throw LabelException("Label expression operator not exist. ${labelExpression.operator}")
@@ -123,8 +123,8 @@ class LabelService @Autowired constructor(
     private fun getInOrExistBitMap(
         projectId: String,
         labelIds: List<Long>
-    ): RoaringBitmap {
-        var inRoaringBitmap = RoaringBitmap()
+    ): Roaring64Bitmap {
+        var inRoaringBitmap = Roaring64Bitmap()
         for (index in labelIds.indices) {
             val bitMapNodes = getLabelBindingNodes(projectId, labelIds[index])
             if (index == 0) {
@@ -162,9 +162,9 @@ class LabelService @Autowired constructor(
         return bitMapNodes
     }
 
-    private fun strToBitMap(str: String?): RoaringBitmap {
-        val intArr = str?.split(",")?.map { it.trim().toInt() }?.toIntArray() ?: IntArray(0)
-        return RoaringBitmap.bitmapOf(*intArr)
+    private fun strToBitMap(str: String?): Roaring64Bitmap {
+        val longArr = str?.split(",")?.map { it.trim().toLong() }?.toLongArray() ?: LongArray(0)
+        return Roaring64Bitmap.bitmapOf(*longArr)
     }
 
     private fun getLabelIds(projectId: String, labelKey: String, labelValues: List<String>?): List<Long> {
