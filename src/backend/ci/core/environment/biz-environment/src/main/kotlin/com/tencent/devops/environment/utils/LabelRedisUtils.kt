@@ -50,15 +50,15 @@ class LabelRedisUtils @Autowired constructor(
             labelBindingNodes.append(NODE_SEPARATOR).append(it)
         }
 
-        labelBindingNodes.removePrefix(NODE_SEPARATOR)
+        val labelBindingNodesStr = labelBindingNodes.removePrefix(NODE_SEPARATOR).toString()
 
         redisOperation.hset(
             key = labelBitMapKey(),
             hashKey = labelBitMapHashKey(projectId, labelId),
-            values = labelBindingNodes.toString()
+            values = labelBindingNodesStr
         )
 
-        return labelBindingNodes.toString()
+        return labelBindingNodesStr
     }
 
     fun getLabelBindingNodes(
@@ -93,15 +93,15 @@ class LabelRedisUtils @Autowired constructor(
             projectNodes.append(NODE_SEPARATOR).append(it)
         }
 
-        projectNodes.removePrefix(NODE_SEPARATOR)
+        val projectNodesStr = projectNodes.removePrefix(NODE_SEPARATOR).toString()
 
         redisOperation.hset(
             key = nodeBitMapKey(),
             hashKey = nodeBitMapHashKey(projectId),
-            values = projectNodes.toString()
+            values = projectNodesStr
         )
 
-        return projectNodes.toString()
+        return projectNodesStr
     }
 
     fun getProjectNodes(
