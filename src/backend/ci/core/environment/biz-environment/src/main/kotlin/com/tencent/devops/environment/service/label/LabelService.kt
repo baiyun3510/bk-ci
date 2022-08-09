@@ -27,6 +27,7 @@
 
 package com.tencent.devops.environment.service.label
 
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.environment.dao.LabelDao
 import com.tencent.devops.environment.dao.NodeDao
 import com.tencent.devops.environment.dao.NodeLabelDao
@@ -89,6 +90,8 @@ class LabelService @Autowired constructor(
     }
 
     fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): List<Long> {
+        logger.info("$userId calculateNodes projectId: $projectId " +
+                        "calculateExpression: ${JsonUtil.toJson(calculateExpression)}")
         if (calculateExpression.labelExpression.isEmpty()) {
             return emptyList()
         }
@@ -105,10 +108,7 @@ class LabelService @Autowired constructor(
                     getInOrExistBitMap(projectId, labelIds).toArray().toList()
                 }
                 Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
-                    val inNodesBitMap = getInOrExistBitMap(projectId, labelIds)
-                    val allProjectNodesBitmap = strToBitMap(getProjectNodes(projectId))
-                    allProjectNodesBitmap.andNot(inNodesBitMap)
-                    allProjectNodesBitmap.toArray().toList()
+                    getNotInOrNotExistBitMap(projectId, labelIds).toArray().toList()
                 }
                 Operator.EXIST -> {
                     getInOrExistBitMap(projectId, labelIds).toArray().toList()
@@ -126,17 +126,37 @@ class LabelService @Autowired constructor(
         projectId: String,
         labelIds: List<Long>
     ): Roaring64Bitmap {
-        var inRoaringBitmap = Roaring64Bitmap()
-        for (index in labelIds.indices) {
-            val bitMapNodes = getLabelBindingNodes(projectId, labelIds[index])
-            if (index == 0) {
-                inRoaringBitmap = strToBitMap(bitMapNodes)
-            } else {
-                inRoaringBitmap.and(strToBitMap(bitMapNodes))
+        try {
+            var inRoaringBitmap = Roaring64Bitmap()
+            for (index in labelIds.indices) {
+                val bitMapNodes = getLabelBindingNodes(projectId, labelIds[index])
+                if (index == 0) {
+                    inRoaringBitmap = strToBitMap(bitMapNodes)
+                } else {
+                    inRoaringBitmap.and(strToBitMap(bitMapNodes))
+                }
             }
-        }
 
-        return inRoaringBitmap
+            return inRoaringBitmap
+        } catch (e: Exception) {
+            logger.error("$projectId Get In or Exist bitmap get error.", e)
+            throw LabelException("Get In or Exist bitmap get error.")
+        }
+    }
+
+    private fun getNotInOrNotExistBitMap(
+        projectId: String,
+        labelIds: List<Long>
+    ): Roaring64Bitmap {
+        try {
+            val inNodesBitMap = getInOrExistBitMap(projectId, labelIds)
+            val allProjectNodesBitmap = strToBitMap(getProjectNodes(projectId))
+            allProjectNodesBitmap.andNot(inNodesBitMap)
+            return allProjectNodesBitmap
+        } catch (e: Exception) {
+            logger.error("$projectId Get NotIn or NotExist bitmap get error.", e)
+            throw LabelException("Get NotIn or NotExist bitmap get error.")
+        }
     }
 
     /**
