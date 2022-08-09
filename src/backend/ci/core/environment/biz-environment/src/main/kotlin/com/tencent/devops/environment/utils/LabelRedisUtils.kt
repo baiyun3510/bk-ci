@@ -50,6 +50,8 @@ class LabelRedisUtils @Autowired constructor(
             labelBindingNodes.append(NODE_SEPARATOR).append(it)
         }
 
+        labelBindingNodes.removePrefix(NODE_SEPARATOR)
+
         redisOperation.hset(
             key = labelBitMapKey(),
             hashKey = labelBitMapHashKey(projectId, labelId),
@@ -90,6 +92,8 @@ class LabelRedisUtils @Autowired constructor(
         nodeIds.forEach {
             projectNodes.append(NODE_SEPARATOR).append(it)
         }
+
+        projectNodes.removePrefix(NODE_SEPARATOR)
 
         redisOperation.hset(
             key = nodeBitMapKey(),
