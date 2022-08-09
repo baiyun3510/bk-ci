@@ -294,6 +294,7 @@ class StoreDockingPlatformDao {
                 summary = summary,
                 principal = principal,
                 logoUrl = logoUrl,
+                labels = labels.split(","),
                 creator = creator,
                 modifier = modifier,
                 createTime = DateTimeUtil.toDateTime(createTime),

@@ -1,6 +1,5 @@
 package com.tencent.devops.store.dao.common
 
-import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.model.store.tables.TStorePublisherInfo
 import com.tencent.devops.model.store.tables.TStorePublisherMemberRel
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
@@ -11,7 +10,6 @@ import com.tencent.devops.store.pojo.common.enums.PublisherType
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
-import java.time.LocalDateTime
 
 @Repository
 class PublishersDao {

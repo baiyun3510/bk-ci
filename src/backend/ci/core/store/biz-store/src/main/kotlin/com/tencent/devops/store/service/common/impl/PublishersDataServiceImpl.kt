@@ -190,11 +190,8 @@ class PublishersDataServiceImpl @Autowired constructor(
         logger.debug("getPublishers personPublisherInfo is $personPublisherInfo")
         if (personPublisherInfo == null) {
             // 如果未注册发布者则自动注册并返回
-            val userDeptInfo = client.get(ServiceUserResource::class)
-                .getDetailFromCache(userId).data ?: UserDeptDetail(
-                "", "0", "", "0", "", "0", "", "0"
-            )
-            userDeptInfo.let {
+            val userDeptInfo = client.get(ServiceUserResource::class).getDetailFromCache(userId).data
+            userDeptInfo?.let {
                 personPublisherInfo = PublisherInfo(
                     id = UUIDUtil.generate(),
                     publisherCode = userId,
@@ -219,10 +216,10 @@ class PublishersDataServiceImpl @Autowired constructor(
                     createTime = LocalDateTime.now(),
                     updateTime = LocalDateTime.now()
                 )
+                publishersDao.create(dslContext, personPublisherInfo!!)
             }
-            publishersDao.create(dslContext, personPublisherInfo!!)
         }
-        publishersInfos.add(personPublisherInfo!!)
+        personPublisherInfo?.let { publishersInfos.add(it) }
         logger.debug("getPublishers $publishersInfos")
         return Result(publishersInfos)
     }
