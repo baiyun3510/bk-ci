@@ -101,4 +101,15 @@ class NodeLabelDao {
                 .execute()
         }
     }
+
+    fun deleteLabel(
+        dslContext: DSLContext,
+        labelId: Long
+    ) {
+        with(TNodeLabel.T_NODE_LABEL) {
+            dslContext.deleteFrom(this)
+                .where(LABEL_ID.eq(labelId))
+                .execute()
+        }
+    }
 }

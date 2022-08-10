@@ -134,8 +134,8 @@ class LabelRedisUtils @Autowired constructor(
     }
 
     companion object {
-        private const val LABEL_BIT_MAP = "label:roaringbitmap"
-        private const val NODE_BIT_MAP = "node:roaringbitmap"
+        private const val LABEL_BIT_MAP = "roaringbitmap:label"
+        private const val NODE_BIT_MAP = "roaringbitmap:node"
 
         private const val NODE_SEPARATOR = ","
     }

@@ -44,7 +44,7 @@ import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["SERVICE_AGENT"], description = "服务-Agent")
+@Api(tags = ["USER_NODE_LABEL"], description = "用户-节点标签")
 @Path("/user/labels")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

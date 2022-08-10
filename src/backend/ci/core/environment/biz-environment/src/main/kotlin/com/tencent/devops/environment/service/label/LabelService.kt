@@ -37,6 +37,7 @@ import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.pojo.label.Operator
 import com.tencent.devops.environment.utils.LabelRedisUtils
 import org.jooq.DSLContext
+import org.jooq.impl.DSL
 import org.roaringbitmap.longlong.Roaring64Bitmap
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -81,10 +82,20 @@ class LabelService @Autowired constructor(
     }
 
     fun delete(userId: String, projectId: String, labelId: Long): Boolean {
-        labelDao.batchDeleteLabel(
-            dslContext = dslContext,
-            labelIds = listOf(labelId)
-        )
+        dslContext.transaction { configuration ->
+            val context = DSL.using(configuration)
+            // 删除标签
+            labelDao.batchDeleteLabel(
+                dslContext = context,
+                labelIds = listOf(labelId)
+            )
+
+            // 删除标签绑定
+            nodeLabelDao.deleteLabel(context, labelId)
+
+            // 删除标签bitmap缓存
+            labelRedisUtils.deleteLabelBitMapHashKey(projectId, labelId)
+        }
 
         return true
     }

@@ -70,19 +70,22 @@ class NodeLabelService @Autowired constructor(
             dslContext = dslContext
         )
 
-        // 删除缓存
+        // 删除标签节点缓存
         labelRedisUtils.deleteLabelBitMapHashKey(projectId, labelId)
 
         return true
     }
 
-    fun delete(userId: String, nodeId: Long, labelId: Long): Boolean {
+    fun delete(userId: String, projectId: String, nodeId: Long, labelId: Long): Boolean {
         logger.info("$userId delete nodeLabel nodeId: $nodeId, labelId: $labelId")
         nodeLabelDao.deleteNodeLabel(
             labelId = labelId,
             nodeId = nodeId,
             dslContext = dslContext
         )
+
+        // 删除标签节点缓存
+        labelRedisUtils.deleteLabelBitMapHashKey(projectId, labelId)
 
         return true
     }
