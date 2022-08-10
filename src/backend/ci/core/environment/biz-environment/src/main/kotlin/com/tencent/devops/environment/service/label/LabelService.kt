@@ -212,7 +212,11 @@ class LabelService @Autowired constructor(
     }
 
     private fun strToBitMap(str: String?): Roaring64Bitmap {
-        val longArr = str?.split(",")?.map { it.trim().toLong() }?.toLongArray() ?: LongArray(0)
+        if (str.isNullOrBlank()) {
+            return Roaring64Bitmap()
+        }
+
+        val longArr = str.split(",").map { it.trim().toLong() }.toLongArray()
         return Roaring64Bitmap.bitmapOf(*longArr)
     }
 
