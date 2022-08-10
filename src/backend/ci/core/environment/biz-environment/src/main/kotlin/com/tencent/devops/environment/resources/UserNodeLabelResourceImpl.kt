@@ -49,4 +49,9 @@ class UserNodeLabelResourceImpl @Autowired constructor(
     override fun delete(userId: String, projectId: String, nodeId: Long, labelId: Long): Result<Boolean> {
         return Result(nodeLabelService.delete(userId, projectId, nodeId, labelId))
     }
+
+    override fun getLabelNodes(userId: String, projectId: String, labelId: Long): Result<List<Long>> {
+        return Result(nodeLabelService.getLabelNodes(userId, projectId, labelId))
+    }
+
 }

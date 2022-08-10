@@ -33,6 +33,7 @@ import com.tencent.devops.environment.dao.NodeDao
 import com.tencent.devops.environment.dao.NodeLabelDao
 import com.tencent.devops.environment.exception.LabelException
 import com.tencent.devops.environment.pojo.label.CalculateExpression
+import com.tencent.devops.environment.pojo.label.LabelExpression
 import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.pojo.label.Operator
 import com.tencent.devops.environment.utils.LabelRedisUtils
@@ -107,30 +108,43 @@ class LabelService @Autowired constructor(
             return emptyList()
         }
 
-        calculateExpression.labelExpression.forEach { labelExpression ->
-            val labelIds = getLabelIds(
-                projectId = projectId,
-                labelKey = labelExpression.key,
-                labelValues = labelExpression.value
-            )
-
-            return when(labelExpression.operator) {
-                Operator.IN -> {
-                    getInOrExistBitMap(projectId, labelIds).toArray().toList()
-                }
-                Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
-                    getNotInOrNotExistBitMap(projectId, labelIds).toArray().toList()
-                }
-                Operator.EXIST -> {
-                    getInOrExistBitMap(projectId, labelIds).toArray().toList()
-                }
-                else -> {
-                    throw LabelException("Label expression operator not exist. ${labelExpression.operator}")
-                }
+        var finalRoaring64Bitmap = Roaring64Bitmap()
+        for (index in calculateExpression.labelExpression.indices) {
+            val expressionBitMap = getExpressionBitMap(projectId, calculateExpression.labelExpression[index])
+            if (index == 0) {
+                finalRoaring64Bitmap = expressionBitMap
+            } else {
+                finalRoaring64Bitmap.and(expressionBitMap)
             }
         }
 
-        return emptyList()
+        return finalRoaring64Bitmap.toArray().toList()
+    }
+
+    private fun getExpressionBitMap(
+        projectId: String,
+        labelExpression: LabelExpression
+    ): Roaring64Bitmap {
+        val labelIds = getLabelIds(
+            projectId = projectId,
+            labelKey = labelExpression.key,
+            labelValues = labelExpression.value
+        )
+
+        return when(labelExpression.operator) {
+            Operator.IN -> {
+                getInOrExistBitMap(projectId, labelIds)
+            }
+            Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
+                getNotInOrNotExistBitMap(projectId, labelIds)
+            }
+            Operator.EXIST -> {
+                getInOrExistBitMap(projectId, labelIds)
+            }
+            else -> {
+                throw LabelException("Label expression operator not exist. ${labelExpression.operator}")
+            }
+        }
     }
 
     private fun getInOrExistBitMap(

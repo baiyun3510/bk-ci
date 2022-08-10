@@ -90,6 +90,16 @@ class NodeLabelService @Autowired constructor(
         return true
     }
 
+    fun getLabelNodes(userId: String, projectId: String, labelId: Long): List<Long> {
+        val labelBindingNodes = labelRedisUtils.getLabelBindingNodes(projectId, labelId)
+        if (labelBindingNodes.isNullOrBlank()) {
+            return emptyList()
+        }
+
+        return labelBindingNodes.split(",").map { it.trim().toLong() }.toList()
+    }
+
+
     companion object {
         private val logger = LoggerFactory.getLogger(NodeLabelService::class.java)
     }
