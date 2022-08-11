@@ -59,6 +59,17 @@ class LabelDao {
         }
     }
 
+    fun getLabelInfo(
+        dslContext: DSLContext,
+        labelId: Long
+    ): String? {
+        with(TLabel.T_LABEL) {
+            return dslContext.selectFrom(this)
+                .where(ID.eq(labelId))
+                .fetchOne()?.labelKey
+        }
+    }
+
     fun addLabel(
         projectId: String,
         labelInfo: LabelInfo,

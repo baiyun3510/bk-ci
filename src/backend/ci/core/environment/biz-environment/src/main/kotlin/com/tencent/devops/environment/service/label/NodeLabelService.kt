@@ -27,16 +27,20 @@
 
 package com.tencent.devops.environment.service.label
 
+import com.tencent.devops.environment.dao.LabelDao
 import com.tencent.devops.environment.dao.NodeLabelDao
+import com.tencent.devops.environment.exception.LabelException
 import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.utils.LabelRedisUtils
 import org.jooq.DSLContext
+import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class NodeLabelService @Autowired constructor(
+    private val labelDao: LabelDao,
     private val nodeLabelDao: NodeLabelDao,
     private val labelRedisUtils: LabelRedisUtils,
     private val dslContext: DSLContext
@@ -62,16 +66,34 @@ class NodeLabelService @Autowired constructor(
 
     fun add(userId: String, projectId: String, nodeId: Long, labelId: Long): Boolean {
         logger.info("$userId add nodeLabel nodeId: $nodeId, labelId: $labelId")
-        // 先更新数据库
-        nodeLabelDao.addNodeLabel(
-            projectId = projectId,
-            nodeId = nodeId,
-            labelId = labelId,
-            dslContext = dslContext
-        )
 
-        // 删除标签节点缓存
-        labelRedisUtils.deleteLabelBitMapHashKey(projectId, labelId)
+        val labelKey = labelDao.getLabelInfo(dslContext, labelId)
+        if (labelKey.isNullOrBlank()) {
+            throw LabelException("LabelId: $labelId labelKey is null or blank.")
+        }
+
+        dslContext.transaction { configuration ->
+            val context = DSL.using(configuration)
+            // 绑定单独key标签
+            nodeLabelDao.addNodeLabel(
+                projectId = projectId,
+                nodeId = nodeId,
+                labelId = labelDao.getLabelId(dslContext, projectId, labelKey) ?:
+                throw LabelException("Labelkey: $labelKey does not exist."),
+                dslContext = context
+            )
+
+            // 先更新数据库
+            nodeLabelDao.addNodeLabel(
+                projectId = projectId,
+                nodeId = nodeId,
+                labelId = labelId,
+                dslContext = context
+            )
+
+            // 删除标签节点缓存
+            labelRedisUtils.deleteLabelBitMapHashKey(projectId, labelId)
+        }
 
         return true
     }
