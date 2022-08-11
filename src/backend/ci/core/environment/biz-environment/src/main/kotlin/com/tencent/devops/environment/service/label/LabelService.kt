@@ -192,7 +192,7 @@ class LabelService @Autowired constructor(
         labelId: Long
     ): String {
         val bitMapNodes = labelRedisUtils.getLabelBindingNodes(projectId, labelId)
-        if (bitMapNodes == null) {
+        if (bitMapNodes.isNullOrBlank()) {
             val labelBindingNodes = nodeLabelDao.getLabelNodes(dslContext, labelId)
             return if (labelBindingNodes == null) {
                 ""
