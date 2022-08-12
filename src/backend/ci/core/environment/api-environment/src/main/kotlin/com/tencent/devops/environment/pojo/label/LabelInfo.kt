@@ -31,5 +31,19 @@ data class LabelInfo(
     val labelId: Long,
     val labelKey: String,
     val labelValue: String?,
-    val description: String?
+    val description: String?,
+    val labelType: LabelType = LabelType.CUSTOM
 )
+
+
+enum class LabelType {
+    /**
+     * 用户自定义标签
+     */
+    CUSTOM,
+
+    /**
+     * 系统内置标签
+     */
+    SYSTEM
+}

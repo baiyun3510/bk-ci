@@ -26,15 +26,13 @@
  */
 package com.tencent.devops.environment.utils
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.tencent.devops.common.redis.RedisOperation
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class LabelRedisUtils @Autowired constructor(
-    private val redisOperation: RedisOperation,
-    private val objectMapper: ObjectMapper
+    private val redisOperation: RedisOperation
 ) {
 
     /**
@@ -53,7 +51,7 @@ class LabelRedisUtils @Autowired constructor(
         val labelBindingNodesStr = labelBindingNodes.removePrefix(NODE_SEPARATOR).toString()
 
         redisOperation.hset(
-            key = labelBitMapKey(),
+            key = LABEL_BIT_MAP,
             hashKey = labelBitMapHashKey(projectId, labelId),
             values = labelBindingNodesStr
         )
@@ -61,22 +59,28 @@ class LabelRedisUtils @Autowired constructor(
         return labelBindingNodesStr
     }
 
+    /**
+     * 获取标签下的节点列表
+     */
     fun getLabelBindingNodes(
         projectId: String,
         labelId: Long
     ): String? {
         return redisOperation.hget(
-            key = labelBitMapKey(),
+            key = LABEL_BIT_MAP,
             hashKey = labelBitMapHashKey(projectId, labelId)
         )
     }
 
+    /**
+     * 删除标签关联节点列表缓存
+     */
     fun deleteLabelBitMapHashKey(
         projectId: String,
         labelId: Long
     ) {
         redisOperation.hdelete(
-            key = labelBitMapKey(),
+            key = LABEL_BIT_MAP,
             hashKey = labelBitMapHashKey(projectId, labelId)
         )
     }
@@ -96,7 +100,7 @@ class LabelRedisUtils @Autowired constructor(
         val projectNodesStr = projectNodes.removePrefix(NODE_SEPARATOR).toString()
 
         redisOperation.hset(
-            key = nodeBitMapKey(),
+            key = NODE_BIT_MAP,
             hashKey = nodeBitMapHashKey(projectId),
             values = projectNodesStr
         )
@@ -104,38 +108,64 @@ class LabelRedisUtils @Autowired constructor(
         return projectNodesStr
     }
 
+    /**
+     * 获取单项目下关联的节点列表
+     */
     fun getProjectNodes(
         projectId: String
     ): String? {
         return redisOperation.hget(
-            key = nodeBitMapKey(),
+            key = NODE_BIT_MAP,
             hashKey = nodeBitMapHashKey(projectId)
         )
     }
 
+    /**
+     * 删除项目关联节点列表
+     */
     fun deleteProjectNodes(projectId: String) {
         redisOperation.hdelete(
-            key = nodeBitMapKey(),
+            key = NODE_BIT_MAP,
             hashKey = nodeBitMapHashKey(projectId)
         )
     }
 
-    private fun labelBitMapKey() = LABEL_BIT_MAP
+    /**
+     * 获取系统标签key列表
+     */
+    fun getSystemLabelKey(): List<String> {
+        return redisOperation.getSetMembers(SYSTEM_LABEL_KEY)?.toList() ?: emptyList()
+    }
+
+    /**
+     * 添加系统标签key
+     */
+    fun addSystemLabelKeys(labelKeys: List<String>) {
+        labelKeys.forEach {
+            redisOperation.addSetValue(SYSTEM_LABEL_KEY, it)
+        }
+    }
+
+    /**
+     * 删除系统标签缓存
+     */
+    fun deleteSystemLabelKey() {
+        redisOperation.delete(SYSTEM_LABEL_KEY)
+    }
 
     private fun labelBitMapHashKey(projectId: String, labelId: Long): String {
         return "$LABEL_BIT_MAP:$projectId:$labelId"
 
     }
 
-    private fun nodeBitMapKey() = NODE_BIT_MAP
-
     private fun nodeBitMapHashKey(projectId: String): String {
         return "$NODE_BIT_MAP:$projectId"
     }
 
     companion object {
-        private const val LABEL_BIT_MAP = "roaringbitmap:label"
-        private const val NODE_BIT_MAP = "roaringbitmap:node"
+        private const val LABEL_BIT_MAP = "environment:roaringbitmap:label"
+        private const val NODE_BIT_MAP = "environment:roaringbitmap:node"
+        private const val SYSTEM_LABEL_KEY = "environment:systemlabel"
 
         private const val NODE_SEPARATOR = ","
     }

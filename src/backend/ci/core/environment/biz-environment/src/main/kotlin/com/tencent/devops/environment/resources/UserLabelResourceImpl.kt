@@ -30,6 +30,7 @@ package com.tencent.devops.environment.resources
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.environment.api.UserLabelResource
+import com.tencent.devops.environment.exception.LabelException
 import com.tencent.devops.environment.pojo.label.CalculateExpression
 import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.service.label.LabelService
@@ -44,6 +45,11 @@ class UserLabelResourceImpl @Autowired constructor(
     }
 
     override fun add(userId: String, projectId: String, labelInfo: LabelInfo): Result<Boolean> {
+        // 用户新增标签时拦截系统标签添加
+        if (labelService.getSystemLabel().contains(labelInfo.labelKey)) {
+            throw LabelException("用户无法添加系统标签!")
+        }
+
         return Result(labelService.add(userId, projectId, labelInfo))
     }
 
@@ -51,7 +57,11 @@ class UserLabelResourceImpl @Autowired constructor(
         return Result(labelService.delete(userId, projectId, labelId))
     }
 
-    override fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): Result<List<Long>> {
+    override fun calculateNodes(
+        userId: String,
+        projectId: String,
+        calculateExpression: CalculateExpression
+    ): Result<List<Long>> {
         return Result(labelService.calculateNodes(userId, projectId, calculateExpression))
     }
 }

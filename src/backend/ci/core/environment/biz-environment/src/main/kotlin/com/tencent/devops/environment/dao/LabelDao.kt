@@ -28,6 +28,7 @@
 package com.tencent.devops.environment.dao
 
 import com.tencent.devops.environment.pojo.label.LabelInfo
+import com.tencent.devops.environment.pojo.label.LabelType
 import com.tencent.devops.model.environment.tables.TLabel
 import com.tencent.devops.model.environment.tables.records.TLabelRecord
 import org.jooq.DSLContext
@@ -82,6 +83,7 @@ class LabelDao {
                 PROJECT_ID,
                 LABEL_KEY,
                 LABEL_VALUE,
+                LABEL_TYPE,
                 DESCRIPTION,
                 GMT_CREATE,
                 GMT_MODIFIED
@@ -90,6 +92,7 @@ class LabelDao {
                     projectId,
                     labelInfo.labelKey,
                     "",
+                    labelInfo.labelType.name,
                     "",
                     LocalDateTime.now(),
                     LocalDateTime.now()
@@ -120,6 +123,7 @@ class LabelDao {
                     PROJECT_ID,
                     LABEL_KEY,
                     LABEL_VALUE,
+                    LABEL_TYPE,
                     DESCRIPTION,
                     GMT_CREATE,
                     GMT_MODIFIED
@@ -128,6 +132,7 @@ class LabelDao {
                         projectId,
                         labelInfo.labelKey,
                         labelInfo.labelValue,
+                        labelInfo.labelType.name,
                         labelInfo.description,
                         LocalDateTime.now(),
                         LocalDateTime.now()
@@ -147,6 +152,16 @@ class LabelDao {
             dslContext.deleteFrom(this)
                 .where(ID.`in`(labelIds))
                 .execute()
+        }
+    }
+
+    fun getSystemLabelKeys(
+        dslContext: DSLContext
+    ): List<TLabelRecord> {
+        with(TLabel.T_LABEL) {
+            return dslContext.selectFrom(this)
+                .where(LABEL_TYPE.eq(LabelType.SYSTEM.name))
+                .fetch()
         }
     }
 }
