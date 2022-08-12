@@ -85,6 +85,9 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     @Value("\${process.deletedPipelineStoreDays:30}")
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
 
+    @Value("\${misc.bkrepo.baseUrl:}")
+    private var bkRepoBaseUrl: String = ""
+
     @PostConstruct
     fun init() {
         logger.info("start init pipelineBuildHistoryDataClearJob")
@@ -164,6 +167,10 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         } finally {
             lock.unlock()
         }
+    }
+
+    private fun getBkRepoUrl(): String {
+        return bkRepoBaseUrl.removeSuffix("/")
     }
 
     private fun doClearBus(
