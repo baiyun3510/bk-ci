@@ -27,11 +27,14 @@
 
 package com.tencent.devops.environment.service.label
 
+import com.tencent.devops.environment.dao.EnvDao
+import com.tencent.devops.environment.dao.EnvNodeDao
 import com.tencent.devops.environment.dao.LabelDao
 import com.tencent.devops.environment.dao.NodeLabelDao
 import com.tencent.devops.environment.exception.LabelException
 import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.utils.LabelRedisUtils
+import com.tencent.devops.model.environment.tables.records.TEnvRecord
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
@@ -40,6 +43,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class NodeLabelService @Autowired constructor(
+    private val envDao: EnvDao,
+    private val envNodeDao: EnvNodeDao,
     private val labelDao: LabelDao,
     private val nodeLabelDao: NodeLabelDao,
     private val labelRedisUtils: LabelRedisUtils,
@@ -121,8 +126,55 @@ class NodeLabelService @Autowired constructor(
         return labelBindingNodes.split(",").map { it.trim().toLong() }.toList()
     }
 
+    fun refreshEnvironmentLabel(
+        minEnvId: Long?,
+        maxEnvId: Long?,
+        projectId: String?,
+        environmentId: Long?
+    ): Boolean {
+        var envIdList = listOf<TEnvRecord>()
+        // 全量刷新
+        if (projectId == null && environmentId == null && minEnvId != null && maxEnvId != null) {
+            envIdList = envDao.listAll(minEnvId, maxEnvId, dslContext)
+        }
+
+        // 单项目刷新
+        if (projectId != null && environmentId == null) {
+            envIdList = envDao.list(dslContext, projectId)
+        }
+
+        // 单环境刷新
+        if (projectId != null && environmentId != null) {
+            envIdList = listOf(envDao.get(dslContext, projectId, environmentId))
+        }
+
+        envIdList.stream().forEach {
+            transferEnv2Label(it.projectId, it.envId, it.envName)
+        }
+
+        return true
+    }
+
+    private fun transferEnv2Label(projectId: String, envId: Long, envName: String) {
+        val envNodes = envNodeDao.list(dslContext, projectId, listOf(envId))
+        val envLabelId = labelDao.addLabel(
+            projectId = projectId,
+            labelInfo = LabelInfo(
+                labelId = 0,
+                labelKey = ENV_LABEL_KEY,
+                labelValue = envName,
+                description = null
+            ),
+            dslContext = dslContext
+        )
+
+        envNodes.forEach {
+            add("", projectId, it.nodeId, envLabelId)
+        }
+    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(NodeLabelService::class.java)
+        private const val ENV_LABEL_KEY = "environment"
     }
 }

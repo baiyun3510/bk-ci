@@ -51,8 +51,8 @@ class LabelService @Autowired constructor(
     private val nodeDao: NodeDao,
     private val labelDao: LabelDao,
     private val nodeLabelDao: NodeLabelDao,
-    private val labelRedisUtils: LabelRedisUtils,
-    private val dslContext: DSLContext
+    private val dslContext: DSLContext,
+    private val labelRedisUtils: LabelRedisUtils
 ) {
     fun get(userId: String, projectId: String): List<LabelInfo> {
         val labelList = mutableListOf<LabelInfo>()
@@ -110,6 +110,9 @@ class LabelService @Autowired constructor(
         return true
     }
 
+    /**
+     * 计算标签表达式节点
+     */
     fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): List<Long> {
         logger.info("$userId calculateNodes projectId: $projectId " +
                         "calculateExpression: ${JsonUtil.toJson(calculateExpression)}")
@@ -157,14 +160,11 @@ class LabelService @Autowired constructor(
         )
 
         return when(labelExpression.operator) {
-            Operator.IN -> {
+            Operator.IN, Operator.EXIST -> {
                 getInOrExistBitMap(projectId, labelIds)
             }
             Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
                 getNotInOrNotExistBitMap(projectId, labelIds)
-            }
-            Operator.EXIST -> {
-                getInOrExistBitMap(projectId, labelIds)
             }
             else -> {
                 throw LabelException("Label expression operator not exist. ${labelExpression.operator}")
