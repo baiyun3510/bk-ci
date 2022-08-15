@@ -89,6 +89,11 @@ class RtxServiceImpl @Autowired constructor(
             return
         }
 
+        if (rtxNotifyMessageWithOperation.getReceivers().isEmpty()) {
+            logger.warn("rtx receiver is empty")
+            return
+        }
+
         val tofConfig = TofUtil.getTofConfig(rtxNotifyMessageWithOperation, tofConfiguration)
         if (tofConfig == null) {
             logger.info("null tofConfig , $rtxNotifyMessageWithOperation")

@@ -83,6 +83,11 @@ class EmailServiceImpl @Autowired constructor(
             return
         }
 
+        if (emailNotifyMessageWithOperation.getReceivers().isEmpty()) {
+            logger.warn("email receivers is empty")
+            return
+        }
+
         val tofConfig = TofUtil.getTofConfig(emailNotifyMessageWithOperation, configuration)
         if (tofConfig == null) {
             logger.info("null tofConfig , $emailNotifyMessageWithOperation")
