@@ -58,7 +58,7 @@ function _M:getTarget(devops_tag, service_name, cache_tail, ns_config)
             local prefix = nil
             if gateway_project == 'codecc' then
                 prefix = 'bk-codecc-' .. service_name
-                devops_tag = 'ieg-bkdevops-codecc-' .. devops_tag
+                devops_tag = 'ieg-codeccsvr-codecc-' .. devops_tag
             else
                 prefix = service_name .. '-' .. ngx.var.chart_name .. '-' .. service_name
             end
