@@ -163,7 +163,7 @@ class NodeLabelService @Autowired constructor(
                 labelId = 0,
                 labelKey = ENV_LABEL_KEY,
                 labelValue = envName,
-                description = null
+                description = ""
             ),
             dslContext = dslContext
         )
