@@ -25,26 +25,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.service.common
+package com.tencent.devops.store.pojo.common
 
-import com.tencent.devops.auth.pojo.vo.DeptInfoVo
-import com.tencent.devops.common.pipeline.container.Stage
-import com.tencent.devops.store.pojo.common.DeptInfo
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-interface StoreDeptService {
-
-    /**
-     * 获取模板下插件对应的机构信息
-     */
-    fun getTemplateAtomDeptMap(stageList: List<Stage>): Map<String, List<DeptInfo>?>
-
-    /**
-     * 获取模板下镜像对应的机构信息
-     */
-    fun getTemplateImageDeptMap(stageList: List<Stage>): Map<String, List<DeptInfo>?>
-
-    /**
-     * 根据机构名称获取机构信息
-     */
-    fun getDeptByName(deptName: String, userId: String): DeptInfoVo?
-}
+@ApiModel("组织列表返回")
+data class DeptInfoVo(
+    @ApiModelProperty("数量")
+    val count: Int,
+    @ApiModelProperty("返回列表内容")
+    val results: List<DeptInfoDo>
+)

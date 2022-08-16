@@ -278,6 +278,7 @@ class AuthDeptServiceImpl @Autowired constructor(
     }
 
     private fun callUserCenter(url: String, searchEntity: EsbBaseReq): String {
+        logger.info("callUserCenter url is $url, searchEntity is $searchEntity")
         val url = getAuthRequestUrl(url)
         val content = objectMapper.writeValueAsString(searchEntity)
         val mediaType = MediaType.parse("application/json; charset=utf-8")

@@ -27,6 +27,7 @@
 
 package com.tencent.devops.store.service.common.impl
 
+import com.tencent.devops.auth.pojo.vo.DeptInfoVo
 import com.tencent.devops.common.pipeline.container.Container
 import com.tencent.devops.common.pipeline.container.Stage
 import com.tencent.devops.common.pipeline.container.VMBuildContainer
@@ -54,6 +55,21 @@ class StoreDeptServiceImpl @Autowired constructor(
             }
         }
         return getStoreDeptRelMap(templateImageCodeSet, StoreTypeEnum.IMAGE.type.toByte())
+    }
+
+    override fun getDeptByName(deptName: String, userId: String): DeptInfoVo? {
+//        val search = SearchUserAndDeptEntity(
+//            bk_app_code = appCode!!,
+//            bk_app_secret = appSecret!!,
+//            bk_username = userId,
+//            fields = null,
+//            lookupField = NAME,
+//            exactLookups = deptName,
+//            fuzzyLookups = null,
+//            accessToken = null
+//        )
+//        return getDeptInfo(search)
+        return null
     }
 
     private fun handleTemplateImageCodeSet(
