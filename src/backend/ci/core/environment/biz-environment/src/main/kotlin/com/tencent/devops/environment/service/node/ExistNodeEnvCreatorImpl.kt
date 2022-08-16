@@ -39,6 +39,7 @@ import com.tencent.devops.environment.permission.EnvironmentPermissionService
 import com.tencent.devops.environment.pojo.EnvCreateInfo
 import com.tencent.devops.environment.pojo.EnvironmentId
 import com.tencent.devops.environment.pojo.enums.NodeSource
+import com.tencent.devops.environment.service.label.NodeLabelService
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,6 +51,7 @@ class ExistNodeEnvCreatorImpl @Autowired constructor(
     private val envDao: EnvDao,
     private val nodeDao: NodeDao,
     private val envNodeDao: EnvNodeDao,
+    private val nodeLabelService: NodeLabelService,
     private val environmentPermissionService: EnvironmentPermissionService
 ) : EnvCreator {
 
@@ -109,6 +111,9 @@ class ExistNodeEnvCreatorImpl @Autowired constructor(
             )
             envNodeDao.batchStoreEnvNode(context, nodeLongIds, envId, projectId)
             environmentPermissionService.createEnv(userId, projectId, envId, envCreateInfo.name)
+
+            // 添加环境标签
+            nodeLabelService.setEnvLabel(projectId, envCreateInfo.name, nodeLongIds)
         }
         return EnvironmentId(HashUtil.encodeLongId(envId))
     }

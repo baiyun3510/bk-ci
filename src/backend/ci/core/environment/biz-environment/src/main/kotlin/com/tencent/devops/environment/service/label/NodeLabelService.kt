@@ -117,6 +117,26 @@ class NodeLabelService @Autowired constructor(
         return true
     }
 
+    fun batchDeleteEnvLabel(userId: String, projectId: String, envName: String, nodeIdList: List<Long>) {
+        logger.info("$userId delete nodeLabel nodeId: $nodeIdList, labelValue: $envName")
+
+        val envLabelId = labelDao.getLabelId(
+            dslContext = dslContext,
+            projectId = projectId,
+            labelKey = ENV_LABEL_KEY,
+            labelValue = envName
+        ) ?: return
+
+        nodeLabelDao.batchDeleteNodeLabel(
+            labelId = envLabelId,
+            nodeIdList = nodeIdList,
+            dslContext = dslContext
+        )
+
+        // 删除标签节点缓存
+        labelRedisUtils.deleteLabelBitMapHashKey(projectId, envLabelId)
+    }
+
     fun getLabelNodes(userId: String, projectId: String, labelId: Long): List<Long> {
         val labelBindingNodes = labelRedisUtils.getLabelBindingNodes(projectId, labelId)
         if (labelBindingNodes.isNullOrBlank()) {
@@ -153,6 +173,65 @@ class NodeLabelService @Autowired constructor(
         }
 
         return true
+    }
+
+    /**
+     * 新增环境变量标签
+     */
+    fun setEnvLabel(projectId: String, envName: String, nodeIds: List<Long>) {
+        val envLabelId = labelDao.addLabel(
+            projectId = projectId,
+            labelInfo = LabelInfo(
+                labelId = 0,
+                labelKey = ENV_LABEL_KEY,
+                labelValue = envName,
+                description = ""
+            ),
+            dslContext = dslContext
+        )
+
+        nodeIds.forEach {
+            add("", projectId, it, envLabelId)
+        }
+    }
+
+    /**
+     * 删除环境变量标签
+     */
+    fun removeEnvLabel(projectId: String, envName: String) {
+        val envLabelId = labelDao.getLabelId(
+            dslContext = dslContext,
+            projectId = projectId,
+            labelKey = ENV_LABEL_KEY,
+            labelValue = envName
+        ) ?: return
+
+        dslContext.transaction { configuration ->
+            val context = DSL.using(configuration)
+            labelDao.batchDeleteLabel(context, listOf(envLabelId))
+            nodeLabelDao.deleteLabel(context, envLabelId)
+        }
+
+        // 删除标签节点缓存
+        labelRedisUtils.deleteLabelBitMapHashKey(projectId, envLabelId)
+    }
+
+    /**
+     * 变更环境变量标签value
+     */
+    fun resetEnvLabel(projectId: String, oldEnvName: String, newEnvName: String, desc: String) {
+        val envLabelId = labelDao.getLabelId(
+            dslContext = dslContext,
+            projectId = projectId,
+            labelKey = ENV_LABEL_KEY,
+            labelValue = oldEnvName
+        ) ?: return
+
+        // 更新标签值value
+        labelDao.updateLabelValueWithId(envLabelId, newEnvName, desc, dslContext)
+
+        // 删除标签节点缓存
+        labelRedisUtils.deleteLabelBitMapHashKey(projectId, envLabelId)
     }
 
     private fun transferEnv2Label(projectId: String, envId: Long, envName: String) {

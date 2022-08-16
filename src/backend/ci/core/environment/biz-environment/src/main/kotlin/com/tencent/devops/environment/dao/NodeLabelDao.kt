@@ -102,6 +102,19 @@ class NodeLabelDao {
         }
     }
 
+    fun batchDeleteNodeLabel(
+        dslContext: DSLContext,
+        labelId: Long,
+        nodeIdList: List<Long>
+    ) {
+        with(TNodeLabel.T_NODE_LABEL) {
+            dslContext.deleteFrom(this)
+                .where(LABEL_ID.eq(labelId))
+                .and(NODE_ID.`in`(nodeIdList))
+                .execute()
+        }
+    }
+
     fun deleteLabel(
         dslContext: DSLContext,
         labelId: Long

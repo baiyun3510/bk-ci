@@ -73,6 +73,7 @@ import com.tencent.devops.environment.pojo.enums.EnvType
 import com.tencent.devops.environment.pojo.enums.NodeStatus
 import com.tencent.devops.environment.pojo.enums.NodeType
 import com.tencent.devops.environment.pojo.enums.SharedEnvType
+import com.tencent.devops.environment.service.label.NodeLabelService
 import com.tencent.devops.environment.service.node.EnvCreatorFactory
 import com.tencent.devops.environment.service.slave.SlaveGatewayService
 import com.tencent.devops.environment.utils.AgentStatusUtils.getAgentStatus
@@ -96,7 +97,8 @@ class EnvService @Autowired constructor(
     private val slaveGatewayService: SlaveGatewayService,
     private val environmentPermissionService: EnvironmentPermissionService,
     private val envShareProjectDao: EnvShareProjectDao,
-    private val client: Client
+    private val client: Client,
+    private val nodeLabelService: NodeLabelService
 ) : IEnvService {
 
     override fun checkName(projectId: String, envId: Long?, envName: String) {
@@ -158,6 +160,14 @@ class EnvService @Autowired constructor(
                     projectId = projectId,
                     envId = envId,
                     envName = envUpdateInfo.name
+                )
+
+                // 如果环境名称有变更，重置环境标签
+                nodeLabelService.resetEnvLabel(
+                    projectId = projectId,
+                    oldEnvName = existEnv.envName,
+                    newEnvName = envUpdateInfo.name,
+                    desc = envUpdateInfo.desc
                 )
             }
         }
@@ -465,7 +475,7 @@ class EnvService @Autowired constructor(
 
     override fun deleteEnvironment(userId: String, projectId: String, envHashId: String) {
         val envId = HashUtil.decodeIdToLong(envHashId)
-        envDao.getOrNull(dslContext, projectId, envId) ?: return
+        val envRecord = envDao.getOrNull(dslContext, projectId, envId) ?: return
         if (!environmentPermissionService.checkEnvPermission(userId, projectId, envId, AuthPermission.DELETE)) {
             throw PermissionForbiddenException(
                 message = MessageCodeUtil.getCodeLanMessage(ERROR_ENV_NO_DEL_PERMISSSION)
@@ -477,6 +487,9 @@ class EnvService @Autowired constructor(
             envDao.deleteEnv(context, envId)
             environmentPermissionService.deleteEnv(projectId, envId)
         }
+
+        // 删除环境标签
+        nodeLabelService.removeEnvLabel(projectId, envRecord.envName)
     }
 
     override fun listRawServerNodeByEnvHashIds(
@@ -605,6 +618,9 @@ class EnvService @Autowired constructor(
         }
 
         envNodeDao.batchStoreEnvNode(dslContext, toAddNodeIds.toList(), envId, projectId)
+
+        // 新增标签关联节点
+        nodeLabelService.setEnvLabel(projectId, env.envName, toAddNodeIds.toList())
     }
 
     override fun deleteEnvNodes(userId: String, projectId: String, envHashId: String, nodeHashIds: List<String>) {
@@ -615,11 +631,16 @@ class EnvService @Autowired constructor(
             )
         }
 
+        val nodeIds = nodeHashIds.map { HashUtil.decodeIdToLong(it) }
         envNodeDao.batchDeleteEnvNode(
             dslContext = dslContext,
             projectId = projectId,
             envId = HashUtil.decodeIdToLong(envHashId),
-            nodeIds = nodeHashIds.map { HashUtil.decodeIdToLong(it) })
+            nodeIds = nodeIds)
+
+        // 删除标签关联节点
+        val envRecord = envDao.get(dslContext, projectId, envId)
+        nodeLabelService.batchDeleteEnvLabel(userId, projectId, envRecord.envName, nodeIds)
     }
 
     override fun listEnvironmentByLimit(projectId: String, offset: Int?, limit: Int?): Page<EnvWithPermission> {

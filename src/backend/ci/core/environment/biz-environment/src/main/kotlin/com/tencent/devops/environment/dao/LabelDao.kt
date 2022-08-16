@@ -143,6 +143,41 @@ class LabelDao {
         }
     }
 
+    fun updateLabelValue(
+        projectId: String,
+        labelKey: String,
+        labelValue: String,
+        labelNewValue: String,
+        description: String,
+        dslContext: DSLContext
+    ) {
+        with(TLabel.T_LABEL) {
+            dslContext.update(this)
+                .set(LABEL_VALUE, labelNewValue)
+                .set(GMT_MODIFIED, LocalDateTime.now())
+                .where(PROJECT_ID.eq(projectId))
+                .and(LABEL_KEY.eq(labelKey))
+                .and(LABEL_VALUE.eq(labelValue))
+                .execute()
+        }
+    }
+
+    fun updateLabelValueWithId(
+        labelId: Long,
+        labelNewValue: String,
+        description: String,
+        dslContext: DSLContext
+    ) {
+        with(TLabel.T_LABEL) {
+            dslContext.update(this)
+                .set(LABEL_VALUE, labelNewValue)
+                .set(DESCRIPTION, description)
+                .set(GMT_MODIFIED, LocalDateTime.now())
+                .where(ID.eq(labelId))
+                .execute()
+        }
+    }
+
     fun batchDeleteLabel(dslContext: DSLContext, labelIds: List<Long>) {
         if (labelIds.isEmpty()) {
             return
