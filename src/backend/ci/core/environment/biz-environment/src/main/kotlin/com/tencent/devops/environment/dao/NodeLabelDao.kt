@@ -84,6 +84,7 @@ class NodeLabelDao {
                     LocalDateTime.now(),
                     LocalDateTime.now()
                 )
+                .onDuplicateKeyIgnore()
                 .returning(ID)
                 .fetchOne()!!.id
         }
