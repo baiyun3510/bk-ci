@@ -88,6 +88,11 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     @Value("\${misc.bkrepo.baseUrl:}")
     private var bkRepoBaseUrl: String = ""
 
+    @Value("\${build.data.clear.basicAuth.bkrepo.username:#{null}}")
+    private val repoUserName: String? = null
+    @Value("\${build.data.clear.basicAuth.bkrepo.password:#{null}}")
+    private val repoPassword: String? = null
+
     @PostConstruct
     fun init() {
         logger.info("start init pipelineBuildHistoryDataClearJob")
