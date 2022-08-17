@@ -67,9 +67,9 @@ class NodeLabelDao {
         nodeId: Long,
         labelId: Long,
         dslContext: DSLContext
-    ): Long {
+    ) {
         with(TNodeLabel.T_NODE_LABEL) {
-            return dslContext.insertInto(
+            dslContext.insertInto(
                 this,
                 PROJECT_ID,
                 NODE_ID,
@@ -85,8 +85,7 @@ class NodeLabelDao {
                     LocalDateTime.now()
                 )
                 .onDuplicateKeyIgnore()
-                .returning(ID)
-                .fetchOne()!!.id
+                .execute()
         }
     }
 
