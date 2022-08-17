@@ -1,7 +1,5 @@
 package com.tencent.devops.store.service.common.impl
 
-import com.tencent.devops.auth.api.service.ServiceDeptResource
-import com.tencent.devops.auth.pojo.DeptInfo
 import com.tencent.devops.common.api.constant.CommonMessageCode
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
@@ -12,7 +10,7 @@ import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.project.api.service.ServiceUserResource
-import com.tencent.devops.project.pojo.user.UserDeptDetail
+import com.tencent.devops.project.pojo.DeptInfo
 import com.tencent.devops.store.dao.common.PublishersDao
 import com.tencent.devops.store.dao.common.StoreDockingPlatformDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
@@ -22,6 +20,7 @@ import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import com.tencent.devops.store.pojo.common.enums.PublisherType
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.PublishersDataService
+import com.tencent.devops.store.service.common.StoreDeptService
 import com.tencent.devops.store.service.common.StoreMemberService
 import com.tencent.devops.store.service.common.StoreUserService
 import org.jooq.DSLContext
@@ -37,7 +36,8 @@ class PublishersDataServiceImpl @Autowired constructor(
     private val client: Client,
     private val storeDockingPlatformDao: StoreDockingPlatformDao,
     private val storeMemberDao: StoreMemberDao,
-    private val storeUserService: StoreUserService
+    private val storeUserService: StoreUserService,
+    private val storeDeptService: StoreDeptService
 ) : PublishersDataService {
     override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
         val storePublisherInfoRecords = mutableListOf<TStorePublisherInfoRecord>()
@@ -228,10 +228,11 @@ class PublishersDataServiceImpl @Autowired constructor(
         //  根据解析组织名称获取组织ID
         val deptNames = organization.split("/")
         val deptInfos = mutableListOf<DeptInfo>()
-        deptNames.forEachIndexed(){ index, deptName ->
-            val result = client.get(ServiceDeptResource::class).getDeptByName(userId, deptName).data
-            result?.let { it -> deptInfos.add(index, it.results[0] ) }
-        }
+//        deptNames.forEachIndexed(){ index, deptName ->
+//            val result = client.get(ServiceDeptResource::class).getDeptByName(userId, deptName).data
+//            result?.let { it -> deptInfos.add(index, it.results[0] ) }
+//        }
+        storeDeptService.getDeptByName(userId, "技术运营部")
         return deptInfos
     }
 

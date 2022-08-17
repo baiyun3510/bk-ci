@@ -27,9 +27,9 @@
 
 package com.tencent.devops.store.service.common
 
-import com.tencent.devops.auth.pojo.vo.DeptInfoVo
 import com.tencent.devops.common.pipeline.container.Stage
 import com.tencent.devops.store.pojo.common.DeptInfo
+import com.tencent.devops.store.pojo.common.DeptInfoVo
 
 interface StoreDeptService {
 

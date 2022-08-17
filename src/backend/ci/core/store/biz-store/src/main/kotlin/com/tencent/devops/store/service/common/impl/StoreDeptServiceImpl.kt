@@ -27,17 +27,20 @@
 
 package com.tencent.devops.store.service.common.impl
 
-import com.tencent.devops.auth.pojo.vo.DeptInfoVo
 import com.tencent.devops.common.pipeline.container.Container
 import com.tencent.devops.common.pipeline.container.Stage
 import com.tencent.devops.common.pipeline.container.VMBuildContainer
 import com.tencent.devops.common.pipeline.type.StoreDispatchType
 import com.tencent.devops.store.dao.common.StoreDeptRelDao
 import com.tencent.devops.store.pojo.common.DeptInfo
+import com.tencent.devops.store.pojo.common.DeptInfoVo
+import com.tencent.devops.store.pojo.common.SearchUserAndDeptEntity
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.StoreDeptService
 import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
@@ -45,6 +48,15 @@ class StoreDeptServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val storeDeptRelDao: StoreDeptRelDao
 ) : StoreDeptService {
+
+    @Value("\${esb.code:#{null}}")
+    val appCode: String? = null
+
+    @Value("\${esb.secret:#{null}}")
+    val appSecret: String? = null
+
+    @Value("\${bk.user.host:#{null}}")
+    val bkUserHost: String? = null
 
     override fun getTemplateImageDeptMap(stageList: List<Stage>): Map<String, List<DeptInfo>?> {
         val templateImageCodeSet = mutableSetOf<String>()
@@ -58,17 +70,18 @@ class StoreDeptServiceImpl @Autowired constructor(
     }
 
     override fun getDeptByName(deptName: String, userId: String): DeptInfoVo? {
-//        val search = SearchUserAndDeptEntity(
-//            bk_app_code = appCode!!,
-//            bk_app_secret = appSecret!!,
-//            bk_username = userId,
-//            fields = null,
-//            lookupField = NAME,
-//            exactLookups = deptName,
-//            fuzzyLookups = null,
-//            accessToken = null
-//        )
+        val search = SearchUserAndDeptEntity(
+            bk_app_code = appCode!!,
+            bk_app_secret = appSecret!!,
+            bk_username = userId,
+            fields = null,
+            lookupField = "name",
+            exactLookups = deptName,
+            fuzzyLookups = null,
+            accessToken = null
+        )
 //        return getDeptInfo(search)
+        logger.info("store getDeptByName search is $search")
         return null
     }
 
@@ -122,5 +135,8 @@ class StoreDeptServiceImpl @Autowired constructor(
             storeDeptRelMap[storeCode] = null
         }
         return storeDeptRelMap
+    }
+    companion object {
+        private val logger = LoggerFactory.getLogger(StoreDeptServiceImpl::class.java)
     }
 }
