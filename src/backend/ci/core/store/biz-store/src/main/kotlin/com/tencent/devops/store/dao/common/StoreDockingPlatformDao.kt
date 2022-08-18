@@ -294,7 +294,7 @@ class StoreDockingPlatformDao {
                 summary = summary,
                 principal = principal,
                 logoUrl = logoUrl,
-                labels = labels.split(","),
+                labels = if (!labels.isNullOrBlank()) labels.split(",") else null,
                 creator = creator,
                 modifier = modifier,
                 createTime = DateTimeUtil.toDateTime(createTime),
