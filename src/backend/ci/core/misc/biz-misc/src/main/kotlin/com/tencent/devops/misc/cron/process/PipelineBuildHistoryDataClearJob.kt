@@ -376,7 +376,11 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             }
             totalHandleNum += DEFAULT_PAGE_SIZE
         }
-        cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
+        try {
+            cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
+        } catch (e: Exception) {
+            logger.error("cleanBuildHistoryRepoData|$projectId|$pipelineId|$cleanBuilds")
+        }
     }
 
     fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
