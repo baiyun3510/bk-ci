@@ -81,7 +81,7 @@ class StoreDeptServiceImpl @Autowired constructor(
             accessToken = null
         )
 //        return getDeptInfo(search)
-        logger.info("store getDeptByName search is $search")
+        logger.info("store getDeptByName search is $search  host is $bkUserHost")
         return null
     }
 

@@ -44,50 +44,50 @@ class PublishersDataServiceImpl @Autowired constructor(
         val storePublisherMemberRelRecords = mutableListOf<TStorePublisherMemberRelRecord>()
         publishers.forEach {
             val deptInfos = analysisDept(userId, it.organization)
-            val storePublisherInfo = TStorePublisherInfoRecord()
-            val storePublisherInfoId = UUIDUtil.generate()
-            storePublisherInfo.id = storePublisherInfoId
-            storePublisherInfo.publisherCode = it.publishersCode
-            storePublisherInfo.publisherName = it.name
-            storePublisherInfo.publisherType = it.publishersType.name
-            storePublisherInfo.owners = it.owners[0]
-            storePublisherInfo.helper = it.helper
-            storePublisherInfo.firstLevelDeptId = deptInfos[0].id.toLong()
-            storePublisherInfo.firstLevelDeptName = deptInfos[0].name
-            storePublisherInfo.secondLevelDeptId = deptInfos[1].id.toLong()
-            storePublisherInfo.secondLevelDeptName = deptInfos[1].name
-            storePublisherInfo.thirdLevelDeptId = deptInfos[2].id.toLong()
-            storePublisherInfo.thirdLevelDeptName = deptInfos[2].name
-            if (deptInfos.size > 3) {
-                storePublisherInfo.fourthLevelDeptId = deptInfos[3].id.toLong()
-                storePublisherInfo.fourthLevelDeptName = deptInfos[3].name
-            }
-            storePublisherInfo.organizationName = it.organization
-            storePublisherInfo.ownerDeptName = it.ownerDeptName
-            storePublisherInfo.certificationFlag = it.certificationFlag
-            storePublisherInfo.storeType = it.storeType.type.toByte()
-            storePublisherInfo.creator = userId
-            storePublisherInfo.modifier = userId
-            storePublisherInfo.createTime = LocalDateTime.now()
-            storePublisherInfo.updateTime = LocalDateTime.now()
-            storePublisherInfoRecords.add(storePublisherInfo)
-            if (it.publishersType == PublisherType.ORGANIZATION) {
-                //  生成可使用组织发布者进行发布的成员关联
-                logger.debug("CreatePublisherMemberRel publisherCode is ${it.publishersCode}, members is ${it.members}")
-                getStoreMemberService(it.storeType)
-                    .getMemberId(it.publishersCode, it.storeType, it.members)
-                    .data?.map { memberId ->
-                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
-                    storePublisherMemberRel.id = UUIDUtil.generate()
-                    storePublisherMemberRel.publisherId = storePublisherInfoId
-                    storePublisherMemberRel.memberId = memberId
-                    storePublisherMemberRel.creator = userId
-                    storePublisherMemberRel.createTime = LocalDateTime.now()
-                    storePublisherMemberRel.modifier = userId
-                    storePublisherMemberRel.updateTime = LocalDateTime.now()
-                    storePublisherMemberRelRecords.add(storePublisherMemberRel)
-                }
-            }
+//            val storePublisherInfo = TStorePublisherInfoRecord()
+//            val storePublisherInfoId = UUIDUtil.generate()
+//            storePublisherInfo.id = storePublisherInfoId
+//            storePublisherInfo.publisherCode = it.publishersCode
+//            storePublisherInfo.publisherName = it.name
+//            storePublisherInfo.publisherType = it.publishersType.name
+//            storePublisherInfo.owners = it.owners[0]
+//            storePublisherInfo.helper = it.helper
+//            storePublisherInfo.firstLevelDeptId = deptInfos[0].id.toLong()
+//            storePublisherInfo.firstLevelDeptName = deptInfos[0].name
+//            storePublisherInfo.secondLevelDeptId = deptInfos[1].id.toLong()
+//            storePublisherInfo.secondLevelDeptName = deptInfos[1].name
+//            storePublisherInfo.thirdLevelDeptId = deptInfos[2].id.toLong()
+//            storePublisherInfo.thirdLevelDeptName = deptInfos[2].name
+//            if (deptInfos.size > 3) {
+//                storePublisherInfo.fourthLevelDeptId = deptInfos[3].id.toLong()
+//                storePublisherInfo.fourthLevelDeptName = deptInfos[3].name
+//            }
+//            storePublisherInfo.organizationName = it.organization
+//            storePublisherInfo.ownerDeptName = it.ownerDeptName
+//            storePublisherInfo.certificationFlag = it.certificationFlag
+//            storePublisherInfo.storeType = it.storeType.type.toByte()
+//            storePublisherInfo.creator = userId
+//            storePublisherInfo.modifier = userId
+//            storePublisherInfo.createTime = LocalDateTime.now()
+//            storePublisherInfo.updateTime = LocalDateTime.now()
+//            storePublisherInfoRecords.add(storePublisherInfo)
+//            if (it.publishersType == PublisherType.ORGANIZATION) {
+//                //  生成可使用组织发布者进行发布的成员关联
+//                logger.debug("CreatePublisherMemberRel publisherCode is ${it.publishersCode}, members is ${it.members}")
+//                getStoreMemberService(it.storeType)
+//                    .getMemberId(it.publishersCode, it.storeType, it.members)
+//                    .data?.map { memberId ->
+//                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
+//                    storePublisherMemberRel.id = UUIDUtil.generate()
+//                    storePublisherMemberRel.publisherId = storePublisherInfoId
+//                    storePublisherMemberRel.memberId = memberId
+//                    storePublisherMemberRel.creator = userId
+//                    storePublisherMemberRel.createTime = LocalDateTime.now()
+//                    storePublisherMemberRel.modifier = userId
+//                    storePublisherMemberRel.updateTime = LocalDateTime.now()
+//                    storePublisherMemberRelRecords.add(storePublisherMemberRel)
+//                }
+//            }
         }
         val batchCreateCount = publishersDao.batchCreate(dslContext, storePublisherInfoRecords)
         publishersDao.batchCreatePublisherMemberRel(dslContext, storePublisherMemberRelRecords)
