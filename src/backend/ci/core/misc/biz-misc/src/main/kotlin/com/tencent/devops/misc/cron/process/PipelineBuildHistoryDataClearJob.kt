@@ -27,6 +27,9 @@
 
 package com.tencent.devops.misc.cron.process
 
+import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_PROJECT_ID
+import com.tencent.devops.common.api.util.JsonUtil
+import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.redis.RedisLock
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.misc.config.MiscBuildDataClearConfig
@@ -41,6 +44,10 @@ import com.tencent.devops.misc.service.project.ProjectDataClearConfigService
 import com.tencent.devops.misc.service.project.ProjectMiscService
 import com.tencent.devops.misc.service.quality.QualityDataClearService
 import com.tencent.devops.misc.service.repository.RepositoryDataClearService
+import okhttp3.Credentials
+import okhttp3.MediaType
+import okhttp3.Request
+import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -88,10 +95,10 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     @Value("\${misc.bkrepo.baseUrl:}")
     private var bkRepoBaseUrl: String = ""
 
-    @Value("\${build.data.clear.basicAuth.bkrepo.username:#{null}}")
-    private val repoUserName: String? = null
-    @Value("\${build.data.clear.basicAuth.bkrepo.password:#{null}}")
-    private val repoPassword: String? = null
+    @Value("\${build.data.clear.basicAuth.bkrepo.username:}")
+    private val repoUserName: String = ""
+    @Value("\${build.data.clear.basicAuth.bkrepo.password:}")
+    private val repoPassword: String = ""
 
     @PostConstruct
     fun init() {
@@ -342,6 +349,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         val totalBuildCount = processMiscService.getTotalBuildCount(projectId, pipelineId, maxBuildNum, maxStartTime)
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|totalBuildCount=$totalBuildCount")
         var totalHandleNum = processMiscService.getMinPipelineBuildNum(projectId, pipelineId).toInt()
+        val cleanBuilds = mutableListOf<String>()
         while (totalHandleNum < totalBuildCount) {
             val pipelineHistoryBuildIdList = processMiscService.getHistoryBuildIdList(
                 projectId = projectId,
@@ -363,9 +371,41 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                     qualityDataClearService.clearBuildData(buildId)
                     artifactoryDataClearService.clearBuildData(buildId)
                     processDataClearService.clearOtherBuildData(projectId, pipelineId, buildId)
+                    cleanBuilds.add(buildId)
                 }
             }
             totalHandleNum += DEFAULT_PAGE_SIZE
+        }
+        cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
+    }
+
+    fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
+        val url = "${getBkRepoUrl()}/repository/api/ext/pipeline/build/data/clear"
+        logger.info("pipelineBuildHistoryDataClear cleanBuildHistoryRepoData url is $url")
+        logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
+        val context = mapOf<String, Any>(
+            "peojectId" to projectId,
+            "pipelineId" to pipelineId,
+            "buildIds" to buildIds
+        )
+
+        val body = RequestBody.create(
+            MediaType.parse("application/json"),
+            JsonUtil.toJson(context)
+        )
+
+        val request = Request.Builder()
+            .url(url)
+            .put(body)
+            .addHeader("Authorization" ,Credentials.basic(repoUserName, repoPassword))
+            .addHeader(AUTH_HEADER_DEVOPS_PROJECT_ID, projectId)
+            .build()
+        OkhttpUtils.doHttp(request).use { response ->
+            val responseContent = response.body()!!.string()
+            if (!response.isSuccessful) {
+                logger.warn("cleanBuildHistoryRepoData fail body is $body")
+            }
+            logger.info("cleanBuildHistoryRepoData response is $responseContent")
         }
     }
 }
