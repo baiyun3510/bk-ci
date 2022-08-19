@@ -214,10 +214,11 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             redisOperation.sadd(PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
                 threadNo.toString(),
                 isDistinguishCluster = true)
+            val projectIds = listOf("qq")
             try {
                 val maxEveryProjectHandleNum = miscBuildDataClearConfig.maxEveryProjectHandleNum
                 var maxHandleProjectPrimaryId = handleProjectPrimaryId ?: 0L
-                val projectInfoList = if (projectIdList.isNullOrEmpty()) {
+                val projectInfoList = if (projectIds.isNullOrEmpty()) {
                     val channelCodeList = miscBuildDataClearConfig.clearChannelCodes.split(",")
                     maxHandleProjectPrimaryId = handleProjectPrimaryId + maxEveryProjectHandleNum
                     projectMiscService.getProjectInfoList(

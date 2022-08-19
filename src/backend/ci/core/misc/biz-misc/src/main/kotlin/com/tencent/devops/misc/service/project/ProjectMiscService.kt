@@ -59,7 +59,7 @@ class ProjectMiscService @Autowired constructor(
     ): List<ProjectInfo>? {
         val projectInfoRecords = projectMiscDao.getProjectInfoList(
             dslContext = dslContext,
-            projectIdList = listOf("qq"),
+            projectIdList = projectIdList,
             minId = minId,
             maxId = maxId,
             channelCodeList = channelCodeList
