@@ -27,6 +27,9 @@
 
 package com.tencent.devops.misc.cron.process
 
+import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_PROJECT_ID
+import com.tencent.devops.common.api.util.JsonUtil
+import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.redis.RedisLock
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.misc.config.MiscBuildDataClearConfig
@@ -41,6 +44,10 @@ import com.tencent.devops.misc.service.project.ProjectDataClearConfigService
 import com.tencent.devops.misc.service.project.ProjectMiscService
 import com.tencent.devops.misc.service.quality.QualityDataClearService
 import com.tencent.devops.misc.service.repository.RepositoryDataClearService
+import okhttp3.Credentials
+import okhttp3.MediaType
+import okhttp3.Request
+import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -84,6 +91,14 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
 
     @Value("\${process.deletedPipelineStoreDays:30}")
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
+
+    @Value("\${misc.bkrepo.baseUrl:}")
+    private var bkRepoBaseUrl: String = "www.dev.bkrepo.com"
+
+    @Value("\${build.data.clear.basicAuth.bkrepo.username:}")
+    private val repoUserName: String = ""
+    @Value("\${build.data.clear.basicAuth.bkrepo.password:}")
+    private val repoPassword: String = ""
 
     @PostConstruct
     fun init() {
@@ -145,6 +160,10 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 } else {
                     index * avgProjectNum + maxProjectNum % maxThreadHandleProjectNum
                 }
+                val isMember = redisOperation.isMember(
+                    key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
+                    item = index.toString(),
+                    isDistinguishCluster = true)
                 // 判断线程是否正在处理任务，如正在处理则不分配新任务(定时任务12秒执行一次，线程启动到往set集合设置编号耗费时间很短，故不加锁)
                 if (!redisOperation.isMember(
                         key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
@@ -164,6 +183,10 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         } finally {
             lock.unlock()
         }
+    }
+
+    private fun getBkRepoUrl(): String {
+        return bkRepoBaseUrl.removeSuffix("/")
     }
 
     private fun doClearBus(
@@ -191,10 +214,11 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             redisOperation.sadd(PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
                 threadNo.toString(),
                 isDistinguishCluster = true)
+            val projectIds = listOf("qq")
             try {
                 val maxEveryProjectHandleNum = miscBuildDataClearConfig.maxEveryProjectHandleNum
                 var maxHandleProjectPrimaryId = handleProjectPrimaryId ?: 0L
-                val projectInfoList = if (projectIdList.isNullOrEmpty()) {
+                val projectInfoList = if (projectIds.isNullOrEmpty()) {
                     val channelCodeList = miscBuildDataClearConfig.clearChannelCodes.split(",")
                     maxHandleProjectPrimaryId = handleProjectPrimaryId + maxEveryProjectHandleNum
                     projectMiscService.getProjectInfoList(
@@ -205,6 +229,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 } else {
                     projectMiscService.getProjectInfoList(projectIdList = projectIdList)
                 }
+                logger.info("pipelineBuildHistoryDataClear projectInfoList is $projectInfoList")
                 // 根据项目依次查询T_PIPELINE_INFO表中的流水线数据处理
                 projectInfoList?.forEach { projectInfo ->
                     val channel = projectInfo.channel
@@ -330,6 +355,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         val totalBuildCount = processMiscService.getTotalBuildCount(projectId, pipelineId, maxBuildNum, maxStartTime)
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|totalBuildCount=$totalBuildCount")
         var totalHandleNum = processMiscService.getMinPipelineBuildNum(projectId, pipelineId).toInt()
+        val cleanBuilds = mutableListOf<String>()
         while (totalHandleNum < totalBuildCount) {
             val pipelineHistoryBuildIdList = processMiscService.getHistoryBuildIdList(
                 projectId = projectId,
@@ -351,9 +377,45 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                     qualityDataClearService.clearBuildData(buildId)
                     artifactoryDataClearService.clearBuildData(buildId)
                     processDataClearService.clearOtherBuildData(projectId, pipelineId, buildId)
+                    cleanBuilds.add(buildId)
                 }
             }
             totalHandleNum += DEFAULT_PAGE_SIZE
+        }
+        try {
+            cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
+        } catch (e: Exception) {
+            logger.error("cleanBuildHistoryRepoData|$projectId|$pipelineId|$cleanBuilds")
+        }
+    }
+
+    fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
+        val url = "${getBkRepoUrl()}/repository/api/ext/pipeline/build/data/clear"
+        logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName| password is $repoPassword")
+        logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
+        val context = mapOf<String, Any>(
+            "peojectId" to projectId,
+            "pipelineId" to pipelineId,
+            "buildIds" to buildIds
+        )
+
+        val body = RequestBody.create(
+            MediaType.parse("application/json"),
+            JsonUtil.toJson(context)
+        )
+
+        val request = Request.Builder()
+            .url(url)
+            .put(body)
+            .addHeader("Authorization" ,Credentials.basic(repoUserName, repoPassword))
+            .addHeader(AUTH_HEADER_DEVOPS_PROJECT_ID, projectId)
+            .build()
+        OkhttpUtils.doHttp(request).use { response ->
+            val responseContent = response.body()!!.string()
+            if (!response.isSuccessful) {
+                logger.warn("cleanBuildHistoryRepoData fail body is $body")
+            }
+            logger.info("cleanBuildHistoryRepoData response is $responseContent")
         }
     }
 }
