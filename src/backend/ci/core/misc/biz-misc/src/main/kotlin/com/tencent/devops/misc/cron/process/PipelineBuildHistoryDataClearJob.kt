@@ -391,7 +391,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
 
     fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
         val url = "${getBkRepoUrl()}/repository/api/ext/pipeline/build/data/clear"
-        logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName| password is $repoPassword")
+        logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName")
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
         val context = mapOf<String, Any>(
             "peojectId" to projectId,
