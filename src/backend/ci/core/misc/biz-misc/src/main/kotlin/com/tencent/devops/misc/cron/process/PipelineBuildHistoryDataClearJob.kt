@@ -93,7 +93,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
 
 //    @Value("\${misc.bkrepo.baseUrl:}")
-    private var bkRepoBaseUrl: String = "www.dev.bkrepo.com"
+    private var bkRepoBaseUrl: String = "https://.dev.bkrepo.com"
 
     @Value("\${build.data.clear.basicAuth.bkrepo.username:}")
     private val repoUserName: String = ""
