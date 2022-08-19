@@ -28,6 +28,8 @@
 package com.tencent.devops.support.robot
 
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.devops.auth.api.manager.AuthManagerApprovalResource
+import com.tencent.devops.auth.pojo.enum.ApprovalType
 import com.tencent.devops.common.wechatwork.WechatWorkRobotService
 import com.tencent.devops.common.wechatwork.WeworkRobotCustomConfig
 import com.tencent.devops.common.wechatwork.aes.WXBizMsgCrypt
@@ -40,12 +42,14 @@ import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 import java.io.StringReader
+import com.tencent.devops.common.client.Client
 import javax.xml.parsers.DocumentBuilderFactory
 
 @Service
 class RobotService @Autowired constructor(
     val weworkRobotCustomConfig: WeworkRobotCustomConfig,
-    val wechatWorkRobotService: WechatWorkRobotService
+    val wechatWorkRobotService: WechatWorkRobotService,
+    val client: Client
 ) {
     private val rototWxcpt =
         WXBizMsgCrypt(weworkRobotCustomConfig.token, weworkRobotCustomConfig.aeskey, "")
@@ -77,6 +81,7 @@ class RobotService @Autowired constructor(
         logger.info("reqData:$reqData")
         val robotCallBack = getCallbackInfo(signature, timestamp, nonce, reqData)
         logger.info("chitId:${robotCallBack.chatId}")
+        logger.info("robotCallBack:$robotCallBack")
         if (robotCallBack.eventType == "enter_chat") {
             // 如为进入机器人单聊, 直接返回空包
             return true
@@ -89,6 +94,46 @@ class RobotService @Autowired constructor(
                 )
             )
             wechatWorkRobotService.send(msg.toJsonString())
+        }
+        val callbackId = robotCallBack.callbackId
+        val actionName = robotCallBack.actionName
+        val actionValue = robotCallBack.actionValue
+        if (callbackId == null || callbackId.isEmpty() || actionValue == null || actionValue.isEmpty()) {
+            return true
+        }
+        when (callbackId) {
+            "approval" -> {
+                when (actionName) {
+                    "agree" -> {
+                        client.get(AuthManagerApprovalResource::class).managerApproval(
+                            approvalId = actionValue.toInt(),
+                            approvalType = ApprovalType.AGREE
+                        )
+                    }
+                    "refuse" -> {
+                        client.get(AuthManagerApprovalResource::class).managerApproval(
+                            approvalId = actionValue.toInt(),
+                            approvalType = ApprovalType.REFUSE
+                        )
+                    }
+                }
+            }
+            "renewal" -> {
+                when (actionName) {
+                    "agree" -> {
+                        client.get(AuthManagerApprovalResource::class).userRenewalAuth(
+                            approvalId = actionValue.toInt(),
+                            approvalType = ApprovalType.AGREE
+                        )
+                    }
+                    "refuse" -> {
+                        client.get(AuthManagerApprovalResource::class).userRenewalAuth(
+                            approvalId = actionValue.toInt(),
+                            approvalType = ApprovalType.REFUSE
+                        )
+                    }
+                }
+            }
         }
         return true
     }
@@ -108,6 +153,9 @@ class RobotService @Autowired constructor(
         val userName = root.getElementsByTagName("Name")
         val userId = root.getElementsByTagName("Alias")
         val eventType = root.getElementsByTagName("Event") ?: null
+        val callbackId = root.getElementsByTagName("CallbackId") ?: null
+        val actions = root.getElementsByTagName("Actions") ?: null
+        val actionValue = root.getElementsByTagName("Value") ?: null
         logger.info("eventType: $eventType, ${eventType?.item(0)}")
         return RobotCallback(
             chatId = chitId.item(0).textContent,
@@ -118,7 +166,10 @@ class RobotService @Autowired constructor(
             content = content?.item(0)?.textContent ?: "",
             name = userName.item(0).textContent,
             userId = userId.item(0).textContent,
-            eventType = eventType?.item(0)?.firstChild?.textContent
+            eventType = eventType?.item(0)?.firstChild?.textContent,
+            callbackId = callbackId?.item(0)?.textContent,
+            actionName = actions?.item(0)?.firstChild?.textContent,
+            actionValue = actionValue?.item(0)?.textContent
         )
     }
 
