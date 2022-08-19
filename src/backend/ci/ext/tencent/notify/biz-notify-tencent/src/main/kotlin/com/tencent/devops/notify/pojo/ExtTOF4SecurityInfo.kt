@@ -24,10 +24,43 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+package com.tencent.devops.notify.pojo
 
-package com.tencent.devops.environment.model
+import com.tencent.devops.common.api.util.AESUtil
+import org.slf4j.LoggerFactory
 
-enum class AgentArchType(val arch: String) {
-    ARM64("arm64"),
-    MIPS64("mips64")
+/**
+ * TOF4秘钥信息
+ */
+class ExtTOF4SecurityInfo {
+    var enable: Boolean = false
+    var token: String = ""
+    var passId: String = ""
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ExtTOF4SecurityInfo::class.java)
+
+        fun get(message: BaseMessage, encryptKey: String?): ExtTOF4SecurityInfo {
+            if (message.v2ExtInfo.isBlank()) {
+                return ExtTOF4SecurityInfo()
+            }
+
+            if (encryptKey.isNullOrBlank()) {
+                logger.error("TOF error, decrypt notify v2 extension, encrypt key can not be empty")
+                return ExtTOF4SecurityInfo()
+            }
+
+            return try {
+                val securityArr = AESUtil.decrypt(encryptKey, message.v2ExtInfo).split(":")
+                ExtTOF4SecurityInfo().apply {
+                    enable = true
+                    passId = securityArr[0]
+                    token = securityArr[1]
+                }
+            } catch (e: Exception) {
+                logger.error("TOF error, decrypt notify v2 extension info fail", e)
+                ExtTOF4SecurityInfo()
+            }
+        }
+    }
 }
