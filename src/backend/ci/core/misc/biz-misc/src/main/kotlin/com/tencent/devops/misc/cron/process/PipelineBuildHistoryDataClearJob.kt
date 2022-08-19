@@ -92,7 +92,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     @Value("\${process.deletedPipelineStoreDays:30}")
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
 
-    @Value("\${misc.bkrepo.baseUrl:}")
+//    @Value("\${misc.bkrepo.baseUrl:}")
     private var bkRepoBaseUrl: String = "www.dev.bkrepo.com"
 
     @Value("\${build.data.clear.basicAuth.bkrepo.username:}")
@@ -385,7 +385,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         try {
             cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
         } catch (e: Exception) {
-            logger.error("cleanBuildHistoryRepoData|$projectId|$pipelineId|$cleanBuilds")
+            logger.error("cleanBuildHistoryRepoData|$projectId|$pipelineId|$cleanBuilds|$e")
         }
     }
 
