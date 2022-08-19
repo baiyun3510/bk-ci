@@ -153,7 +153,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             // 获取清理项目构建数据的线程数量
             val maxThreadHandleProjectNum = miscBuildDataClearConfig.maxThreadHandleProjectNum
             val avgProjectNum = maxProjectNum / maxThreadHandleProjectNum
-            logger.info("pipelineBuildHistoryDataClear maxThreadHandleProjectNum is $maxThreadHandleProjectNum")
             for (index in 1..maxThreadHandleProjectNum) {
                 // 计算线程能处理的最大项目主键ID
                 val maxThreadProjectPrimaryId = if (index != maxThreadHandleProjectNum) {
@@ -161,6 +160,11 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 } else {
                     index * avgProjectNum + maxProjectNum % maxThreadHandleProjectNum
                 }
+                val isMember = redisOperation.isMember(
+                    key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
+                    item = index.toString(),
+                    isDistinguishCluster = true)
+                logger.info("pipelineBuildHistoryDataClear Member is $isMember")
                 // 判断线程是否正在处理任务，如正在处理则不分配新任务(定时任务12秒执行一次，线程启动到往set集合设置编号耗费时间很短，故不加锁)
                 if (!redisOperation.isMember(
                         key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
