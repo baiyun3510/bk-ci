@@ -225,6 +225,9 @@ class UpgradeService @Autowired constructor(
             else -> canUpgrade && (info.goAgentVersion.isNullOrBlank() || (currentGoAgentVersion != info.goAgentVersion))
         }
 
+        logger.info("project: $projectId|agent: $agentId|os: $os|arch: ${props?.arch}|version: ${info.jdkVersion}|" +
+                "current jdk version: ${currentJdkVersion?.trim()}")
+
         val jdkVersion = when {
             currentJdkVersion.isNullOrBlank() -> {
                 logger.warn("project: $projectId|agent: $agentId|os: $os|arch: ${props?.arch}|current jdk is null")
