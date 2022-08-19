@@ -164,7 +164,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                     key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
                     item = index.toString(),
                     isDistinguishCluster = true)
-                logger.info("pipelineBuildHistoryDataClear Member is $isMember")
                 // 判断线程是否正在处理任务，如正在处理则不分配新任务(定时任务12秒执行一次，线程启动到往set集合设置编号耗费时间很短，故不加锁)
                 if (!redisOperation.isMember(
                         key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
@@ -229,6 +228,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 } else {
                     projectMiscService.getProjectInfoList(projectIdList = projectIdList)
                 }
+                logger.info("pipelineBuildHistoryDataClear projectInfoList is $projectInfoList")
                 // 根据项目依次查询T_PIPELINE_INFO表中的流水线数据处理
                 projectInfoList?.forEach { projectInfo ->
                     val channel = projectInfo.channel
