@@ -66,7 +66,4 @@ sharding:
     algorithmClassName: "com.tencent.devops.misc.sharding.BkProcessDatabaseShardingAlgorithm"
     shardingField: PROJECT_ID
 
-misc:
-  bkrepo:
-    baseUrl: __BK_REPO_API_URL__               # bkrepo的地址
-    authorization: __BK_REPO_AUTHORIZATION__    # 访问bkrepo鉴权信息，例如Token串
+
