@@ -93,7 +93,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
 
     @Value("\${misc.bkrepo.baseUrl:}")
-    private var bkRepoBaseUrl: String = ""
+    private var bkRepoBaseUrl: String = "www.dev.bkrepo.com"
 
     @Value("\${build.data.clear.basicAuth.bkrepo.username:}")
     private val repoUserName: String = ""
@@ -391,7 +391,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
 
     fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
         val url = "${getBkRepoUrl()}/repository/api/ext/pipeline/build/data/clear"
-        logger.info("pipelineBuildHistoryDataClear cleanBuildHistoryRepoData url is $url")
+        logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName| password is $repoPassword")
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
         val context = mapOf<String, Any>(
             "peojectId" to projectId,
