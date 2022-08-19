@@ -153,6 +153,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             // 获取清理项目构建数据的线程数量
             val maxThreadHandleProjectNum = miscBuildDataClearConfig.maxThreadHandleProjectNum
             val avgProjectNum = maxProjectNum / maxThreadHandleProjectNum
+            logger.info("pipelineBuildHistoryDataClear maxThreadHandleProjectNum is $maxThreadHandleProjectNum")
             for (index in 1..maxThreadHandleProjectNum) {
                 // 计算线程能处理的最大项目主键ID
                 val maxThreadProjectPrimaryId = if (index != maxThreadHandleProjectNum) {
