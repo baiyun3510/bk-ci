@@ -94,15 +94,4 @@ spec:
             timeoutSeconds: 10
             failureThreshold: 5
             successThreshold: 1
-          volumeMounts:
-            - name: quartz-config
-              mountPath: /data/workspace/quartz.properties
-              subPath: quartz.properties
-      volumes:
-        - name: quartz-config
-          configMap:
-            name: {{ include "bkci.names.fullname" . }}-turbo
-            items:
-              - key: quartz.properties
-                path: quartz.properties
 {{- end }}

@@ -85,7 +85,7 @@ config = {
         password = "__BK_CI_INFLUXDB_PASSWORD__"
     },
     bkrepo = {domain = "__BK_REPO_HOST__", authorization = "__BK_CI_BKREPO_AUTHORIZATION__"},
-    kubernetes = {domain = "kubernetes.demo.com"}
+    kubernetes = {domain = "kubernetes.demo.com", codecc = {domain = "kubernetes.demo.com"}}
 }
 
 require("init_common")
