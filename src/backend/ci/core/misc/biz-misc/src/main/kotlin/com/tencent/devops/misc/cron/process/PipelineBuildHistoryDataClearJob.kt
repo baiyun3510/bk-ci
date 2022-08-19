@@ -227,7 +227,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                         channelCodeList = channelCodeList
                     )
                 } else {
-                    projectMiscService.getProjectInfoList(projectIdList = projectIdList)
+                    projectMiscService.getProjectInfoList(projectIdList = projectIds)
                 }
                 logger.info("pipelineBuildHistoryDataClear projectInfoList is $projectInfoList")
                 // 根据项目依次查询T_PIPELINE_INFO表中的流水线数据处理
