@@ -1,5 +1,33 @@
+/*
+ * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
+ *
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
+ *
+ * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
+ *
+ * A copy of the MIT License is included in this file.
+ *
+ *
+ * Terms of the MIT License:
+ * ---------------------------------------------------
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of
+ * the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 package com.tencent.devops.store.service.common.impl
 
+import com.tencent.devops.auth.api.service.ServiceDeptResource
+import com.tencent.devops.auth.pojo.DeptInfo
 import com.tencent.devops.common.api.constant.CommonMessageCode
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
@@ -10,7 +38,6 @@ import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.project.api.service.ServiceUserResource
-import com.tencent.devops.project.pojo.DeptInfo
 import com.tencent.devops.store.dao.common.PublishersDao
 import com.tencent.devops.store.dao.common.StoreDockingPlatformDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
@@ -44,50 +71,50 @@ class PublishersDataServiceImpl @Autowired constructor(
         val storePublisherMemberRelRecords = mutableListOf<TStorePublisherMemberRelRecord>()
         publishers.forEach {
             val deptInfos = analysisDept(userId, it.organization)
-//            val storePublisherInfo = TStorePublisherInfoRecord()
-//            val storePublisherInfoId = UUIDUtil.generate()
-//            storePublisherInfo.id = storePublisherInfoId
-//            storePublisherInfo.publisherCode = it.publishersCode
-//            storePublisherInfo.publisherName = it.name
-//            storePublisherInfo.publisherType = it.publishersType.name
-//            storePublisherInfo.owners = it.owners[0]
-//            storePublisherInfo.helper = it.helper
-//            storePublisherInfo.firstLevelDeptId = deptInfos[0].id.toLong()
-//            storePublisherInfo.firstLevelDeptName = deptInfos[0].name
-//            storePublisherInfo.secondLevelDeptId = deptInfos[1].id.toLong()
-//            storePublisherInfo.secondLevelDeptName = deptInfos[1].name
-//            storePublisherInfo.thirdLevelDeptId = deptInfos[2].id.toLong()
-//            storePublisherInfo.thirdLevelDeptName = deptInfos[2].name
-//            if (deptInfos.size > 3) {
-//                storePublisherInfo.fourthLevelDeptId = deptInfos[3].id.toLong()
-//                storePublisherInfo.fourthLevelDeptName = deptInfos[3].name
-//            }
-//            storePublisherInfo.organizationName = it.organization
-//            storePublisherInfo.ownerDeptName = it.ownerDeptName
-//            storePublisherInfo.certificationFlag = it.certificationFlag
-//            storePublisherInfo.storeType = it.storeType.type.toByte()
-//            storePublisherInfo.creator = userId
-//            storePublisherInfo.modifier = userId
-//            storePublisherInfo.createTime = LocalDateTime.now()
-//            storePublisherInfo.updateTime = LocalDateTime.now()
-//            storePublisherInfoRecords.add(storePublisherInfo)
-//            if (it.publishersType == PublisherType.ORGANIZATION) {
-//                //  生成可使用组织发布者进行发布的成员关联
-//                logger.debug("CreatePublisherMemberRel publisherCode is ${it.publishersCode}, members is ${it.members}")
-//                getStoreMemberService(it.storeType)
-//                    .getMemberId(it.publishersCode, it.storeType, it.members)
-//                    .data?.map { memberId ->
-//                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
-//                    storePublisherMemberRel.id = UUIDUtil.generate()
-//                    storePublisherMemberRel.publisherId = storePublisherInfoId
-//                    storePublisherMemberRel.memberId = memberId
-//                    storePublisherMemberRel.creator = userId
-//                    storePublisherMemberRel.createTime = LocalDateTime.now()
-//                    storePublisherMemberRel.modifier = userId
-//                    storePublisherMemberRel.updateTime = LocalDateTime.now()
-//                    storePublisherMemberRelRecords.add(storePublisherMemberRel)
-//                }
-//            }
+            val storePublisherInfo = TStorePublisherInfoRecord()
+            val storePublisherInfoId = UUIDUtil.generate()
+            storePublisherInfo.id = storePublisherInfoId
+            storePublisherInfo.publisherCode = it.publishersCode
+            storePublisherInfo.publisherName = it.name
+            storePublisherInfo.publisherType = it.publishersType.name
+            storePublisherInfo.owners = it.owners[0]
+            storePublisherInfo.helper = it.helper
+            storePublisherInfo.firstLevelDeptId = deptInfos[0].id.toLong()
+            storePublisherInfo.firstLevelDeptName = deptInfos[0].name
+            storePublisherInfo.secondLevelDeptId = deptInfos[1].id.toLong()
+            storePublisherInfo.secondLevelDeptName = deptInfos[1].name
+            storePublisherInfo.thirdLevelDeptId = deptInfos[2].id.toLong()
+            storePublisherInfo.thirdLevelDeptName = deptInfos[2].name
+            if (deptInfos.size > 3) {
+                storePublisherInfo.fourthLevelDeptId = deptInfos[3].id.toLong()
+                storePublisherInfo.fourthLevelDeptName = deptInfos[3].name
+            }
+            storePublisherInfo.organizationName = it.organization
+            storePublisherInfo.ownerDeptName = it.ownerDeptName
+            storePublisherInfo.certificationFlag = it.certificationFlag
+            storePublisherInfo.storeType = it.storeType.type.toByte()
+            storePublisherInfo.creator = userId
+            storePublisherInfo.modifier = userId
+            storePublisherInfo.createTime = LocalDateTime.now()
+            storePublisherInfo.updateTime = LocalDateTime.now()
+            storePublisherInfoRecords.add(storePublisherInfo)
+            if (it.publishersType == PublisherType.ORGANIZATION) {
+                //  生成可使用组织发布者进行发布的成员关联
+                logger.debug("CreatePublisherMemberRel publisherCode is ${it.publishersCode}, members is ${it.members}")
+                getStoreMemberService(it.storeType)
+                    .getMemberId(it.publishersCode, it.storeType, it.members)
+                    .data?.map { memberId ->
+                    val storePublisherMemberRel = TStorePublisherMemberRelRecord()
+                    storePublisherMemberRel.id = UUIDUtil.generate()
+                    storePublisherMemberRel.publisherId = storePublisherInfoId
+                    storePublisherMemberRel.memberId = memberId
+                    storePublisherMemberRel.creator = userId
+                    storePublisherMemberRel.createTime = LocalDateTime.now()
+                    storePublisherMemberRel.modifier = userId
+                    storePublisherMemberRel.updateTime = LocalDateTime.now()
+                    storePublisherMemberRelRecords.add(storePublisherMemberRel)
+                }
+            }
         }
         val batchCreateCount = publishersDao.batchCreate(dslContext, storePublisherInfoRecords)
         publishersDao.batchCreatePublisherMemberRel(dslContext, storePublisherMemberRelRecords)
@@ -228,10 +255,10 @@ class PublishersDataServiceImpl @Autowired constructor(
         //  根据解析组织名称获取组织ID
         val deptNames = organization.split("/")
         val deptInfos = mutableListOf<DeptInfo>()
-//        deptNames.forEachIndexed(){ index, deptName ->
-//            val result = client.get(ServiceDeptResource::class).getDeptByName(userId, deptName).data
-//            result?.let { it -> deptInfos.add(index, it.results[0] ) }
-//        }
+        deptNames.forEachIndexed(){ index, deptName ->
+            val result = client.get(ServiceDeptResource::class).getDeptByName(userId, deptName).data
+            result?.let { it -> deptInfos.add(index, it.results[0] ) }
+        }
         storeDeptService.getDeptByName(userId, "技术运营部")
         return deptInfos
     }
