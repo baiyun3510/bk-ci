@@ -28,6 +28,7 @@
 package com.tencent.devops.misc.service.artifactory
 
 import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -41,6 +42,9 @@ class SampleArtifactoryDataClearServiceImpl @Autowired constructor(
     }
 
     override fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
-        // 开源版无需额外清理数据
+        logger.info("cleanBuildHistoryRepoData  SampleArtifactoryDataClearServiceImpl")
+    }
+    companion object {
+        private val logger = LoggerFactory.getLogger(SampleArtifactoryDataClearServiceImpl::class.java)
     }
 }
