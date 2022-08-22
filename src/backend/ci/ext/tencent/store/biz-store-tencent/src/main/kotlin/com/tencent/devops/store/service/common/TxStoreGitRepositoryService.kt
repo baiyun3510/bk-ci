@@ -25,26 +25,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.api.enums
+package com.tencent.devops.store.service.common
 
-enum class OSArch(
-    val osTypeList: List<OSType>,
-    val archStr: String // 编译插件的参数
-) {
-    AMD_64(
-        osTypeList = listOf(OSType.LINUX, OSType.MAC_OS, OSType.WINDOWS),
-        archStr = "amd64"
-    ),
-    ARM_64(
-        osTypeList = listOf(OSType.LINUX, OSType.MAC_OS),
-        archStr = "arm64"
-    ),
-    MIPS_64(
-        osTypeList = listOf(OSType.LINUX),
-        archStr = "mips64"
-    ),
-    I_386(
-        osTypeList = listOf(OSType.WINDOWS),
-        archStr = "386"
-    );
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.store.pojo.common.StoreMemberReq
+
+interface TxStoreGitRepositoryService {
+    fun addRepoMember(storeMemberReq: StoreMemberReq, userId: String, repositoryHashId: String): Result<Boolean>
+
+    fun deleteRepoMember(userId: String, username: String, repositoryHashId: String): Result<Boolean>
 }
