@@ -68,7 +68,7 @@ class TxArtifactoryDataClearServiceImpl @Autowired constructor(
         logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName")
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
         val context = mapOf<String, Any>(
-            "peojectId" to projectId,
+            "projectId" to projectId,
             "pipelineId" to pipelineId,
             "buildIds" to buildIds
         )
