@@ -27,9 +27,6 @@
 
 package com.tencent.devops.misc.cron.process
 
-import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_PROJECT_ID
-import com.tencent.devops.common.api.util.JsonUtil
-import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.redis.RedisLock
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.misc.config.MiscBuildDataClearConfig
@@ -44,10 +41,6 @@ import com.tencent.devops.misc.service.project.ProjectDataClearConfigService
 import com.tencent.devops.misc.service.project.ProjectMiscService
 import com.tencent.devops.misc.service.quality.QualityDataClearService
 import com.tencent.devops.misc.service.repository.RepositoryDataClearService
-import okhttp3.Credentials
-import okhttp3.MediaType
-import okhttp3.Request
-import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -92,13 +85,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     @Value("\${process.deletedPipelineStoreDays:30}")
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
 
-    @Value("\${build.data.clear.basicAuth.bkrepo.baseUrl:}")
-    private val bkRepoBaseUrl: String = ""
 
-    @Value("\${build.data.clear.basicAuth.bkrepo.username:}")
-    private val repoUserName: String = ""
-    @Value("\${build.data.clear.basicAuth.bkrepo.password:}")
-    private val repoPassword: String = ""
 
     @PostConstruct
     fun init() {
@@ -183,11 +170,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         } finally {
             lock.unlock()
         }
-    }
-
-    private fun getBkRepoUrl(): String {
-        logger.info("cleanBuildHistoryRepoData url is $bkRepoBaseUrl")
-        return bkRepoBaseUrl.removeSuffix("/")
     }
 
     private fun doClearBus(
@@ -384,39 +366,9 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             totalHandleNum += DEFAULT_PAGE_SIZE
         }
         try {
-            cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
+            artifactoryDataClearService.cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
         } catch (e: Exception) {
             logger.error("cleanBuildHistoryRepoData|$projectId|$pipelineId|$cleanBuilds|$e")
-        }
-    }
-
-    fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
-        val url = "${getBkRepoUrl()}/repository/api/ext/pipeline/build/data/clear"
-        logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName")
-        logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
-        val context = mapOf<String, Any>(
-            "peojectId" to projectId,
-            "pipelineId" to pipelineId,
-            "buildIds" to buildIds
-        )
-
-        val body = RequestBody.create(
-            MediaType.parse("application/json"),
-            JsonUtil.toJson(context)
-        )
-
-        val request = Request.Builder()
-            .url(url)
-            .put(body)
-            .addHeader("Authorization" ,Credentials.basic(repoUserName, repoPassword))
-            .addHeader(AUTH_HEADER_DEVOPS_PROJECT_ID, projectId)
-            .build()
-        OkhttpUtils.doHttp(request).use { response ->
-            val responseContent = response.body()!!.string()
-            if (!response.isSuccessful) {
-                logger.warn("cleanBuildHistoryRepoData fail body is $body")
-            }
-            logger.info("cleanBuildHistoryRepoData response is $responseContent")
         }
     }
 }
