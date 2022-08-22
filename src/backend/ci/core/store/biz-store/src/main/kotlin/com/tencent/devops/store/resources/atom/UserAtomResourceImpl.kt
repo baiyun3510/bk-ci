@@ -36,14 +36,15 @@ import com.tencent.devops.store.pojo.atom.AtomResp
 import com.tencent.devops.store.pojo.atom.AtomRespItem
 import com.tencent.devops.store.pojo.atom.InstalledAtom
 import com.tencent.devops.store.pojo.atom.PipelineAtom
-import com.tencent.devops.store.pojo.common.VersionInfo
 import com.tencent.devops.store.pojo.common.UnInstallReq
+import com.tencent.devops.store.pojo.common.VersionInfo
 import com.tencent.devops.store.service.atom.AtomService
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
-class UserAtomResourceImpl @Autowired constructor(private val atomService: AtomService) :
-    UserAtomResource {
+class UserAtomResourceImpl @Autowired constructor(
+    private val atomService: AtomService
+    ) : UserAtomResource {
 
     override fun getPipelineAtom(projectCode: String, atomCode: String, version: String): Result<PipelineAtom?> {
         return atomService.getPipelineAtom(

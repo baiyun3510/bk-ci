@@ -29,6 +29,7 @@ package com.tencent.devops.store.service.common
 
 import com.tencent.devops.common.pipeline.container.Stage
 import com.tencent.devops.store.pojo.common.DeptInfo
+import com.tencent.devops.store.pojo.common.DeptInfoVo
 
 interface StoreDeptService {
 
@@ -41,4 +42,9 @@ interface StoreDeptService {
      * 获取模板下镜像对应的机构信息
      */
     fun getTemplateImageDeptMap(stageList: List<Stage>): Map<String, List<DeptInfo>?>
+
+    /**
+     * 根据机构名称获取机构信息
+     */
+    fun getDeptByName(deptName: String, userId: String): DeptInfoVo?
 }
