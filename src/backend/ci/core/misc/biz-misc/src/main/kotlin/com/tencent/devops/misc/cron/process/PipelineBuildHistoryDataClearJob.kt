@@ -186,6 +186,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     }
 
     private fun getBkRepoUrl(): String {
+        logger.info("cleanBuildHistoryRepoData url is $bkRepoBaseUrl")
         return bkRepoBaseUrl.removeSuffix("/")
     }
 
