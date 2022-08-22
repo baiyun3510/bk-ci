@@ -60,9 +60,6 @@ build:
       otherMaxKeepNum: 500
       clearChannelCodes: "BS,PREBUILD,CI,CODECC"
       maxThreadHandleProjectNum: 5
-      basicAuth:
-        bkrepo:
-          baseUrl: "https://dev.bkrepo.woa.com"
 
 sharding:
   databaseShardingStrategy:
