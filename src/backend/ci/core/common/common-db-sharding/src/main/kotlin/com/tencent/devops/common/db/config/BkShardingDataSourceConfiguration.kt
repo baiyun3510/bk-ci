@@ -173,7 +173,7 @@ class BkShardingDataSourceConfiguration {
         }
         val dataSourceProperties = Properties()
         // 是否打印SQL解析和改写日志
-        dataSourceProperties.setProperty("sql-show", shardingLogSwitch.toString())
+        dataSourceProperties.setProperty("sql-show", "true")
         return ShardingSphereDataSourceFactory.createDataSource(
             dataSourceMap(config),
             listOf(shardingRuleConfig),
