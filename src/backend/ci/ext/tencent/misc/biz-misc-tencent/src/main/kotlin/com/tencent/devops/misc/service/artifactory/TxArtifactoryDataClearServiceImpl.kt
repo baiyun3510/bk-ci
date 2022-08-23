@@ -65,7 +65,6 @@ class TxArtifactoryDataClearServiceImpl @Autowired constructor(
 
     override fun cleanBuildHistoryRepoData(projectId: String, pipelineId: String, buildIds: List<String>) {
         val url = "${getBkRepoUrl()}/repository/api/ext/pipeline/build/data/clear"
-        logger.info("cleanBuildHistoryRepoData url is $url | name is $repoUserName")
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|buildIds = $buildIds")
         val context = mapOf<String, Any>(
             "projectId" to projectId,
