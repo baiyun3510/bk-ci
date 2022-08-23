@@ -50,6 +50,7 @@ import com.tencent.devops.dispatch.utils.ThirdPartyAgentLock
 import com.tencent.devops.dispatch.utils.redis.ThirdPartyAgentBuildRedisUtils
 import com.tencent.devops.dispatch.utils.redis.ThirdPartyRedisBuild
 import com.tencent.devops.environment.api.thirdPartyAgent.ServiceThirdPartyAgentResource
+import com.tencent.devops.environment.pojo.LabelQuery
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgent
 import com.tencent.devops.process.api.service.ServiceBuildResource
 import com.tencent.devops.process.engine.common.VMUtils
@@ -59,6 +60,8 @@ import com.tencent.devops.process.pojo.mq.PipelineAgentStartupEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.util.HashMap
+import java.util.HashSet
 import javax.ws.rs.core.Response
 
 @Component
@@ -296,11 +299,22 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             }
             AgentType.NAME -> {
                 try {
-                    client.get(ServiceThirdPartyAgentResource::class)
-                        .getAgentsByEnvName(
-                            event.projectId,
-                            dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
-                                ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                    if (dispatchType.labelExpressions != null) {
+                        client.get(ServiceThirdPartyAgentResource::class)
+                            .getAgentsByLabels(
+                                projectId = event.projectId,
+                                labelQuery = LabelQuery(
+                                    labelExpressions = dispatchType.labelExpressions!!,
+                                    sharedProjectId = dispatchType.envProjectId
+                                )
+                            )
+                    } else {
+                        client.get(ServiceThirdPartyAgentResource::class)
+                            .getAgentsByEnvName(
+                                event.projectId,
+                                dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
+                                    ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                    }
                 } catch (e: Exception) {
                     onFailBuild(
                         client = client,

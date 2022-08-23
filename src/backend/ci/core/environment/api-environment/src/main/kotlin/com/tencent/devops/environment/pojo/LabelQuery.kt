@@ -25,37 +25,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.pipeline.type.agent
+package com.tencent.devops.environment.pojo
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.tencent.devops.common.api.util.EnvUtils
-import com.tencent.devops.common.pipeline.type.BuildType
-import com.tencent.devops.common.pipeline.type.DispatchType
-
-data class ThirdPartyAgentEnvDispatchType(
-    @JsonProperty("value") var envName: String,
-    var envProjectId: String?,
-    var workspace: String?,
-    var labelExpressions: String? = "",
-    val agentType: AgentType = AgentType.NAME
-) : DispatchType(
-    envName
-) {
-    override fun cleanDataBeforeSave() {
-        this.envName = this.envName.trim()
-        this.envProjectId = this.envProjectId?.trim()
-        this.workspace = this.workspace?.trim()
-        this.labelExpressions = this.labelExpressions?.trim()
-    }
-
-    override fun replaceField(variables: Map<String, String>) {
-        envName = EnvUtils.parseEnv(envName, variables)
-        envProjectId = EnvUtils.parseEnv(envProjectId, variables)
-        if (!workspace.isNullOrBlank()) {
-            workspace = EnvUtils.parseEnv(workspace!!, variables)
-        }
-        labelExpressions = EnvUtils.parseEnv(labelExpressions, variables)
-    }
-
-    override fun buildType() = BuildType.valueOf(BuildType.THIRD_PARTY_AGENT_ENV.name)
-}
+data class LabelQuery(
+    val labelExpressions: String,
+    val sharedProjectId: String?
+)
