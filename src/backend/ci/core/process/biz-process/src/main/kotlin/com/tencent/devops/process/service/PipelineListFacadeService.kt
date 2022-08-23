@@ -1472,7 +1472,7 @@ class PipelineListFacadeService @Autowired constructor(
         keyword: String?,
         page: Int,
         pageSize: Int,
-        channelCodes: List<ChannelCode>?
+        channelCodes: List<ChannelCode>
     ): Page<PipelineIdAndName> {
         val sqlLimit = PageUtil.convertPageSizeToSQLLimit(page, pageSize)
         val pipelineRecords =
@@ -1492,6 +1492,7 @@ class PipelineListFacadeService @Autowired constructor(
         val count = pipelineInfoDao.countByProjectIds(
             dslContext = dslContext,
             projectIds = listOf(projectId),
+            channelCodes = channelCodes,
             keyword = keyword
         )
         return Page(
