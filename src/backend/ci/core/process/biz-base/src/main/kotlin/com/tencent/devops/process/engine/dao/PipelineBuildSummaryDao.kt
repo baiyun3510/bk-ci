@@ -55,8 +55,6 @@ import java.time.LocalDateTime
 @Repository
 class PipelineBuildSummaryDao {
 
-    private val logger = LoggerFactory.getLogger(PipelineBuildSummaryDao::class.java)
-
     fun create(
         dslContext: DSLContext,
         projectId: String,
@@ -188,7 +186,6 @@ class PipelineBuildSummaryDao {
         pageSize: Int? = null,
         pageOffsetNum: Int? = 0
     ): Result<TPipelineInfoRecord> {
-        logger.info("listPipelineInfoBuildSummary params[$projectId|$page|$pageSize|$pageOffsetNum]")
         val conditions = generatePipelineFilterCondition(
             projectId = projectId,
             channelCode = channelCode,
@@ -374,7 +371,6 @@ class PipelineBuildSummaryDao {
         offset: Int? = null,
         limit: Int? = null
     ): Result<TPipelineInfoRecord> {
-        logger.info("listPipelineInfoBuildSummary params[$sortType|$offset|$limit]")
         val baseStep = dslContext.selectFrom(T_PIPELINE_INFO).where(conditions)
         if (sortType != null) {
             val sortTypeField = when (sortType) {
