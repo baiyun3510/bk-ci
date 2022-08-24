@@ -28,6 +28,7 @@
 package com.tencent.devops.process.api.service
 
 import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.artifactory.pojo.Property
 import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.pojo.Result
@@ -100,7 +101,8 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
                 modifiedTime = System.currentTimeMillis(),
                 artifactoryType = ArtifactoryType.CUSTOM_DIR,
                 folder = false,
-                fileType = reportImageInfo.fileType
+                fileType = reportImageInfo.fileType,
+                properties = listOf(Property("tag", reportImageInfo.tag))
             )
         )
 
