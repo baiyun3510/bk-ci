@@ -54,6 +54,7 @@ object BkRepoUtils {
     const val REPO_NAME_REPORT = "report"
     const val REPO_NAME_PLUGIN = "plugin"
     const val REPO_NAME_STATIC = "static"
+    const val REPO_NAME_IMAGE = "image"
 
     fun parseArtifactoryInfo(path: String): ArtifactInfo {
         val normalizedPath = path.trim().removePrefix("/").removePrefix("./")

@@ -27,6 +27,7 @@
 
 package com.tencent.devops.process.api
 
+import com.tencent.devops.artifactory.pojo.FileInfo
 import com.tencent.devops.common.api.exception.ParamBlankException
 import com.tencent.devops.common.api.pojo.BuildHistoryPage
 import com.tencent.devops.common.api.pojo.ErrorType
@@ -361,6 +362,17 @@ class ServiceBuildResourceImpl @Autowired constructor(
                 channelCode = channelCode,
                 checkPermission = ChannelCode.isNeedAuth(channelCode)
             )
+        )
+    }
+
+    override fun getArtifactoryInfo(
+        userId: String,
+        projectId: String,
+        pipelineId: String,
+        buildId: String
+    ): Result<List<FileInfo>> {
+        return Result(
+            pipelineBuildFacadeService.getArtifactList(projectId, pipelineId, buildId)
         )
     }
 

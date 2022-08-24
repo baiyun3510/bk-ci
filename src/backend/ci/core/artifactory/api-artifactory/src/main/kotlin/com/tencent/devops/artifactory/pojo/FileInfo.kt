@@ -49,6 +49,8 @@ data class FileInfo(
     val modifiedTime: Long,
     @ApiModelProperty("仓库类型", required = true)
     val artifactoryType: ArtifactoryType,
+    @ApiModelProperty("文件类型", required = false)
+    val fileType: String? = null,
     @ApiModelProperty("元数据", required = true)
     val properties: List<Property>?,
     @ApiModelProperty("app版本", required = true)
@@ -66,6 +68,7 @@ data class FileInfo(
         path: String,
         fullPath: String,
         size: Long,
+        fileType: String? = null,
         folder: Boolean,
         modifiedTime: Long,
         artifactoryType: ArtifactoryType
@@ -75,6 +78,7 @@ data class FileInfo(
             path = path,
             fullPath = fullPath,
             size = size,
+            fileType = fileType,
             folder = folder,
             modifiedTime = modifiedTime,
             artifactoryType = artifactoryType,

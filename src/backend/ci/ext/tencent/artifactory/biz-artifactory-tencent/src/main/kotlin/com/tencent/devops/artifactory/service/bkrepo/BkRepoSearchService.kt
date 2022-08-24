@@ -37,6 +37,8 @@ import com.tencent.devops.common.api.exception.OperationException
 import com.tencent.devops.common.api.util.timestamp
 import com.tencent.devops.common.archive.client.BkRepoClient
 import com.tencent.devops.common.archive.constant.ARCHIVE_PROPS_FILE_NAME
+import com.tencent.devops.common.client.Client
+import com.tencent.devops.process.api.service.ServiceBuildResource
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -46,7 +48,8 @@ import java.time.LocalDateTime
 class BkRepoSearchService @Autowired constructor(
     val bkRepoClient: BkRepoClient,
     val pipelineService: PipelineService,
-    val bkRepoService: BkRepoService
+    val bkRepoService: BkRepoService,
+    val client: Client
 ) : RepoSearchService {
     fun search(
         userId: String,
@@ -85,7 +88,19 @@ class BkRepoSearchService @Autowired constructor(
         logger.info("pipelineHasPermissionList is $pipelineHasPermissionList")
         logger.info("nodeList is $nodeList")
         val fileInfoList = bkRepoService.transferFileInfo(projectId, nodeList, pipelineHasPermissionList)
-        return Pair(LocalDateTime.now().timestamp(), fileInfoList)
+        val pipelineId = searchProps.props["pipelineId"] ?: ""
+        val buildId = searchProps.props["buildId"] ?: ""
+        //  获取流水线插件镜像构件信息
+        val imageArtifactInfos = client.get(ServiceBuildResource::class).getArtifactoryInfo(
+            userId = userId,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        ).data ?: listOf()
+        val result = mutableListOf<FileInfo>()
+        result.addAll(fileInfoList)
+        result.addAll(imageArtifactInfos)
+        return Pair(LocalDateTime.now().timestamp(), result)
     }
 
     fun serviceSearch(

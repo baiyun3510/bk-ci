@@ -27,6 +27,8 @@
 
 package com.tencent.devops.process.utils
 
+import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.pipeline.enums.BuildFormPropertyType
 import com.tencent.devops.common.webhook.pojo.code.PIPELINE_REPO_NAME
 import com.tencent.devops.common.webhook.pojo.code.PIPELINE_WEBHOOK_BRANCH
@@ -124,6 +126,12 @@ class PipelineVarUtilTest {
         assertEquals(PIPELINE_TIME_DURATION, PipelineVarUtil.oldVarToNewVar("pipeline.time.duration"))
         assertEquals(PROJECT_NAME_CHINESE, PipelineVarUtil.oldVarToNewVar("project.name.chinese"))
         assertEquals(PIPELINE_NAME, PipelineVarUtil.oldVarToNewVar("pipeline.name"))
+    }
+
+    @Test
+    fun test() {
+        val a = JsonUtil.to("[]", Array<FileInfo>::class.java)
+        println(a.isNullOrEmpty())
     }
 
     @Test
