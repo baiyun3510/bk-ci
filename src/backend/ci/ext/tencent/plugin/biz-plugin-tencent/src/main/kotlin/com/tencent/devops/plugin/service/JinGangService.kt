@@ -46,7 +46,6 @@ import com.tencent.devops.common.auth.api.AuthResourceType
 import com.tencent.devops.common.auth.api.BSAuthPermissionApi
 import com.tencent.devops.common.auth.api.pojo.BkAuthGroup
 import com.tencent.devops.common.auth.code.PipelineAuthServiceCode
-import com.tencent.devops.common.auth.code.VSAuthServiceCode
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.service.utils.HomeHostUtil
@@ -60,6 +59,7 @@ import com.tencent.devops.plugin.pojo.JinGangAppResultReponse
 import com.tencent.devops.process.api.service.ServiceJfrogResource
 import com.tencent.devops.process.api.service.ServicePipelineResource
 import com.tencent.devops.project.api.service.ServiceProjectResource
+import com.tencent.devops.project.api.service.ServiceUserResource
 import javassist.NotFoundException
 import okhttp3.MediaType
 import okhttp3.Request
@@ -88,7 +88,6 @@ class JinGangService @Autowired constructor(
     private val dslContext: DSLContext,
     private val authProjectApi: AuthProjectApi,
     private val pipelineServiceCode: PipelineAuthServiceCode,
-    private val vsServiceCode: VSAuthServiceCode,
     private val bkRepoClient: BkRepoClient
 ) {
 
@@ -329,6 +328,7 @@ class JinGangService @Autowired constructor(
             if (status == "1") {
                 @Suppress("UNCHECKED_CAST")
                 val data = obj["data"] as Map<String, Any>
+
                 @Suppress("UNCHECKED_CAST")
                 val user = data["user"] as Collection<Any>?
                 return StarResponse(
@@ -350,7 +350,9 @@ class JinGangService @Autowired constructor(
     }
 
     private fun getProjectManager(projectId: String): List<StarUser> {
-        val manager = authProjectApi.getProjectUsers(vsServiceCode, projectId, BkAuthGroup.MANAGER)
+        val manager = client.get(ServiceUserResource::class).getProjectUserRoles(projectId, BkAuthGroup.MANAGER)
+            .data ?: emptyList()
+//        val manager = authProjectApi.getProjectUsers(vsServiceCode, projectId, BkAuthGroup.MANAGER)
         return listOf(StarUser(roleName = "项目管理员", roleId = "37", user = manager.joinToString(";")))
     }
 
