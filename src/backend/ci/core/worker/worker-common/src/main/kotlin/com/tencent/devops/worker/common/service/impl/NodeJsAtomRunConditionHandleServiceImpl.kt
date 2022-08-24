@@ -88,10 +88,10 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
                 // 空文件夹需要删除
                 pkgFileDir.delete()
             }
-            logger.info("prepareRunEnv pkgFileDir:$pkgFileDir,pkgName:$pkgName")
+            logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir,pkgName:$pkgName")
             if (pkgFileDir.exists() && pkgName.contains("node-v11.15.0-linux-x64")) {
-                logger.info("prepareRunEnv pkgFileDir:$pkgFileDir delete")
-                pkgFileDir.delete()
+                logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir delete")
+                pkgFileDir.deleteRecursively()
             }
             if (!pkgFileDir.exists()) {
                 // 把指定的nodejs安装包下载到构建机上
