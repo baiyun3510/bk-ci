@@ -40,9 +40,6 @@ import com.tencent.devops.common.pipeline.element.CosCdnDistributionElementDev
 import com.tencent.devops.common.pipeline.element.DeployDistributionElement
 import com.tencent.devops.common.pipeline.element.ExperienceElement
 import com.tencent.devops.common.pipeline.element.FileArchiveElement
-import com.tencent.devops.common.pipeline.element.GcloudAppElement
-import com.tencent.devops.common.pipeline.element.GcloudDeleteVersionElement
-import com.tencent.devops.common.pipeline.element.GcloudElement
 import com.tencent.devops.common.pipeline.element.GcloudPufferDeleteVersionElement
 import com.tencent.devops.common.pipeline.element.GcloudPufferElement
 import com.tencent.devops.common.pipeline.element.GcloudPufferUpdateVersionElement
@@ -105,7 +102,6 @@ class PluginElementSubTypeFetcher : ElementSubTypeFetcher {
             SendSmsNotifyElement.classType to SendSmsNotifyElement::class.java,
             SendWechatNotifyElement.classType to SendWechatNotifyElement::class.java,
             ExperienceElement.classType to ExperienceElement::class.java,
-            GcloudElement.classType to GcloudElement::class.java,
             JobExecuteTaskExtElement.classType to JobExecuteTaskExtElement::class.java,
             ComDistributionElement.classType to ComDistributionElement::class.java,
             JobDevOpsFastPushFileElement.classType to JobDevOpsFastPushFileElement::class.java,
@@ -121,7 +117,6 @@ class PluginElementSubTypeFetcher : ElementSubTypeFetcher {
             JinGangAppElement.classType to JinGangAppElement::class.java,
             BcsContainerOpElement.classType to BcsContainerOpElement::class.java,
             BcsContainerOpByNameElement.classType to BcsContainerOpByNameElement::class.java,
-            GcloudAppElement.classType to GcloudAppElement::class.java,
             AcrossProjectDistributionElement.classType to AcrossProjectDistributionElement::class.java,
             ReportArchiveServiceElement.classType to ReportArchiveServiceElement::class.java,
             TcmElement.classType to TcmElement::class.java,
@@ -133,7 +128,6 @@ class PluginElementSubTypeFetcher : ElementSubTypeFetcher {
             GcloudUpdateVersionElement.classType to GcloudUpdateVersionElement::class.java,
             OpenStatePushFileElement.classType to OpenStatePushFileElement::class.java,
             GcloudPufferElement.classType to GcloudPufferElement::class.java,
-            GcloudDeleteVersionElement.classType to GcloudDeleteVersionElement::class.java,
             GcloudPufferDeleteVersionElement.classType to GcloudPufferDeleteVersionElement::class.java,
             GcloudPufferUpdateVersionElement.classType to GcloudPufferUpdateVersionElement::class.java,
             WetestElement.classType to WetestElement::class.java,
