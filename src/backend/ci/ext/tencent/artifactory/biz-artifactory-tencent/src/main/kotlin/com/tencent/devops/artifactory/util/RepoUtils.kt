@@ -33,7 +33,6 @@ import com.tencent.devops.artifactory.pojo.FileChecksums
 import com.tencent.devops.artifactory.pojo.FileDetail
 import com.tencent.devops.artifactory.pojo.FileInfo
 import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
-import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType.*
 import com.tencent.devops.common.api.util.timestamp
 import com.tencent.devops.common.archive.pojo.QueryNodeInfo
 import java.time.LocalDateTime
@@ -47,15 +46,15 @@ object RepoUtils {
 
     fun getRepoByType(repoType: ArtifactoryType): String {
         return when (repoType) {
-            PIPELINE -> PIPELINE_REPO
-            CUSTOM_DIR -> CUSTOM_REPO
+            ArtifactoryType.PIPELINE -> PIPELINE_REPO
+            ArtifactoryType.CUSTOM_DIR -> CUSTOM_REPO
         }
     }
 
     fun getTypeByRepo(repo: String): ArtifactoryType {
         return when (repo) {
-            PIPELINE_REPO -> PIPELINE
-            CUSTOM_REPO -> CUSTOM_DIR
+            PIPELINE_REPO -> ArtifactoryType.PIPELINE
+            CUSTOM_REPO -> ArtifactoryType.CUSTOM_DIR
             else -> throw IllegalArgumentException("invalid repo: $repo")
         }
     }
@@ -92,7 +91,7 @@ object RepoUtils {
             size = if (fileInfo.folder) -1 else fileInfo.size,
             folder = fileInfo.folder,
             modifiedTime = LocalDateTime.parse(fileInfo.lastModifiedDate, DateTimeFormatter.ISO_DATE_TIME).timestamp(),
-            artifactoryType = CUSTOM_DIR
+            artifactoryType = ArtifactoryType.CUSTOM_DIR
         )
     }
 
