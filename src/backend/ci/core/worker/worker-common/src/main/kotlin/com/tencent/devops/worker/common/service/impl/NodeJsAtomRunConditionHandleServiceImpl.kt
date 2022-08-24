@@ -88,6 +88,9 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
                 // 空文件夹需要删除
                 pkgFileDir.delete()
             }
+            if (pkgFileDir.absolutePath.contains("node-v11.15.0-linux-x64")) {
+                pkgFileDir.delete()
+            }
             if (!pkgFileDir.exists()) {
                 // 把指定的nodejs安装包下载到构建机上
                 val pkgFile = File(envDir, "$NODEJS/$pkgName")
