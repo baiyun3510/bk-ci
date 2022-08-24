@@ -74,7 +74,7 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
         }
         val storePkgRunEnvInfo = storePkgRunEnvInfoResult.data
         val envDir = WorkspaceUtils.getCommonEnvDir() ?: workspace
-        logger.info("prepareRunEnv param:[$osType,$language,$runtimeVersion,$envDir,$storePkgRunEnvInfo]")
+        logger.info("prepareRunEnvDev param:[$osType,$language,$runtimeVersion,$envDir,$storePkgRunEnvInfo]")
         storePkgRunEnvInfo?.let {
             // 判断nodejs安装包是否已经存在构建机上
             val pkgName = storePkgRunEnvInfo.pkgName
