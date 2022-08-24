@@ -88,7 +88,9 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
                 // 空文件夹需要删除
                 pkgFileDir.delete()
             }
-            if (pkgFileDir.absolutePath.contains("node-v11.15.0-linux-x64")) {
+            logger.info("prepareRunEnv pkgFileDir:$pkgFileDir,pkgName:$pkgName")
+            if (pkgFileDir.exists() && pkgName.contains("node-v11.15.0-linux-x64")) {
+                logger.info("prepareRunEnv pkgFileDir:$pkgFileDir delete")
                 pkgFileDir.delete()
             }
             if (!pkgFileDir.exists()) {
