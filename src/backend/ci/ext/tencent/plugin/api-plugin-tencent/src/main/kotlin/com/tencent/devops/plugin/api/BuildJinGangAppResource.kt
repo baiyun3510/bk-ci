@@ -82,24 +82,6 @@ interface BuildJinGangAppResource {
         runType: String
     ): Result<String>
 
-    @ApiOperation("权限中心注册资源")
-    @POST
-    @Path("/users/{userId}/app/resource")
-    fun createResource(
-        @ApiParam("用户ID", required = true)
-        @PathParam("userId")
-        userId: String,
-        @ApiParam("项目ID", required = true)
-        @HeaderParam(AUTH_HEADER_PROJECT_ID)
-        projectId: String,
-        @ApiParam("金刚TaskId", required = true)
-        @QueryParam("jinGangTaskId")
-        jinGangTaskId: String,
-        @ApiParam("资源名", required = true)
-        @QueryParam("resourceName")
-        resourceName: String
-    ): Result<Boolean>
-
     @ApiOperation("创建金刚Task")
     @POST
     @Path("/users/{userId}/app/create")
@@ -140,6 +122,12 @@ interface BuildJinGangAppResource {
     @POST
     @Path("/users/{userId}/app/update")
     fun updateTask(
+        @ApiParam("项目ID", required = true)
+        @HeaderParam(AUTH_HEADER_PROJECT_ID)
+        projectId: String,
+        @ApiParam("流水线ID", required = true)
+        @HeaderParam(AUTH_HEADER_PIPELINE_ID)
+        pipelineId: String,
         @ApiParam("流水线构建id", required = true)
         @HeaderParam(AUTH_HEADER_BUILD_ID)
         buildId: String,
