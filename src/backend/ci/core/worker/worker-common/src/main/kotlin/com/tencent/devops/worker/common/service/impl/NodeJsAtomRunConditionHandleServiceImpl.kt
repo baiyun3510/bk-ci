@@ -93,6 +93,7 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
                 logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir delete")
                 pkgFileDir.deleteRecursively()
             }
+            logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir,size:${pkgFileDir.listFiles()?.size},existFlag:${pkgFileDir.exists()}")
             if (!pkgFileDir.exists()) {
                 // 把指定的nodejs安装包下载到构建机上
                 val pkgFile = File(envDir, "$NODEJS/$pkgName")
