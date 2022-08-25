@@ -36,6 +36,7 @@ import com.tencent.devops.misc.service.dispatch.DispatchDataClearService
 import com.tencent.devops.misc.service.plugin.PluginDataClearService
 import com.tencent.devops.misc.service.process.ProcessDataClearService
 import com.tencent.devops.misc.service.process.ProcessMiscService
+import com.tencent.devops.misc.service.process.ProcessRelatedPlatformDataClearService
 import com.tencent.devops.misc.service.project.ProjectDataClearConfigFactory
 import com.tencent.devops.misc.service.project.ProjectDataClearConfigService
 import com.tencent.devops.misc.service.project.ProjectMiscService
@@ -67,7 +68,8 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
     private val dispatchDataClearService: DispatchDataClearService,
     private val pluginDataClearService: PluginDataClearService,
     private val qualityDataClearService: QualityDataClearService,
-    private val artifactoryDataClearService: ArtifactoryDataClearService
+    private val artifactoryDataClearService: ArtifactoryDataClearService,
+    private val processRelatedPlatformDataClearService: ProcessRelatedPlatformDataClearService
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(PipelineBuildHistoryDataClearJob::class.java)
@@ -84,8 +86,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
 
     @Value("\${process.deletedPipelineStoreDays:30}")
     private val deletedPipelineStoreDays: Long = 30 // 回收站已删除流水线保存天数
-
-
 
     @PostConstruct
     fun init() {
@@ -147,10 +147,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 } else {
                     index * avgProjectNum + maxProjectNum % maxThreadHandleProjectNum
                 }
-                val isMember = redisOperation.isMember(
-                    key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
-                    item = index.toString(),
-                    isDistinguishCluster = true)
                 // 判断线程是否正在处理任务，如正在处理则不分配新任务(定时任务12秒执行一次，线程启动到往set集合设置编号耗费时间很短，故不加锁)
                 if (!redisOperation.isMember(
                         key = PIPELINE_BUILD_HISTORY_DATA_CLEAR_THREAD_SET_KEY,
@@ -211,7 +207,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 } else {
                     projectMiscService.getProjectInfoList(projectIdList = projectIdList)
                 }
-                logger.info("pipelineBuildHistoryDataClear projectInfoList is $projectInfoList")
                 // 根据项目依次查询T_PIPELINE_INFO表中的流水线数据处理
                 projectInfoList?.forEach { projectInfo ->
                     val channel = projectInfo.channel
@@ -351,7 +346,7 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             pipelineHistoryBuildIdList?.forEach { buildId ->
                 // 依次删除process表中的相关构建记录(T_PIPELINE_BUILD_HISTORY做为基准表，
                 // 为了保证构建流水记录删干净，T_PIPELINE_BUILD_HISTORY记录要最后删)
-                // processDataClearService.clearBaseBuildData(projectId, buildId)
+                processDataClearService.clearBaseBuildData(projectId, buildId)
                 repositoryDataClearService.clearBuildData(buildId)
                 if (isCompletelyDelete) {
                     dispatchDataClearService.clearBuildData(buildId)
@@ -364,10 +359,6 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
             }
             totalHandleNum += DEFAULT_PAGE_SIZE
         }
-        try {
-            artifactoryDataClearService.cleanBuildHistoryRepoData(projectId, pipelineId, cleanBuilds)
-        } catch (e: Exception) {
-            logger.error("cleanBuildHistoryRepoData|$projectId|$pipelineId|$cleanBuilds|$e")
-        }
+        processRelatedPlatformDataClearService.cleanBuildData(projectId, pipelineId, cleanBuilds)
     }
 }
