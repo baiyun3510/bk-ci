@@ -1,8 +1,6 @@
 package com.tencent.devops.openapi.service.apigw
 
 import com.tencent.devops.common.api.exception.ErrorCodeException
-import com.tencent.devops.common.api.exception.OperationException
-import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.openapi.constant.OpenAPIMessageCode
 import com.tencent.devops.openapi.service.op.OpAppUserService
