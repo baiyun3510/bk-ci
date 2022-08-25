@@ -27,8 +27,6 @@
 
 package com.tencent.devops.common.service
 
-import com.tencent.devops.common.service.apm.OpenTelemetryFilter
-import com.tencent.devops.common.service.apm.OpentelemetryConfiguration
 import com.tencent.devops.common.service.config.CommonConfig
 import com.tencent.devops.common.service.gray.Gray
 import com.tencent.devops.common.service.prometheus.BkTimedAspect
