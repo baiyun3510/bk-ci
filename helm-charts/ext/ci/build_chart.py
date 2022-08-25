@@ -12,7 +12,7 @@ spring_profile = os.environ.get("spring_profile")
 
 def write_application_tpl(config_path, tpl_path):
     files_list = os.listdir(config_path)
-    files_list.sort()
+    files_list.sort(reverse=True)
     for file_name in files_list:  # for循环读取application开头的yaml文件
         file_path = config_path+file_name
         if os.path.isfile(file_path) and file_name.startswith("application"):
