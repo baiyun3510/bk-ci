@@ -24,17 +24,39 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-dependencies {
-    api(project(":core:common:common-service"))
-    api(project(":core:common:common-api"))
-    api("io.github.openfeign:feign-jaxrs")
-    api("io.github.openfeign:feign-okhttp")
-    api("io.github.openfeign:feign-jackson")
-    api("io.github.openfeign.form:feign-form")
-    api("io.github.openfeign.form:feign-form-spring")
-    api("io.github.openfeign:feign-spring4")
-    api("io.opentelemetry:opentelemetry-api")
-    api("io.opentelemetry:opentelemetry-sdk")
-    api("io.opentelemetry:opentelemetry-exporter-otlp")
-    api("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
+
+package com.tencent.devops.common.apm.prometheus
+
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.PushGateway
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.scheduling.annotation.Scheduled
+import java.util.concurrent.Executors
+
+class CronPush @Autowired constructor(
+    val pushGateway: PushGateway,
+    val counter: Counter,
+    val gauge: Gauge
+) {
+    @Value("\${spring.application.name:#{null}}")
+    val applicationName: String? = null
+
+    private val executorService = Executors.newSingleThreadExecutor()
+
+    @Scheduled(cron = "0/30 * * * * ?")
+    fun pushThread() {
+        logger.info("start push")
+        pushGateway.push(counter, "$applicationName-counter")
+        pushGateway.push(gauge, "$applicationName-gauge")
+        logger.info("end push")
+    }
+
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(CronPush::class.java)
+        const val SLEEP_TIME = 10 * 1000L
+    }
 }

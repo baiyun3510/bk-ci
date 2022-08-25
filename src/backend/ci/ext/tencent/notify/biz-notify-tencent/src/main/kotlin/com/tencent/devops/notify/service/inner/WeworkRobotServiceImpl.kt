@@ -46,6 +46,9 @@ import com.tencent.devops.notify.pojo.WeworkRobotSingleTextMessage
 import com.tencent.devops.notify.pojo.WeworkSendMessageResp
 import com.tencent.devops.notify.pojo.WeworkRobotContentMessage
 import com.tencent.devops.notify.service.WeworkService
+import io.opentelemetry.api.trace.Span
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
@@ -57,10 +60,20 @@ import org.springframework.context.annotation.Configuration
 @ConditionalOnProperty(prefix = "notify", name = ["weworkChannel"], havingValue = "weworkRobot")
 class WeworkRobotServiceImpl @Autowired constructor(
     private val rabbitTemplate: RabbitTemplate,
-    private val weworkNotifyDao: WeworkNotifyDao
+    private val weworkNotifyDao: WeworkNotifyDao,
+    private val counter: Counter,
+    private val gauge: Gauge
 ) : WeworkService {
     override fun sendMqMsg(message: WeworkNotifyMessageWithOperation) {
+        //        val trace = opentelemetryConfiguration.trace
+        val spanContext = Span.current().spanContext
+        counter.labels("sendRTX")
+            .incWithExemplar(mapOf("traceID" to spanContext.traceId, "spanID" to spanContext.spanId))
+        gauge.inc()
+//        val textMapPropagator: TextMapPropagator = opentelemetryConfiguration.openTelemetry.propagators.textMapPropagator
+//        val span = trace.spanBuilder("sendRtx_PRO").setParent(Context.current()).setSpanKind(SpanKind.PRODUCER).startSpan()
         rabbitTemplate.convertAndSend(EXCHANGE_NOTIFY, ROUTE_WEWORK, message)
+//        span.end()
     }
 
     @Value("\${wework.apiUrl:https://qyapi.weixin.qq.com}")

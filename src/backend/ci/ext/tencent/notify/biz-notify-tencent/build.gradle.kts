@@ -30,6 +30,7 @@ dependencies {
     api(project(":ext:tencent:common:common-wechatwork"))
     api(project(":ext:tencent:support:api-support-tencent"))
     api(project(":ext:tencent:common:common-auth:common-auth-tencent"))
+    api(project(":ext:tencent:common:common-apm"))
     api(project(":core:common:common-db"))
     api(project(":ext:tencent:common:common-notify-tencent"))
     api(project(":core:notify:api-notify"))

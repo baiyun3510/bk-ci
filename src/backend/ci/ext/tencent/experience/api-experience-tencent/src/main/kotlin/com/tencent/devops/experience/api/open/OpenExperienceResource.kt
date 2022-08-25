@@ -63,4 +63,10 @@ interface OpenExperienceResource {
         @BkField(maxLength = 15)
         userId: String
     ): Response
+
+    //TODO 测试用 , 需删除
+    @ApiOperation("OT测试")
+    @Path("/test/ot")
+    @GET
+    fun testOt(): Result<String>
 }

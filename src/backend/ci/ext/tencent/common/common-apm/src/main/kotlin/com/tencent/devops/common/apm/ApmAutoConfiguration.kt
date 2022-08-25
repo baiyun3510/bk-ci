@@ -25,51 +25,71 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.service
+package com.tencent.devops.common.apm
 
-import com.tencent.devops.common.service.apm.OpenTelemetryFilter
-import com.tencent.devops.common.service.apm.OpentelemetryConfiguration
-import com.tencent.devops.common.service.config.CommonConfig
-import com.tencent.devops.common.service.gray.Gray
-import com.tencent.devops.common.service.prometheus.BkTimedAspect
-import com.tencent.devops.common.service.trace.TraceFilter
-import com.tencent.devops.common.service.utils.SpringContextUtil
-import io.micrometer.core.instrument.MeterRegistry
+import com.tencent.devops.common.apm.prometheus.BkConnectionFactory
+import com.tencent.devops.common.apm.prometheus.BkPushGateway
+import com.tencent.devops.common.apm.prometheus.CronPush
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
+import io.prometheus.client.exporter.HTTPServer
+import io.prometheus.client.exporter.PushGateway
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.cloud.consul.ConsulAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.Ordered
-import org.springframework.core.env.Environment
 
-/**
- *
- * Powered By Tencent
- */
+
 @Configuration
 @PropertySource("classpath:/common-service.properties")
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @AutoConfigureBefore(ConsulAutoConfiguration::class)
-@EnableDiscoveryClient
-class ServiceAutoConfiguration {
-    @Bean
-    fun profile(environment: Environment) = Profile(environment)
+class ApmAutoConfiguration {
+
+    @Value("\${spring.application.name:#{null}}")
+    val applicationName: String? = null
 
     @Bean
-    fun springContextUtil() = SpringContextUtil()
+    fun getPushGateway(): PushGateway {
+        val token = "Ymtia2JrYmtia2JrYmtia4FtQWLNkSKtNp77jBh0s/TYzOtqKq7oFyDDmnP5jtxD"
+        val pushGateway = BkPushGateway("bkmonitor-http-report-paasee.woa.com:4318")
+        val connectionFactory = BkConnectionFactory(token)
+//        val connectionFactory = DefaultHttpConnectionFactory()
+        pushGateway.setConnectionFactory(connectionFactory)
+        return pushGateway
+    }
 
     @Bean
-    fun gray() = Gray()
+    fun cronPush(pushGateway: PushGateway, counter: Counter, gauge: Gauge): CronPush {
+        return CronPush(pushGateway = pushGateway, counter = counter, gauge = gauge)
+    }
 
     @Bean
-    fun commonConfig() = CommonConfig()
+    fun getCounter(): Counter {
+        return Counter.build()
+            .name(applicationName + "_counter_total") //
+            .labelNames(applicationName + "_counter") //
+            .help(applicationName + "_counter") //这个名字随便起
+            .withExemplars()
+            .register() //注：通常只能注册1次，1个实例中重复注册会报错
+    }
 
     @Bean
-    fun traceFilter() = TraceFilter()
+    fun getGauge(): Gauge {
+        return Gauge.build()
+            .name(applicationName + "_gauge") //
+            .help(applicationName + "_gauge")
+            .register()
+    }
 
     @Bean
-    fun bkTimedAspect(meterRegistry: MeterRegistry) = BkTimedAspect(meterRegistry)
+    fun prometheusHttpServer(): HTTPServer {
+        return HTTPServer.Builder()
+            .withPort(1234)
+            .build()
+    }
 }
