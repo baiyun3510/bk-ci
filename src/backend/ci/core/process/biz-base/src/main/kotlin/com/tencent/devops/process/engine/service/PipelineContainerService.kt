@@ -42,6 +42,7 @@ import com.tencent.devops.common.pipeline.pojo.BuildNoType
 import com.tencent.devops.common.pipeline.pojo.element.Element
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildAtomElement
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildLessAtomElement
+import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentEnvDispatchType
 import com.tencent.devops.common.pipeline.utils.ModelUtils
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.utils.CommonUtils
@@ -518,6 +519,13 @@ class PipelineContainerService @Autowired constructor(
                     )
                     else -> null
                 }
+
+                if (container is VMBuildContainer && container.dispatchType is ThirdPartyAgentEnvDispatchType) {
+                    if ((container.dispatchType as ThirdPartyAgentEnvDispatchType).labelExpressions == null) {
+
+                    }
+                }
+
                 buildContainers.add(
                     PipelineBuildContainer(
                         projectId = projectId,

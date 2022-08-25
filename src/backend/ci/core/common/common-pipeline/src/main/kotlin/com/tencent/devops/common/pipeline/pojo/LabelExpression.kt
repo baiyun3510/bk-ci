@@ -25,24 +25,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.environment.resources
+package com.tencent.devops.common.pipeline.pojo
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.environment.api.ServiceLabelResource
-import com.tencent.devops.environment.pojo.label.CalculateExpression
-import com.tencent.devops.environment.service.label.LabelService
-import org.springframework.beans.factory.annotation.Autowired
+data class LabelExpression(
+    val key: String,
+    val value: List<String>?,
+    val operator: Operator
+)
 
-@RestResource
-class ServiceLabelResourceImpl @Autowired constructor(
-    private val labelService: LabelService
-) : ServiceLabelResource {
-    override fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): Result<List<Long>> {
-        return Result(labelService.calculateNodes(userId, projectId, calculateExpression))
-    }
-
-    override fun transferEnvLabel(projectId: String, envId: String, sharedProjectId: String) {
-        TODO("Not yet implemented")
-    }
+enum class Operator{
+    IN,
+    NOT_IN,
+    EXIST,
+    DOES_NOT_EXIST
 }
