@@ -76,7 +76,7 @@ class TxProcessRelatedPlatformDataClearServiceImpl(
             "pipelineId" to pipelineId,
             "buildIds" to buildIds
         )
-
+        logger.info("cleanBuildDataRequest|$url|$userName")
         val body = RequestBody.create(
             MediaType.parse("application/json"),
             JsonUtil.toJson(context)
