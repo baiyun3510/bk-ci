@@ -67,14 +67,6 @@ build_macos_arm64_no_cgo:
 	GO111MODULE=on CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build ${BUILD_FLAGS} -o $(BINDIR)/installer_macos_arm64 $(CMDDIR)/installer/main.go
 	ls -la $(BINDIR)
 
-build_macos_arm64_2:
-	mkdir -p $(BINDIR)
-	GO111MODULE=on GOOS=darwin GOARCH=arm64 go build ${BUILD_FLAGS} -o $(BINDIR)/devopsDaemon_macos_arm64 $(CMDDIR)/daemon/main.go
-	GO111MODULE=on GOOS=darwin GOARCH=arm64 go build ${BUILD_FLAGS} -o $(BINDIR)/devopsAgent_macos_arm64 $(CMDDIR)/agent/main.go
-	GO111MODULE=on GOOS=darwin GOARCH=arm64 go build ${BUILD_FLAGS} -o $(BINDIR)/upgrader_macos_arm64 $(CMDDIR)/upgrader/main.go
-	GO111MODULE=on GOOS=darwin GOARCH=arm64 go build ${BUILD_FLAGS} -o $(BINDIR)/installer_macos_arm64 $(CMDDIR)/installer/main.go
-	ls -la $(BINDIR)
-
 build_windows:
 	mkdir -p $(BINDIR)
 	GO111MODULE=on CGO_ENABLED=0 GOOS=windows GOARCH=386 go build ${BUILD_FLAGS} -o $(BINDIR)/devopsDaemon.exe $(CMDDIR)/daemon/main_win.go
