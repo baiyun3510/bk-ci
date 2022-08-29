@@ -30,14 +30,19 @@ package com.tencent.devops.process.service.webhook
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.model.SQLPage
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.PageUtil
 import com.tencent.devops.common.auth.api.AuthPermission
+import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.kafka.KafkaClient
+import com.tencent.devops.common.kafka.KafkaTopic.LANDUN_PIPELINE_WEBHOOK_BUILD_LOG
 import com.tencent.devops.process.constant.ProcessMessageCode
 import com.tencent.devops.process.engine.dao.PipelineWebhookBuildLogDetailDao
 import com.tencent.devops.process.engine.service.PipelineWebhookBuildLogService
 import com.tencent.devops.process.permission.PipelinePermissionService
 import com.tencent.devops.process.pojo.webhook.PipelineWebhookBuildLog
 import com.tencent.devops.process.pojo.webhook.PipelineWebhookBuildLogDetail
+import com.tencent.devops.project.api.service.ServiceAllocIdResource
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Primary
@@ -48,15 +53,21 @@ import org.springframework.stereotype.Service
 class TxPipelineWebhookBuildLogServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val pipelineWebhookBuildLogDetailDao: PipelineWebhookBuildLogDetailDao,
-    private val pipelinePermissionService: PipelinePermissionService
+    private val pipelinePermissionService: PipelinePermissionService,
+    private val client: Client,
+    private val kafkaClient: KafkaClient
 ) : PipelineWebhookBuildLogService {
 
     override fun saveWebhookBuildLog(webhookBuildLog: PipelineWebhookBuildLog) {
+        val logId =  client.get(ServiceAllocIdResource::class)
+            .generateSegmentId("PIPELINE_WEBHOOK_BUILD_LOG_DETAIL").data
+        webhookBuildLog.id = logId
         pipelineWebhookBuildLogDetailDao.save(
             dslContext = dslContext,
-            logId = 0L,
+            logId = logId!!,
             webhookBuildLogDetails = webhookBuildLog.detail
         )
+        kafkaClient.send(LANDUN_PIPELINE_WEBHOOK_BUILD_LOG, JsonUtil.toJson(webhookBuildLog))
     }
 
     override fun listWebhookBuildLogDetail(
