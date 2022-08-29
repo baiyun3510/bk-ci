@@ -106,6 +106,14 @@ class StoreApproveDao {
         }
     }
 
+    fun getStoreApproveToken(dslContext: DSLContext, approveId: String): TStoreApproveRecord? {
+        return with(TStoreApprove.T_STORE_APPROVE) {
+            dslContext.select(this.TO)
+                .where(ID.eq(approveId))
+                .fetchOne()
+        }
+    }
+
     fun addStoreApproveInfo(
         dslContext: DSLContext,
         userId: String,
