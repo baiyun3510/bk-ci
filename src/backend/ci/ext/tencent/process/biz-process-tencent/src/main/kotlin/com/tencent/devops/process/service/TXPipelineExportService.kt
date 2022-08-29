@@ -1124,7 +1124,7 @@ class TXPipelineExportService @Autowired constructor(
 
             val realValue = when {
                 lastExistingOutputElements.stepAtom != null &&
-                    lastExistingOutputElements.jobLocation?.jobId != null -> {
+                    !lastExistingOutputElements.jobLocation?.jobId.isNullOrBlank() -> {
                     checkConflictOutput(
                         key = originKey,
                         existingOutputElements = existingOutputElements!!,
@@ -1594,7 +1594,7 @@ class TXPipelineExportService @Autowired constructor(
             } else keyStr
 
             when {
-                lastExistingOutputElements.jobLocation?.jobId == null -> originKeyWithNamespace
+                lastExistingOutputElements.jobLocation?.jobId.isNullOrBlank() -> originKeyWithNamespace
 
                 !namespace.isNullOrBlank() -> "jobs.${lastExistingOutputElements.jobLocation?.jobId}.steps." +
                     "$namespace.outputs.$originKeyWithNamespace"
