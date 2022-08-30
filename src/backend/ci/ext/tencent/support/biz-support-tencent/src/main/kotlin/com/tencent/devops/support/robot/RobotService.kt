@@ -98,7 +98,7 @@ class RobotService @Autowired constructor(
         val callbackId = robotCallBack.callbackId
         val actionName = robotCallBack.actionName
         val actionValue = robotCallBack.actionValue
-        // 若callbackId为空，则表示没有回调事件，则不需要再进行下一步回调事件处理
+        // 若callbackId为空，则表示没有回调事件，不需要再进行下一步回调事件处理
         if (checkParams(callbackId, actionValue)) {
             return true
         }
@@ -139,15 +139,21 @@ class RobotService @Autowired constructor(
         return true
     }
 
+    @SuppressWarnings("ComplexMethod")
     private fun checkParams(
         callbackId: String?,
         actionValue: String?
     ): Boolean {
-        if (callbackId == null || callbackId.isEmpty() || actionValue == null || actionValue.isEmpty()) {
+        if (isLegal(callbackId, actionValue)) {
             return true
         }
         return false
     }
+
+    private fun isLegal(
+        callbackId: String?,
+        actionValue: String?
+    ) = (callbackId == null || callbackId.isEmpty() || actionValue == null || actionValue.isEmpty())
 
     /*
   * 获取密文的CallbackInfo对象
@@ -206,7 +212,7 @@ class RobotService @Autowired constructor(
             xmlString = rototWxcpt.DecryptMsg(signature, timestamp.toString(), nonce, reqData)
         } catch (e: Exception) {
             // 转换失败，错误原因请查看异常
-            e.printStackTrace()
+            logger.warn("getDecrypeMsg :$e")
         }
         return xmlString
     }
