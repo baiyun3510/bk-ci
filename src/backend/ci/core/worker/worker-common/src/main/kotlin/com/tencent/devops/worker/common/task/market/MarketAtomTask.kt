@@ -383,9 +383,13 @@ open class MarketAtomTask : ITask() {
         val atomParams = mutableMapOf<String, String>()
         try {
             inputMap.forEach { (name, value) ->
+                logger.info("parseInputParams|[$asCodeEnabled]|name=$name|value=$value")
                 // 修复插件input环境变量替换问题 #5682
-                atomParams[name] = JsonUtil.toJson(EnvReplacementParser.parse(value, variables, asCodeEnabled))
-                    .parseCredentialValue(null, acrossInfo?.targetProjectId)
+                atomParams[name] = EnvReplacementParser.parse(
+                    obj = JsonUtil.toJson(value),
+                    contextMap = variables,
+                    onlyExpression = asCodeEnabled
+                ).parseCredentialValue(null, acrossInfo?.targetProjectId)
             }
         } catch (e: Throwable) {
             logger.error("plugin input illegal! ", e)

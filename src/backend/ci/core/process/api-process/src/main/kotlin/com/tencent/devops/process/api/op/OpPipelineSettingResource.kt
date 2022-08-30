@@ -30,7 +30,7 @@ package com.tencent.devops.process.api.op
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID_DEFAULT_VALUE
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.process.pojo.setting.PipelineAsCodeSettings
+import com.tencent.devops.common.api.pojo.PipelineAsCodeSettings
 import com.tencent.devops.process.pojo.setting.PipelineSetting
 import com.tencent.devops.process.utils.PIPELINE_SETTING_MAX_CON_QUEUE_SIZE_DEFAULT
 import io.swagger.annotations.Api
@@ -102,8 +102,8 @@ interface OpPipelineSettingResource {
         projectId: String,
         @ApiParam("流水线id", required = true)
         @QueryParam("pipelineId")
-        pipelineId: String,
+        pipelineId: String?,
         @ApiParam("YAML流水线设置", required = true)
         pipelineAsCodeSettings: PipelineAsCodeSettings
-    ): Result<String>
+    ): Result<Int>
 }

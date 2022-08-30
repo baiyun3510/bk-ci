@@ -129,6 +129,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
     companion object {
         private val LOG = LoggerFactory.getLogger(EngineVMBuildService::class.java)
         const val ENV_CONTEXT_KEY_PREFIX = "envs."
+
         // 任务结束上报Key
         private fun completeTaskKey(buildId: String, vmSeqId: String) = "build:$buildId:job:$vmSeqId:ending_task"
     }
@@ -171,7 +172,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         Preconditions.checkNotNull(buildInfo, NotFoundException("Pipeline build ($buildId) is not exist"))
         LOG.info("ENGINE|$buildId|BUILD_VM_START|j($vmSeqId)|vmName($vmName)")
         // var表中获取环境变量，并对老版本变量进行兼容
-        val variables = buildVariableService.getAllVariable(projectId, buildId)
+        val variables = buildVariableService.getAllVariable(projectId, buildInfo.pipelineId, buildId)
         val variablesWithType = buildVariableService.getAllVariableWithType(projectId, buildId).toMutableList()
         val model = containerBuildDetailService.getBuildModel(projectId, buildId)
         val asCodeSettings = pipelineAsCodeService.getPipelineAsCodeSettings(projectId, buildInfo.pipelineId)
@@ -476,7 +477,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                 BuildTask(buildId, vmSeqId, BuildTaskStatus.WAIT)
             }
             else -> {
-                val allVariable = buildVariableService.getAllVariable(task.projectId, buildId)
+                val allVariable = buildVariableService.getAllVariable(task.projectId, task.pipelineId, buildId)
                 // 构造扩展变量
                 val extMap = buildExtService.buildExt(task, allVariable)
                 val buildVariable = mutableMapOf(
@@ -831,12 +832,15 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         task?.run {
             errorType?.also { // #5046 增加错误信息
                 val errMsg = "Error: Process completed with exit code $errorCode: $errorMsg. " +
-                    (
-                        errorCode?.let {
-                            "\n${MessageCodeUtil.getCodeLanMessage(messageCode = errorCode.toString())}\n"
-                        }
-                            ?: ""
-                        ) +
+                    (errorCode?.let {
+                        "\n${
+                            MessageCodeUtil.getCodeLanMessage(
+                                messageCode = errorCode.toString(),
+                                checkUrlDecoder = true
+                            )
+                        }\n"
+                    }
+                        ?: "") +
                     when (errorType) {
                         ErrorType.USER -> "Please check your input or service."
                         ErrorType.THIRD_PARTY -> "Please contact the third-party service provider."
