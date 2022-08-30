@@ -27,10 +27,12 @@
 
 package com.tencent.devops.dispatch.service.dispatcher.agent
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.tencent.devops.common.api.enums.AgentStatus
 import com.tencent.devops.common.api.exception.InvalidParamException
 import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
@@ -50,7 +52,8 @@ import com.tencent.devops.dispatch.utils.ThirdPartyAgentLock
 import com.tencent.devops.dispatch.utils.redis.ThirdPartyAgentBuildRedisUtils
 import com.tencent.devops.dispatch.utils.redis.ThirdPartyRedisBuild
 import com.tencent.devops.environment.api.thirdPartyAgent.ServiceThirdPartyAgentResource
-import com.tencent.devops.environment.pojo.LabelQuery
+import com.tencent.devops.environment.pojo.label.LabelExpression
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgent
 import com.tencent.devops.process.api.service.ServiceBuildResource
 import com.tencent.devops.process.engine.common.VMUtils
@@ -60,8 +63,6 @@ import com.tencent.devops.process.pojo.mq.PipelineAgentStartupEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import java.util.HashMap
-import java.util.HashSet
 import javax.ws.rs.core.Response
 
 @Component
@@ -304,7 +305,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                             .getAgentsByLabels(
                                 projectId = event.projectId,
                                 labelQuery = LabelQuery(
-                                    labelExpressions = dispatchType.labelExpressions!!,
+                                    labelExpressions = formatLabelExpressions(event, dispatchType.labelExpressions!!),
                                     sharedProjectId = dispatchType.envProjectId
                                 )
                             )
@@ -691,6 +692,24 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             runningBuildsMapper[agentId] = runningCnt
         }
         return runningCnt
+    }
+
+    private fun formatLabelExpressions(
+        event: PipelineAgentStartupEvent,
+        labelExpressions: String
+    ): List<LabelExpression>{
+        return try {
+            val labelExpressionList = JsonUtil.to(
+                labelExpressions,
+                object : TypeReference<List<LabelExpression>>() {}
+            )
+
+            labelExpressionList
+        } catch (e: Exception) {
+            logger.warn("[${event.buildId}|${event.vmSeqId}] Failed to format label expressions.", e)
+            logDebug(buildLogPrinter, event, "Failed to format label expressions")
+            emptyList()
+        }
     }
 
     interface AgentMatcher {

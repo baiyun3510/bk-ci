@@ -31,8 +31,8 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.environment.api.UserLabelResource
 import com.tencent.devops.environment.exception.LabelException
-import com.tencent.devops.environment.pojo.label.CalculateExpression
 import com.tencent.devops.environment.pojo.label.LabelInfo
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.service.label.LabelService
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -60,8 +60,8 @@ class UserLabelResourceImpl @Autowired constructor(
     override fun calculateNodes(
         userId: String,
         projectId: String,
-        calculateExpression: CalculateExpression
+        labelQuery: LabelQuery
     ): Result<List<Long>> {
-        return Result(labelService.calculateNodes(userId, projectId, calculateExpression))
+        return Result(labelService.calculateNodes(userId, projectId, labelQuery))
     }
 }

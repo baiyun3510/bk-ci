@@ -32,10 +32,9 @@ import com.tencent.devops.environment.dao.LabelDao
 import com.tencent.devops.environment.dao.NodeDao
 import com.tencent.devops.environment.dao.NodeLabelDao
 import com.tencent.devops.environment.exception.LabelException
-import com.tencent.devops.environment.pojo.label.CalculateExpression
 import com.tencent.devops.environment.pojo.label.LabelExpression
-
 import com.tencent.devops.environment.pojo.label.LabelInfo
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.pojo.label.LabelType
 import com.tencent.devops.environment.pojo.label.Operator
 import com.tencent.devops.environment.utils.LabelRedisUtils
@@ -92,6 +91,29 @@ class LabelService @Autowired constructor(
         return true
     }
 
+    fun batchAdd(userId: String, projectId: String, labelInfoList: List<LabelInfo>): List<Long> {
+        labelInfoList.forEach { checkLabelInfo(it) }
+
+        val labelIdList = mutableListOf<Long>()
+        dslContext.transaction { configuration ->
+            val context = DSL.using(configuration)
+            labelInfoList.forEach {
+                labelIdList.add(labelDao.addLabel(
+                    projectId = projectId,
+                    labelInfo = it,
+                    dslContext = context
+                ))
+
+                // 新增系统标签key时删除系统标签key缓存
+                if ((it.labelType == LabelType.SYSTEM) && !getSystemLabel().contains(it.labelKey)) {
+                    labelRedisUtils.deleteSystemLabelKey()
+                }
+            }
+        }
+
+        return labelIdList
+    }
+
     fun delete(userId: String, projectId: String, labelId: Long): Boolean {
         dslContext.transaction { configuration ->
             val context = DSL.using(configuration)
@@ -114,16 +136,16 @@ class LabelService @Autowired constructor(
     /**
      * 计算标签表达式节点
      */
-    fun calculateNodes(userId: String, projectId: String, calculateExpression: CalculateExpression): List<Long> {
+    fun calculateNodes(userId: String, projectId: String, labelQuery: LabelQuery): List<Long> {
         logger.info("$userId calculateNodes projectId: $projectId " +
-                        "calculateExpression: ${JsonUtil.toJson(calculateExpression)}")
-        if (calculateExpression.labelExpression.isEmpty()) {
+                        "labelQuery: ${JsonUtil.toJson(labelQuery)}")
+        if (labelQuery.labelExpressions.isEmpty()) {
             return emptyList()
         }
 
         var finalRoaring64Bitmap = Roaring64Bitmap()
-        for (index in calculateExpression.labelExpression.indices) {
-            val expressionBitMap = getExpressionBitMap(projectId, calculateExpression.labelExpression[index])
+        for (index in labelQuery.labelExpressions.indices) {
+            val expressionBitMap = getExpressionBitMap(projectId, labelQuery.labelExpressions[index])
             if (index == 0) {
                 finalRoaring64Bitmap = expressionBitMap
             } else {

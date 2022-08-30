@@ -30,8 +30,8 @@ package com.tencent.devops.environment.api
 import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_USER_ID
 import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_USER_ID_DEFAULT_VALUE
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.environment.pojo.label.CalculateExpression
 import com.tencent.devops.environment.pojo.label.LabelInfo
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -103,6 +103,6 @@ interface UserLabelResource {
         @PathParam("projectId")
         projectId: String,
         @ApiParam(value = "计算表达式列表", required = true)
-        calculateExpression: CalculateExpression
+        labelQuery: LabelQuery
     ): Result<List<Long>>
 }

@@ -83,6 +83,23 @@ interface UserNodeLabelResource {
         labelId: Long
     ): Result<Boolean>
 
+    @ApiOperation("节点批量打标签")
+    @POST
+    @Path("/projects/{projectId}/nodes/{nodeId}/batchAddLabel")
+    fun batchAdd(
+        @ApiParam("用户ID", required = true, defaultValue = AUTH_HEADER_DEVOPS_USER_ID_DEFAULT_VALUE)
+        @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
+        userId: String,
+        @ApiParam(value = "项目ID", required = true)
+        @PathParam("projectId")
+        projectId: String,
+        @ApiParam(value = "节点ID", required = true)
+        @PathParam("nodeId")
+        nodeId: Long,
+        @ApiParam(value = "批量标签信息", required = true)
+        labelInfoList: List<LabelInfo>
+    ): Result<Boolean>
+
     @ApiOperation("节点去除标签")
     @DELETE
     @Path("/projects/{projectId}/nodes/{nodeId}/labels/{labelId}")

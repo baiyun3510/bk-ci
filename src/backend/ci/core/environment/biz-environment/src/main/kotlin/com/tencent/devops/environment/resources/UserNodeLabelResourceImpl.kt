@@ -31,11 +31,14 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.environment.api.UserNodeLabelResource
 import com.tencent.devops.environment.pojo.label.LabelInfo
+import com.tencent.devops.environment.service.label.LabelService
 import com.tencent.devops.environment.service.label.NodeLabelService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class UserNodeLabelResourceImpl @Autowired constructor(
+    private val labelService: LabelService,
     private val nodeLabelService: NodeLabelService
 ) : UserNodeLabelResource {
     override fun get(userId: String, projectId: String, nodeId: Long): Result<List<LabelInfo>> {
@@ -46,6 +49,45 @@ class UserNodeLabelResourceImpl @Autowired constructor(
         return Result(nodeLabelService.add(userId, projectId, nodeId, labelId))
     }
 
+    override fun batchAdd(userId: String, projectId: String, nodeId: Long, labelInfoList: List<LabelInfo>): Result<Boolean> {
+        logger.info("$userId batch add nodeLabel nodeId: $nodeId, labelInfoList: $labelInfoList")
+
+        val oldLabelInfoList = nodeLabelService.get(userId, nodeId)
+
+        // 获取此次批量绑定新增标签列表
+        val addLabelInfoList = labelInfoList.toMutableList()
+        labelInfoList.forEach { labelInfo ->
+            oldLabelInfoList.forEach { oldLabelInfo ->
+                if (labelInfo.labelKey == oldLabelInfo.labelKey && labelInfo.labelValue == oldLabelInfo.labelValue) {
+                    addLabelInfoList.remove(labelInfo)
+                }
+            }
+        }
+
+        // 批量新增标签并批量绑定
+        val labelIdList = labelService.batchAdd(userId, projectId, addLabelInfoList)
+        labelIdList.forEach {
+            nodeLabelService.add(userId, projectId, nodeId, it)
+        }
+
+        // 获取解绑标签列表
+        val deleteLabelInfoList = oldLabelInfoList.toMutableList()
+        oldLabelInfoList.forEach { oldLabelInfo ->
+            labelInfoList.forEach { labelInfo ->
+                if (labelInfo.labelKey == oldLabelInfo.labelKey && labelInfo.labelValue == oldLabelInfo.labelValue) {
+                    deleteLabelInfoList.remove(labelInfo)
+                }
+            }
+        }
+
+        // 解绑标签
+        deleteLabelInfoList.forEach {
+            nodeLabelService.delete(userId, projectId, nodeId, it.labelId)
+        }
+
+        return Result(true)
+    }
+
     override fun delete(userId: String, projectId: String, nodeId: Long, labelId: Long): Result<Boolean> {
         return Result(nodeLabelService.delete(userId, projectId, nodeId, labelId))
     }
@@ -54,4 +96,7 @@ class UserNodeLabelResourceImpl @Autowired constructor(
         return Result(nodeLabelService.getLabelNodes(userId, projectId, labelId))
     }
 
+    companion object {
+        private val logger = LoggerFactory.getLogger(UserNodeLabelResourceImpl::class.java)
+    }
 }

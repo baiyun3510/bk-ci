@@ -27,7 +27,6 @@
 
 package com.tencent.devops.environment.service.thirdPartyAgent
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.devops.common.api.enums.AgentAction
@@ -68,12 +67,10 @@ import com.tencent.devops.environment.exception.AgentPermissionUnAuthorizedExcep
 import com.tencent.devops.environment.model.AgentHostInfo
 import com.tencent.devops.environment.permission.EnvironmentPermissionService
 import com.tencent.devops.environment.pojo.EnvVar
-import com.tencent.devops.environment.pojo.LabelQuery
 import com.tencent.devops.environment.pojo.enums.NodeStatus
 import com.tencent.devops.environment.pojo.enums.NodeType
 import com.tencent.devops.environment.pojo.enums.SharedEnvType
-import com.tencent.devops.environment.pojo.label.CalculateExpression
-import com.tencent.devops.environment.pojo.label.LabelExpression
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.pojo.thirdPartyAgent.AgentBuildDetail
 import com.tencent.devops.environment.pojo.thirdPartyAgent.AgentTask
 import com.tencent.devops.environment.pojo.thirdPartyAgent.HeartbeatResponse
@@ -103,7 +100,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import java.util.ArrayList
 import java.util.Date
 import javax.ws.rs.NotFoundException
 import javax.ws.rs.core.Response
@@ -724,19 +720,7 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
             projectId
         }
 
-        val nodeIds: List<Long>
-        try {
-            val labelExpressionList = JsonUtil.to(
-                labelQuery.labelExpressions,
-                object : TypeReference<List<LabelExpression>>() {}
-            )
-
-            nodeIds = labelService.calculateNodes("", realProjectId, CalculateExpression(labelExpressionList))
-        } catch (e: Exception) {
-            logger.warn("[$projectId|$labelQuery] Failed to get nodeIds by label expressions.", e)
-            return emptyList()
-        }
-
+        val nodeIds = labelService.calculateNodes("", realProjectId,labelQuery)
         return getThirdPartyAgentByNodeIds(nodeIds.toSet(), projectId)
     }
 

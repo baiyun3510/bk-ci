@@ -27,6 +27,7 @@
 
 package com.tencent.devops.environment.pojo.label
 
-data class CalculateExpression(
-    val labelExpression: List<LabelExpression>
+data class LabelQuery(
+    val labelExpressions: List<LabelExpression>,
+    val sharedProjectId: String?
 )
