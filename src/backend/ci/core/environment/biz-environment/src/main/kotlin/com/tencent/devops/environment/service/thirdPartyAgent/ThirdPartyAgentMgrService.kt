@@ -724,42 +724,6 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
 
         val nodeIds = labelService.calculateNodes("", realProjectId,labelQuery)
         return getThirdPartyAgentByNodeIds(nodeIds.toSet(), projectId)
-                // 通过项目组获取所有项目，判断当前项目是否处于被分享的项目组中
-                if (it.type == SharedEnvType.GROUP.name) {
-                    val projectsInGroups = try {
-                        val token = client.get(ServiceOauthResource::class).gitGet(it.creator).data?.accessToken
-                            ?: throw NotFoundException("cannot found oauth access token for user(${it.creator})")
-                        client.get(ServiceGitResource::class).getProjectGroupInfo(
-                            id = it.sharedProjectId.removePrefix("git_"),
-                            includeSubgroups = true,
-                            token = token,
-                            tokenType = TokenTypeEnum.OAUTH
-                        ).data
-                    } catch (e: Exception) {
-                        logger.warn("$projectId $sharedProjectId:$sharedEnvName get share project error: ${e.message}")
-                        null
-                    }
-                    val gitProjectId = projectId.removePrefix("git_")
-                    projectsInGroups?.projects?.filter { project -> project.id == gitProjectId }?.ifEmpty {
-                        projectsInGroups.subProjects?.filter { subProject -> subProject.id == gitProjectId }?.ifEmpty {
-                            return@nextRecord
-                        }
-                    }
-                }
-
-                sharedThirdPartyAgents.addAll(getAgentByEnvId(it.mainProjectId, HashUtil.encodeLongId(it.envId)))
-                // 找到了环境可用就可以退出了
-                return@outSide
-            }
-        }
-        if (sharedThirdPartyAgents.isEmpty()) {
-            throw CustomException(
-                Response.Status.FORBIDDEN,
-                "无权限使用第三方构建机环境($sharedProjectId:$sharedEnvName)"
-            )
-        }
-        logger.info("sharedThirdPartyAgents size: ${sharedThirdPartyAgents.size}")
-        return sharedThirdPartyAgents
     }
 
     fun getAgentByEnvId(projectId: String, envHashId: String): List<ThirdPartyAgent> {
