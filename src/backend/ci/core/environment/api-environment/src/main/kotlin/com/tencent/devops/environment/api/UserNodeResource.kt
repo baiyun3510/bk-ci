@@ -42,6 +42,7 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
 @Api(tags = ["USER_NODE"], description = "用户-节点")
@@ -85,7 +86,10 @@ interface UserNodeResource {
         userId: String,
         @ApiParam("项目ID", required = true)
         @PathParam("projectId")
-        projectId: String
+        projectId: String,
+        @ApiParam("节点ID", required = true)
+        @QueryParam("nodeIds")
+        nodeIds: String?
     ): Result<List<NodeWithPermission>>
 
     @ApiOperation("获取用户有权限使用的服务器列表")

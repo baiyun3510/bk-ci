@@ -33,6 +33,7 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.environment.api.thirdPartyAgent.ServiceThirdPartyAgentResource
 import com.tencent.devops.environment.pojo.AgentPipelineRefRequest
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.pojo.thirdPartyAgent.AgentPipelineRef
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgent
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgentDetail
@@ -66,7 +67,11 @@ class ServiceThirdPartyAgentResourceImpl @Autowired constructor(
         Result(thirdPartyAgentService.getAgentByEnvId(projectId, envId))
 
     override fun getAgentsByEnvName(projectId: String, envName: String): Result<List<ThirdPartyAgent>> =
-        Result(thirdPartyAgentService.getAgnetByEnvName(projectId, envName))
+        Result(thirdPartyAgentService.getAgentByEnvName(projectId, envName))
+
+    override fun getAgentsByLabels(projectId: String, labelQuery: LabelQuery): Result<List<ThirdPartyAgent>> {
+        return Result(thirdPartyAgentService.getAgentByLabelExpressions(projectId, labelQuery))
+    }
 
     override fun upgrade(projectId: String, agentId: String, secretKey: String, tag: String) =
         thirdPartyAgentService.checkIfCanUpgrade(projectId, agentId, secretKey, tag)

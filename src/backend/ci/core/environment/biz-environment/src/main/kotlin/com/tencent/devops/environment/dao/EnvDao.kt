@@ -136,6 +136,19 @@ class EnvDao {
         }
     }
 
+    fun listAll(
+        minEnvId: Long,
+        maxEnvId: Long,
+        dslContext: DSLContext
+    ): List<TEnvRecord> {
+        with(TEnv.T_ENV) {
+            return dslContext.selectFrom(this)
+                .where(IS_DELETED.eq(false))
+                .and(ENV_ID.between(minEnvId, maxEnvId))
+                .fetch()
+        }
+    }
+
     fun listEnvByProject(dslContext: DSLContext, projectId: String, limit: Int, offset: Int): List<TEnvRecord>? {
         return with(TEnv.T_ENV) {
             dslContext.selectFrom(this)

@@ -27,6 +27,7 @@
 
 package com.tencent.devops.common.pipeline.utils
 
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.pipeline.Model
 import com.tencent.devops.common.pipeline.container.Container
 import com.tencent.devops.common.pipeline.container.NormalContainer
@@ -35,10 +36,13 @@ import com.tencent.devops.common.pipeline.container.VMBuildContainer
 import com.tencent.devops.common.pipeline.enums.BuildStatus
 import com.tencent.devops.common.pipeline.enums.JobRunCondition
 import com.tencent.devops.common.pipeline.option.JobControlOption
+import com.tencent.devops.common.pipeline.pojo.LabelExpression
+import com.tencent.devops.common.pipeline.pojo.Operator
 import com.tencent.devops.common.pipeline.pojo.element.Element
 import com.tencent.devops.common.pipeline.pojo.element.RunCondition
 import com.tencent.devops.common.pipeline.pojo.element.trigger.ManualTriggerElement
 import com.tencent.devops.common.pipeline.pojo.element.trigger.RemoteTriggerElement
+import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentEnvDispatchType
 
 /**
  *
@@ -76,6 +80,15 @@ object ModelUtils {
                     timeout = c.maxRunningMinutes,
                     runCondition = JobRunCondition.STAGE_RUNNING
                 )
+            }
+
+            // 如果是第三方构建环境调度类型且没有适配最新的标签格式，则适配
+            if (c.dispatchType is ThirdPartyAgentEnvDispatchType && c.dispatchType.labelExpressions == null) {
+                c.dispatchType.labelExpressions = JsonUtil.toJson(LabelExpression(
+                    key = "environment",
+                    value = listOf(c.dispatchType.envName),
+                    operator = Operator.IN
+                ))
             }
         }
     }

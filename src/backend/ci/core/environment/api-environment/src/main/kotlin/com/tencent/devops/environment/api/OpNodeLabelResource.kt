@@ -25,37 +25,38 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.pipeline.type.agent
+package com.tencent.devops.environment.api
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.tencent.devops.common.api.util.EnvUtils
-import com.tencent.devops.common.pipeline.type.BuildType
-import com.tencent.devops.common.pipeline.type.DispatchType
+import com.tencent.devops.common.api.pojo.Result
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiParam
+import javax.ws.rs.Consumes
+import javax.ws.rs.POST
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
 
-data class ThirdPartyAgentEnvDispatchType(
-    @JsonProperty("value") var envName: String,
-    var envProjectId: String?,
-    var workspace: String?,
-    var labelExpressions: String? = "",
-    val agentType: AgentType = AgentType.NAME
-) : DispatchType(
-    envName
-) {
-    override fun cleanDataBeforeSave() {
-        this.envName = this.envName.trim()
-        this.envProjectId = this.envProjectId?.trim()
-        this.workspace = this.workspace?.trim()
-        this.labelExpressions = this.labelExpressions?.trim()
-    }
+@Api(tags = ["OP_ENVIRONMENT"], description = "OP-环境服务数据刷新")
+@Path("/op/labels")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+interface OpNodeLabelResource {
 
-    override fun replaceField(variables: Map<String, String>) {
-        envName = EnvUtils.parseEnv(envName, variables)
-        envProjectId = EnvUtils.parseEnv(envProjectId, variables)
-        if (!workspace.isNullOrBlank()) {
-            workspace = EnvUtils.parseEnv(workspace!!, variables)
-        }
-        labelExpressions = EnvUtils.parseEnv(labelExpressions, variables)
-    }
-
-    override fun buildType() = BuildType.valueOf(BuildType.THIRD_PARTY_AGENT_ENV.name)
+    @POST
+    @Path("/refresh_env_label")
+    fun refreshEnvironmentLabel(
+        @ApiParam("蓝盾项目ID", required = false)
+        @QueryParam("projectId")
+        projectId: String?,
+        @ApiParam("环境ID", required = false)
+        @QueryParam("environmentId")
+        environmentId: Long?,
+        @ApiParam("最小环境ID", required = false)
+        @QueryParam("minEnvId")
+        minEnvId: Long?,
+        @ApiParam("最大环境ID", required = false)
+        @QueryParam("maxEnvId")
+        maxEnvId: Long?
+    ): Result<Boolean>
 }

@@ -35,6 +35,7 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.pojo.agent.UpgradeItem
 import com.tencent.devops.common.web.annotation.BkField
 import com.tencent.devops.environment.pojo.AgentPipelineRefRequest
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.pojo.thirdPartyAgent.AgentPipelineRef
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgent
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgentDetail
@@ -108,6 +109,17 @@ interface ServiceThirdPartyAgentResource {
         @ApiParam("Environment name", required = true)
         @PathParam("envName")
         envName: String
+    ): Result<List<ThirdPartyAgent>>
+
+    @ApiOperation("根据标签获取Agent列表")
+    @POST
+    @Path("/projects/{projectId}/labels/calculate")
+    fun getAgentsByLabels(
+        @ApiParam(value = "项目ID", required = true)
+        @PathParam("projectId")
+        projectId: String,
+        @ApiParam(value = "计算表达式", required = true)
+        labelQuery: LabelQuery
     ): Result<List<ThirdPartyAgent>>
 
     @ApiOperation("Agent是否能升级")
