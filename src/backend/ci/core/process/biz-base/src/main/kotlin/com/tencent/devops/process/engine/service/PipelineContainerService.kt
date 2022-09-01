@@ -520,12 +520,6 @@ class PipelineContainerService @Autowired constructor(
                     else -> null
                 }
 
-                if (container is VMBuildContainer && container.dispatchType is ThirdPartyAgentEnvDispatchType) {
-                    if ((container.dispatchType as ThirdPartyAgentEnvDispatchType).labelExpressions == null) {
-
-                    }
-                }
-
                 buildContainers.add(
                     PipelineBuildContainer(
                         projectId = projectId,
