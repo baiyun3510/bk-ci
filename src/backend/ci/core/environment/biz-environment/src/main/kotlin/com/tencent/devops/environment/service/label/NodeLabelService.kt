@@ -27,6 +27,7 @@
 
 package com.tencent.devops.environment.service.label
 
+import com.tencent.devops.common.api.util.HashUtil
 import com.tencent.devops.environment.dao.EnvDao
 import com.tencent.devops.environment.dao.EnvNodeDao
 import com.tencent.devops.environment.dao.LabelDao
@@ -50,6 +51,11 @@ class NodeLabelService @Autowired constructor(
     private val labelRedisUtils: LabelRedisUtils,
     private val dslContext: DSLContext
 ) {
+    fun getByHashId(userId: String, nodeHashId: String): List<LabelInfo> {
+        val nodeId = HashUtil.decodeIdToLong(nodeHashId)
+        return get(userId, nodeId)
+    }
+
     fun get(userId: String, nodeId: Long): List<LabelInfo> {
         val nodeLabelRecords = nodeLabelDao.getNodeLabels(dslContext, nodeId)
         val labelList = mutableListOf<LabelInfo>()

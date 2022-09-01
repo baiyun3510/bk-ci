@@ -52,7 +52,7 @@ interface UserNodeLabelResource {
 
     @ApiOperation("获取节点下的标签信息")
     @GET
-    @Path("/projects/{projectId}/nodes/{nodeId}")
+    @Path("/projects/{projectId}/nodes/{nodeHashId}")
     fun get(
         @ApiParam("用户ID", required = true, defaultValue = AUTH_HEADER_DEVOPS_USER_ID_DEFAULT_VALUE)
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
@@ -60,9 +60,9 @@ interface UserNodeLabelResource {
         @ApiParam(value = "项目ID", required = true)
         @PathParam("projectId")
         projectId: String,
-        @ApiParam(value = "节点ID", required = true)
-        @PathParam("nodeId")
-        nodeId: Long
+        @ApiParam(value = "节点HASH ID", required = true)
+        @PathParam("nodeHashId")
+        nodeHashId: String
     ): Result<List<LabelInfo>>
 
     @ApiOperation("节点打标签")
