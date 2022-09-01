@@ -29,7 +29,7 @@ package com.tencent.devops.store.resources.common
 
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.store.api.common.TxServiceStoreApproveResource
+import com.tencent.devops.store.api.TxServiceStoreApproveResource
 import com.tencent.devops.store.service.common.TxStoreMoaApproveCallBackService
 import org.springframework.beans.factory.annotation.Autowired
 

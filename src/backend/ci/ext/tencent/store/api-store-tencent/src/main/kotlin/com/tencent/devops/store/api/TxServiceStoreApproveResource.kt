@@ -25,7 +25,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.api.common
+package com.tencent.devops.store.api
 
 import com.tencent.devops.common.api.pojo.Result
 import io.swagger.annotations.Api
@@ -36,10 +36,11 @@ import javax.ws.rs.FormParam
 import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["SERVICE_MARKET_APPROVAL"], description = "store组件审批")
-@Path("/service/market/approval")
+@Api(tags = ["OPEN_MARKET_APPROVAL"], description = "open-store组件审批")
+@Path("/open/market/approval")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 interface TxServiceStoreApproveResource {
@@ -62,7 +63,7 @@ interface TxServiceStoreApproveResource {
         @FormParam("message")
         message: String,
         @ApiParam(value = "token", required = true)
-        @FormParam("token")
+        @QueryParam("token")
         token: String
     ): Result<Boolean>
 }
