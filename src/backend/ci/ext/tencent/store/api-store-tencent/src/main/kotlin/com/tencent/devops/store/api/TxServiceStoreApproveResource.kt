@@ -35,6 +35,7 @@ import javax.ws.rs.Consumes
 import javax.ws.rs.FormParam
 import javax.ws.rs.POST
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
@@ -47,7 +48,7 @@ interface TxServiceStoreApproveResource {
 
     @ApiOperation("moa审批回调")
     @POST
-    @Path("/moa/callBack")
+    @Path("/moa/callBack/{token}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun moaApproveCallBack(
         @ApiParam(value = "审批人", required = true)
@@ -63,7 +64,7 @@ interface TxServiceStoreApproveResource {
         @FormParam("message")
         message: String,
         @ApiParam(value = "token", required = true)
-        @QueryParam("token")
+        @PathParam("token")
         token: String
     ): Result<Boolean>
 }

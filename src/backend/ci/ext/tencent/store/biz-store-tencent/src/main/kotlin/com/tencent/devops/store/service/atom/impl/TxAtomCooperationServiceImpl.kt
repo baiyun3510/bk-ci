@@ -76,11 +76,11 @@ class TxAtomCooperationServiceImpl @Autowired constructor() : AtomCooperationSer
                     params = arrayOf(userId, atomRecord!!.name, applyReason)
                 ) ?: applyReason,
                 taskId = approveId,
-                backUrl = "$moaApproveCallBackUrl?token=$token"
+                backUrl = "$moaApproveCallBackUrl/$token"
             )
             val createMoaMessageApprovalResult = client.get(ServiceMessageApproveResource::class)
                 .createMoaMessageApproval(userId = userId, createMoaApproveRequest = createMoaApproveRequest)
-            logger.info("createMoaMessageApprovalResult is :$createMoaMessageApprovalResult|backUrl is $moaApproveCallBackUrl")
+            logger.info("createMoaMessageApprovalResult is :$createMoaMessageApprovalResult|createMoaApproveRequest is $createMoaApproveRequest")
         }
     }
 }
