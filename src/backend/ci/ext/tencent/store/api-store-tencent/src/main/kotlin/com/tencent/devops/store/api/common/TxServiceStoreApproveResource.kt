@@ -60,6 +60,9 @@ interface TxServiceStoreApproveResource {
         taskId: String,
         @ApiParam(value = "审批信息", required = true)
         @FormParam("message")
-        message: String
+        message: String,
+        @ApiParam(value = "token", required = true)
+        @FormParam("token")
+        token: String
     ): Result<Boolean>
 }

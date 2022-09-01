@@ -63,6 +63,6 @@ interface ApigwStoreApproveResource {
         message: String,
         @ApiParam(value = "token", required = true)
         @FormParam("token")
-        token: String,
+        token: String
     ): Result<Boolean>
 }

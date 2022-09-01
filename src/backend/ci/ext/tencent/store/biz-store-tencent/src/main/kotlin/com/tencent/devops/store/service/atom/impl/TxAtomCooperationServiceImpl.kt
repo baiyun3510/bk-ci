@@ -57,9 +57,10 @@ class TxAtomCooperationServiceImpl @Autowired constructor() : AtomCooperationSer
         atomCode: String,
         atomCollaboratorCreateReq: AtomCollaboratorCreateReq,
         approveId: String,
-        userId: String
+        userId: String,
+        token: String
     ) {
-        logger.info("sendMoaMessage params:[$atomCode|$atomCollaboratorCreateReq|$approveId|$userId")
+        logger.info("sendMoaMessage params:[$atomCode|$atomCollaboratorCreateReq|$approveId|$userId|backUrl is $moaApproveCallBackUrl")
         executorService.submit<Unit> {
             val adminRecords = storeMemberDao.getAdmins(dslContext, atomCode, StoreTypeEnum.ATOM.type.toByte())
             val verifierSb = StringBuilder()
@@ -75,7 +76,7 @@ class TxAtomCooperationServiceImpl @Autowired constructor() : AtomCooperationSer
                     params = arrayOf(userId, atomRecord!!.name, applyReason)
                 ) ?: applyReason,
                 taskId = approveId,
-                backUrl = moaApproveCallBackUrl
+                backUrl = "$moaApproveCallBackUrl"
             )
             val createMoaMessageApprovalResult = client.get(ServiceMessageApproveResource::class)
                 .createMoaMessageApproval(userId = userId, createMoaApproveRequest = createMoaApproveRequest)

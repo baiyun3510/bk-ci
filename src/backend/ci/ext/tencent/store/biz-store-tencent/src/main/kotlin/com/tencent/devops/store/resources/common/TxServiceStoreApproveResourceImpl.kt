@@ -42,8 +42,15 @@ class TxServiceStoreApproveResourceImpl @Autowired constructor(
         verifier: String,
         result: Int,
         taskId: String,
-        message: String
+        message: String,
+        token: String
     ): Result<Boolean> {
-        return txStoreMoaApproveCallBackService.moaApproveCallBack(verifier, result, taskId, message)
+        return txStoreMoaApproveCallBackService.moaApproveCallBack(
+            verifier = verifier,
+            result = result,
+            taskId = taskId,
+            message = message,
+            token = token
+        )
     }
 }

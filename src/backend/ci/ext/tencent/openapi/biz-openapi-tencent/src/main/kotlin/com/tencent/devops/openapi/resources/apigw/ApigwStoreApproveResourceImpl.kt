@@ -4,12 +4,15 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.openapi.api.apigw.ApigwStoreApproveResource
+import com.tencent.devops.store.api.common.TxServiceStoreApproveResource
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class ApigwStoreApproveResourceImpl @Autowired constructor(
     private val client: Client
 ) : ApigwStoreApproveResource {
+
+
     override fun moaApproveCallBack(
         verifier: String,
         result: Int,
@@ -17,6 +20,13 @@ class ApigwStoreApproveResourceImpl @Autowired constructor(
         message: String,
         token: String
     ): Result<Boolean> {
-        return client.get()
+        return client.get(TxServiceStoreApproveResource::class)
+            .moaApproveCallBack(
+                verifier = verifier,
+                result = result,
+                taskId = taskId,
+                message = message,
+                token = token
+            )
     }
 }
