@@ -300,7 +300,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             }
             AgentType.NAME -> {
                 try {
-                    if (dispatchType.labelExpressions != null) {
+                    if (!dispatchType.labelExpressions.isNullOrBlank()) {
                         client.get(ServiceThirdPartyAgentResource::class)
                             .getAgentsByLabels(
                                 projectId = event.projectId,
@@ -698,6 +698,10 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         event: PipelineAgentStartupEvent,
         labelExpressions: String
     ): List<LabelExpression>{
+        if (labelExpressions.isBlank()) {
+            return emptyList()
+        }
+
         return try {
             val labelExpressionList = JsonUtil.to(
                 labelExpressions,
