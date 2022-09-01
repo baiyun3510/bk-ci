@@ -60,9 +60,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import kotlin.streams.toList
 
-@Service@Suppress("ALL")
+@Service
+@Suppress("ALL")
 class NodeService @Autowired constructor(
     private val dslContext: DSLContext,
     private val nodeDao: NodeDao,
@@ -81,6 +85,7 @@ class NodeService @Autowired constructor(
         private val logger = LoggerFactory.getLogger(NodeService::class.java)
     }
 
+    val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
     fun deleteNodes(userId: String, projectId: String, nodeHashIds: List<String>) {
         val nodeLongIds = nodeHashIds.map { HashUtil.decodeIdToLong(it) }
         val canDeleteNodeIds =
@@ -510,19 +515,17 @@ class NodeService @Autowired constructor(
     }
 
     fun addHashId() {
-        envDao.getAllEnv(dslContext)?.map {
-            val id = it.value1()
-            logger.info("test :$id")
-            val hashId = HashUtil.encodeLongId(it.value1())
-            logger.info("test :$hashId")
-            envDao.updateHashId(dslContext, id, hashId)
-        }
-        nodeDao.getAllNode(dslContext)?.map {
-            val id = it.value1()
-            logger.info("test :$id")
-            val hashId = HashUtil.encodeLongId(it.value1())
-            logger.info("test :$hashId")
-            nodeDao.updateHashId(dslContext, id, hashId)
+        threadPoolExecutor.submit {
+            envDao.getAllEnv(dslContext)?.map {
+                val id = it.value1()
+                val hashId = HashUtil.encodeLongId(it.value1())
+                envDao.updateHashId(dslContext, id, hashId)
+            }
+            nodeDao.getAllNode(dslContext)?.map {
+                val id = it.value1()
+                val hashId = HashUtil.encodeLongId(it.value1())
+                nodeDao.updateHashId(dslContext, id, hashId)
+            }
         }
     }
 }
