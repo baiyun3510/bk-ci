@@ -36,6 +36,7 @@ import javax.ws.rs.FormParam
 import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
 @Api(tags = ["OPEN_API_MARKET_APPROVAL"], description = "store组件审批")
@@ -62,7 +63,7 @@ interface ApigwStoreApproveResource {
         @FormParam("message")
         message: String,
         @ApiParam(value = "token", required = true)
-        @FormParam("token")
+        @QueryParam("token")
         token: String
     ): Result<Boolean>
 }
