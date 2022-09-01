@@ -292,15 +292,26 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
 
         val agentsResult = when (dispatchType.agentType) {
             AgentType.ID -> {
-                client.get(ServiceThirdPartyAgentResource::class)
-                    .getAgentsByEnvId(
-                        event.projectId,
-                        dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
-                            ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                if (!dispatchType.labelExpressions.isNullOrBlank()) {
+                    client.get(ServiceThirdPartyAgentResource::class)
+                        .getAgentsByLabels(
+                            projectId = event.projectId,
+                            labelQuery = LabelQuery(
+                                labelExpressions = formatLabelExpressions(event, dispatchType.labelExpressions!!),
+                                sharedProjectId = dispatchType.envProjectId
+                            )
+                        )
+                } else {
+                    client.get(ServiceThirdPartyAgentResource::class)
+                        .getAgentsByEnvId(
+                            event.projectId,
+                            dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
+                                ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                }
             }
             AgentType.NAME -> {
                 try {
-                    if (dispatchType.labelExpressions != null) {
+                    if (!dispatchType.labelExpressions.isNullOrBlank()) {
                         client.get(ServiceThirdPartyAgentResource::class)
                             .getAgentsByLabels(
                                 projectId = event.projectId,
@@ -698,6 +709,10 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         event: PipelineAgentStartupEvent,
         labelExpressions: String
     ): List<LabelExpression>{
+        if (labelExpressions.isBlank()) {
+            return emptyList()
+        }
+
         return try {
             val labelExpressionList = JsonUtil.to(
                 labelExpressions,

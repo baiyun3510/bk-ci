@@ -315,9 +315,12 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
 
         // start check
         return if (latestCommit.isOk() && (latestCommit.data == null ||
-                latestCommit.data!!.commit != preCommit.data!!.revision)) {
-            LOG.info("[$pipelineId] [${ele.id}] scm svn change: lastCommitId=" +
-                "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$preCommit")
+                    latestCommit.data!!.commit != preCommit.data!!.revision)
+        ) {
+            LOG.info(
+                "[$pipelineId] [${ele.id}] scm svn change: lastCommitId=" +
+                        "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$preCommit"
+            )
             true
         } else {
             LOG.info("[$pipelineId] [${ele.id}] svn not change")
@@ -339,9 +342,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             gitPullMode != null -> EnvUtils.parseEnv(gitPullMode.value, variables)
             !oldBranchName.isNullOrBlank() -> EnvUtils.parseEnv(oldBranchName, variables)
             else -> return false
-        }
-        if (branchName.isBlank()) {
-            return false
         }
         val gitPullModeType = gitPullMode?.type ?: GitPullModeType.BRANCH
 //        val latestRevision =
@@ -402,8 +402,10 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             return false
         }
         if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != latestRevision)) {
-            LOG.info("[$pipelineId] [${ele.id}] ${ele.getClassType()} change: lastCommitId=" +
-                "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$latestRevision")
+            LOG.info(
+                "[$pipelineId] [${ele.id}] ${ele.getClassType()} change: lastCommitId=" +
+                        "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$latestRevision"
+            )
             return true
         }
         return false
@@ -421,11 +423,16 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         val repositoryConfig = getMarketBuildRepoConfig(input, variables)
 
         val gitPullMode = EnvUtils.parseEnv(input["pullType"] as String?, variables)
-        val branchName = when (gitPullMode) {
-            GitPullModeType.BRANCH.name -> EnvUtils.parseEnv(input["branchName"] as String?, variables)
-            GitPullModeType.TAG.name -> EnvUtils.parseEnv(input["tagName"] as String?, variables)
-            GitPullModeType.COMMIT_ID.name -> EnvUtils.parseEnv(input["commitId"] as String?, variables)
-            else -> return false
+
+        val branchName = if (ele.getAtomCode().equals("checkout")) {
+            EnvUtils.parseEnv(input["refName"] as String?, variables)
+        } else {
+            when (gitPullMode) {
+                GitPullModeType.BRANCH.name -> EnvUtils.parseEnv(input["branchName"] as String?, variables)
+                GitPullModeType.TAG.name -> EnvUtils.parseEnv(input["tagName"] as String?, variables)
+                GitPullModeType.COMMIT_ID.name -> EnvUtils.parseEnv(input["commitId"] as String?, variables)
+                else -> return false
+            }
         }
         // 如果分支是变量形式,默认值为空,那么解析后值就为空,导致调接口失败
         if (branchName.isBlank()) {
@@ -473,8 +480,10 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
 
         // start check
         return if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != preCommit)) {
-            LOG.info("[$pipelineId] [${ele.id}] ${ele.getClassType()} " +
-                "change: lastCommitId=${latestCommit.data?.commit}, newCommitId=$preCommit")
+            LOG.info(
+                "[$pipelineId] [${ele.id}] ${ele.getClassType()} " +
+                        "change: lastCommitId=${latestCommit.data?.commit}, newCommitId=$preCommit"
+            )
             true
         } else {
             LOG.info("[$pipelineId] [${ele.id}] ${ele.getAtomCode()} scm not change")
