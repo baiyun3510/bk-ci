@@ -41,8 +41,8 @@ class UserNodeLabelResourceImpl @Autowired constructor(
     private val labelService: LabelService,
     private val nodeLabelService: NodeLabelService
 ) : UserNodeLabelResource {
-    override fun get(userId: String, projectId: String, nodeId: Long): Result<List<LabelInfo>> {
-        return Result(nodeLabelService.get(userId, nodeId))
+    override fun get(userId: String, projectId: String, nodeHashId: String): Result<List<LabelInfo>> {
+        return Result(nodeLabelService.getByHashId(userId, nodeHashId))
     }
 
     override fun add(userId: String, projectId: String, nodeId: Long, labelId: Long): Result<Boolean> {

@@ -42,6 +42,7 @@ import com.tencent.devops.common.pipeline.pojo.element.Element
 import com.tencent.devops.common.pipeline.pojo.element.RunCondition
 import com.tencent.devops.common.pipeline.pojo.element.trigger.ManualTriggerElement
 import com.tencent.devops.common.pipeline.pojo.element.trigger.RemoteTriggerElement
+import com.tencent.devops.common.pipeline.type.agent.AgentType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentEnvDispatchType
 
 /**
@@ -83,7 +84,9 @@ object ModelUtils {
             }
 
             // 如果是第三方构建环境调度类型且没有适配最新的标签格式，则适配
-            if (c.dispatchType is ThirdPartyAgentEnvDispatchType && c.dispatchType.labelExpressions == null) {
+            if (c.dispatchType is ThirdPartyAgentEnvDispatchType &&
+                c.dispatchType.labelExpressions.isNullOrBlank() &&
+                c.dispatchType.agentType == AgentType.NAME) {
                 c.dispatchType.labelExpressions = JsonUtil.toJson(LabelExpression(
                     key = "environment",
                     value = listOf(c.dispatchType.envName),
