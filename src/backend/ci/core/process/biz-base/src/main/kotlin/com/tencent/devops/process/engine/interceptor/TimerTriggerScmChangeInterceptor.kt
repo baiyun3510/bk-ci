@@ -155,7 +155,7 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
                 existScmElement = true
                 codeChange = checkSvnChangeNew(projectId, pipelineId, ele, variables)
             }
-            ele.getAtomCode() in setOf("gitCodeRepo", "PullFromGithub", "Gitlab", "atomtgit") -> {
+            ele.getAtomCode() in setOf("gitCodeRepo", "PullFromGithub", "Gitlab", "atomtgit", "checkout") -> {
                 existScmElement = true
                 codeChange = checkGitChangeNew(
                     variables,
@@ -423,8 +423,7 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         val repositoryConfig = getMarketBuildRepoConfig(input, variables)
 
         val gitPullMode = EnvUtils.parseEnv(input["pullType"] as String?, variables)
-
-        val branchName = if (ele.getAtomCode().equals("checkout")) {
+        val branchName = if (ele.getAtomCode() == "checkout") {
             EnvUtils.parseEnv(input["refName"] as String?, variables)
         } else {
             when (gitPullMode) {
@@ -439,11 +438,14 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             return false
         }
 
+        LOG.info("check change new | atomCode is ${ele.getAtomCode()} | branchName is : $branchName")
         // 如果是commit id ,则gitPullModeType直接比对就可以了，不需要再拉commit id
         // get pre vision
         val preCommit =
-            if (gitPullMode == GitPullModeType.COMMIT_ID.name) {
+            if (gitPullMode == GitPullModeType.COMMIT_ID.name && ele.getAtomCode() != "checkout") {
                 EnvUtils.parseEnv(input["commitId"] as String?, variables)
+            } else if (gitPullMode == GitPullModeType.COMMIT_ID.name && ele.getAtomCode() == "checkout") {
+                EnvUtils.parseEnv(input["refName"] as String?, variables)
             } else {
                 val result =
                     scmProxyService.recursiveFetchLatestRevision(
