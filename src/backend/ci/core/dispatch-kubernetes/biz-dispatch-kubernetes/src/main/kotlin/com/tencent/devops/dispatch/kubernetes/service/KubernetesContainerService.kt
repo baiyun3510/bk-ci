@@ -190,7 +190,7 @@ class KubernetesContainerService @Autowired constructor(
                 userId = userId,
                 builder = Builder(
                     name = builderName,
-                    image = "$name:$tag",
+                    image = "$host/$name:$tag",
                     registry = registry,
                     resource = KubernetesResource(
                         requestCPU = cpu.toString(),
