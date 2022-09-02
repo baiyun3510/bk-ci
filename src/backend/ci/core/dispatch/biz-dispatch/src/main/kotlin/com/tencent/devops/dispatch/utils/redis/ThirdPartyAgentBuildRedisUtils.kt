@@ -59,7 +59,7 @@ class ThirdPartyAgentBuildRedisUtils @Autowired constructor(
             )
         )
 
-    fun getRunningJobWithAllAgent(containerHashId: String, agentId: String): Int {
+    fun getRunningJobWithAllAgent(containerHashId: String): Int {
         val runningCount = redisOperation.hget(jobRunningHashKey(), allAgentHashField(containerHashId))
         return runningCount?.toInt() ?: 0
     }
