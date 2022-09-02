@@ -480,14 +480,12 @@ class PipelineListFacadeService @Autowired constructor(
             }
             // 剔除掉filterByViewIds
             if (filterByViewIds != null) {
-                pipelineIds.retainAll(
-                    pipelineViewGroupService.listPipelineIdsByViewIds(
-                        projectId,
-                        filterByViewIds.split(",")
-                    ).toSet()
-                )
+                val pipelineIdsByFilterViewIds =
+                    pipelineViewGroupService.listPipelineIdsByViewIds(projectId, filterByViewIds.split(",")).toSet()
                 if (pipelineIds.isEmpty()) {
-                    pipelineIds.add("##NONE##") // 特殊标志,避免有些判空逻辑导致过滤器没有执行
+                    pipelineIds.addAll(pipelineIdsByFilterViewIds)
+                } else {
+                    pipelineIds.retainAll(pipelineIdsByFilterViewIds)
                 }
             }
             pipelineViewService.addUsingView(userId = userId, projectId = projectId, viewId = viewId)
