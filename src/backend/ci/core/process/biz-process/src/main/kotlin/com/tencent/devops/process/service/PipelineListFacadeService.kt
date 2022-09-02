@@ -469,6 +469,7 @@ class PipelineListFacadeService @Autowired constructor(
                 PIPELINE_VIEW_FAVORITE_PIPELINES, PIPELINE_VIEW_MY_PIPELINES, PIPELINE_VIEW_ALL_PIPELINES,
                 PIPELINE_VIEW_UNCLASSIFIED
             )
+            val includeDelete = !viewIdList.contains(viewId)
 
             if (!viewIdList.contains(viewId)) {// 已分组的视图
                 pipelineIds.addAll(pipelineViewGroupService.listPipelineIdsByViewId(projectId, viewId))
@@ -500,7 +501,8 @@ class PipelineListFacadeService @Autowired constructor(
                 authPipelines = authPipelines,
                 viewId = viewId,
                 pipelineFilterParamList = pipelineFilterParamList,
-                permissionFlag = true
+                permissionFlag = true,
+                includeDelete = includeDelete
             )
 
             // 查询无权限查看的流水线总数
@@ -509,11 +511,12 @@ class PipelineListFacadeService @Autowired constructor(
                     dslContext = dslContext,
                     projectId = projectId,
                     channelCode = channelCode,
+                    viewId = viewId,
                     favorPipelines = favorPipelines,
                     authPipelines = authPipelines,
-                    viewId = viewId,
                     pipelineFilterParamList = pipelineFilterParamList,
-                    permissionFlag = false
+                    permissionFlag = false,
+                    includeDelete = includeDelete
                 )
             val pipelineList = mutableListOf<Pipeline>()
             val totalSize = totalAvailablePipelineSize + totalInvalidPipelineSize
@@ -536,7 +539,8 @@ class PipelineListFacadeService @Autowired constructor(
                         pipelineFilterParamList = pipelineFilterParamList,
                         permissionFlag = true,
                         page = page,
-                        pageSize = pageSize
+                        pageSize = pageSize,
+                        includeDelete = includeDelete
                     )
                 } else if (page == totalAvailablePipelinePage && totalAvailablePipelineSize > 0) {
                     //  查询可用流水线最后一页不满页的数量
@@ -553,7 +557,8 @@ class PipelineListFacadeService @Autowired constructor(
                         pipelineFilterParamList = pipelineFilterParamList,
                         permissionFlag = true,
                         page = page,
-                        pageSize = pageSize
+                        pageSize = pageSize,
+                        includeDelete = includeDelete
                     )
                     // 可用流水线最后一页不满页的数量需用不可用的流水线填充
                     if (lastPageRemainNum > 0 && totalInvalidPipelineSize > 0) {
@@ -569,7 +574,8 @@ class PipelineListFacadeService @Autowired constructor(
                             pipelineFilterParamList = pipelineFilterParamList,
                             permissionFlag = false,
                             page = 1,
-                            pageSize = lastPageRemainNum.toInt()
+                            pageSize = lastPageRemainNum.toInt(),
+                            includeDelete = includeDelete
                         )
                     }
                 } else if (totalInvalidPipelineSize > 0) {
@@ -589,7 +595,8 @@ class PipelineListFacadeService @Autowired constructor(
                         permissionFlag = false,
                         page = page - totalAvailablePipelinePage,
                         pageSize = pageSize,
-                        pageOffsetNum = lastPageRemainNum.toInt()
+                        pageOffsetNum = lastPageRemainNum.toInt(),
+                        includeDelete = includeDelete
                     )
                 }
             } else {
@@ -606,7 +613,8 @@ class PipelineListFacadeService @Autowired constructor(
                     pipelineFilterParamList = pipelineFilterParamList,
                     permissionFlag = true,
                     page = page,
-                    pageSize = pageSize
+                    pageSize = pageSize,
+                    includeDelete = includeDelete
                 )
 
                 if (filterInvalid) {
@@ -622,7 +630,8 @@ class PipelineListFacadeService @Autowired constructor(
                         pipelineFilterParamList = pipelineFilterParamList,
                         permissionFlag = false,
                         page = page,
-                        pageSize = pageSize
+                        pageSize = pageSize,
+                        includeDelete = includeDelete
                     )
                 }
             }
@@ -656,7 +665,8 @@ class PipelineListFacadeService @Autowired constructor(
         permissionFlag: Boolean? = null,
         page: Int? = null,
         pageSize: Int? = null,
-        pageOffsetNum: Int? = 0
+        pageOffsetNum: Int? = 0,
+        includeDelete: Boolean? = false
     ) {
         val pipelineRecords = pipelineBuildSummaryDao.listPipelineInfoBuildSummary(
             dslContext = dslContext,
@@ -671,7 +681,8 @@ class PipelineListFacadeService @Autowired constructor(
             permissionFlag = permissionFlag,
             page = page,
             pageSize = pageSize,
-            pageOffsetNum = pageOffsetNum
+            pageOffsetNum = pageOffsetNum,
+            includeDelete = includeDelete
         )
         pipelineList.addAll(
             buildPipelines(
@@ -1225,6 +1236,7 @@ class PipelineListFacadeService @Autowired constructor(
             it.version = templateInfo?.version
             it.versionName = templateInfo?.versionName
             it.groupLabel = pipelineGroupLabel[pipelineId]
+            it.delete = it.delete
             val pipelineBuildSummaryRecord = pipelineBuildSummaryMap[pipelineId]
             if (pipelineBuildSummaryRecord != null) {
                 val finishCount = pipelineBuildSummaryRecord.finishCount ?: 0

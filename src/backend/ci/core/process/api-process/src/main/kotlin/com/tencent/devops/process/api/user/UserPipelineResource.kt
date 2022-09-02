@@ -379,7 +379,7 @@ interface UserPipelineResource {
         filterByLabels: String?,
         @ApiParam("按视图过滤", required = false)
         @QueryParam("filterByViewIds")
-        filterByViewIds: String?,
+        filterByViewIds: String? = null,
         @ApiParam("用户视图ID,表示用户当前所在视图", required = true)
         @QueryParam("viewId")
         viewId: String
