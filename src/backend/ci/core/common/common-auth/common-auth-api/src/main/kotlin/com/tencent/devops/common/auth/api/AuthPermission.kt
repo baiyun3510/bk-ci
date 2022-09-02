@@ -28,6 +28,7 @@
 package com.tencent.devops.common.auth.api
 
 enum class AuthPermission(val value: String, val alias: String) {
+    PROJECT_VIEW("project_view", "项目查看"), // 项目查看
     CREATE("create", "创建"), // 流水线，凭据，证书，代码仓库
     DEPLOY("deploy", "部署"), // 流水线，容器，自定义目录
     EDIT("edit", "编辑"), // 流水线，凭据，证书，代码仓库
