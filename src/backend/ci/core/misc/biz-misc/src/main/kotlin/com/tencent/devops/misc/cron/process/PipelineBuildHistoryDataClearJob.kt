@@ -332,8 +332,8 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
         val totalBuildCount = processMiscService.getTotalBuildCount(projectId, pipelineId, maxBuildNum, maxStartTime)
         logger.info("pipelineBuildHistoryDataClear|$projectId|$pipelineId|totalBuildCount=$totalBuildCount")
         var totalHandleNum = processMiscService.getMinPipelineBuildNum(projectId, pipelineId).toInt()
-        val cleanBuilds = mutableListOf<String>()
         while (totalHandleNum < totalBuildCount) {
+            val cleanBuilds = mutableListOf<String>()
             val pipelineHistoryBuildIdList = processMiscService.getHistoryBuildIdList(
                 projectId = projectId,
                 pipelineId = pipelineId,
@@ -358,7 +358,9 @@ class PipelineBuildHistoryDataClearJob @Autowired constructor(
                 }
             }
             totalHandleNum += DEFAULT_PAGE_SIZE
+            if (!cleanBuilds.isNullOrEmpty()) {
+                processRelatedPlatformDataClearService.cleanBuildData(projectId, pipelineId, cleanBuilds)
+            }
         }
-        processRelatedPlatformDataClearService.cleanBuildData(projectId, pipelineId, cleanBuilds)
     }
 }
