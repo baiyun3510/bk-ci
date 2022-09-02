@@ -67,7 +67,7 @@ interface UserNodeLabelResource {
 
     @ApiOperation("节点打标签")
     @POST
-    @Path("/projects/{projectId}/nodes/{nodeId}/labels/{labelId}")
+    @Path("/projects/{projectId}/nodes/{nodeHashId}/labels/{labelId}")
     fun add(
         @ApiParam("用户ID", required = true, defaultValue = AUTH_HEADER_DEVOPS_USER_ID_DEFAULT_VALUE)
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
@@ -76,8 +76,8 @@ interface UserNodeLabelResource {
         @PathParam("projectId")
         projectId: String,
         @ApiParam(value = "节点ID", required = true)
-        @PathParam("nodeId")
-        nodeId: Long,
+        @PathParam("nodeHashId")
+        nodeHashId: String,
         @ApiParam(value = "标签ID", required = true)
         @PathParam("labelId")
         labelId: Long
@@ -85,7 +85,7 @@ interface UserNodeLabelResource {
 
     @ApiOperation("节点批量打标签")
     @POST
-    @Path("/projects/{projectId}/nodes/{nodeId}/batchAddLabel")
+    @Path("/projects/{projectId}/nodes/{nodeHashId}/batchAddLabel")
     fun batchAdd(
         @ApiParam("用户ID", required = true, defaultValue = AUTH_HEADER_DEVOPS_USER_ID_DEFAULT_VALUE)
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
@@ -94,15 +94,15 @@ interface UserNodeLabelResource {
         @PathParam("projectId")
         projectId: String,
         @ApiParam(value = "节点ID", required = true)
-        @PathParam("nodeId")
-        nodeId: Long,
+        @PathParam("nodeHashId")
+        nodeHashId: String,
         @ApiParam(value = "批量标签信息", required = true)
         labelInfoList: List<LabelInfo>
     ): Result<Boolean>
 
     @ApiOperation("节点去除标签")
     @DELETE
-    @Path("/projects/{projectId}/nodes/{nodeId}/labels/{labelId}")
+    @Path("/projects/{projectId}/nodes/{nodeHashId}/labels/{labelId}")
     fun delete(
         @ApiParam("用户ID", required = true, defaultValue = AUTH_HEADER_DEVOPS_USER_ID_DEFAULT_VALUE)
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
@@ -111,8 +111,8 @@ interface UserNodeLabelResource {
         @PathParam("projectId")
         projectId: String,
         @ApiParam(value = "节点ID", required = true)
-        @PathParam("nodeId")
-        nodeId: Long,
+        @PathParam("nodeHashId")
+        nodeHashId: String,
         @ApiParam(value = "标签ID", required = true)
         @PathParam("labelId")
         labelId: Long
