@@ -227,6 +227,8 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     return false
                 }
 
+                // if (event.maxParallelInSingle != null && thirdPartyAgentBuildRedisUtils.getRunningJobWithSingleAgent(event.containerHashId, agent.agentId))
+
                 // #5806 入库失败就不再写Redis
                 inQueue(agent = agent, event = event, agentId = agent.agentId, workspace = workspace)
                 // 保存构建详情
@@ -275,6 +277,9 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 atoms = event.atoms
             )
         )
+
+        // 只要入队成功，则Job运行统计 +1
+        thirdPartyAgentBuildRedisUtils.increRunningJobWithAgentId(event.containerHashId!!, agentId, 1)
     }
 
     private fun saveAgentInfoToBuildDetail(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent) {

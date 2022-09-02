@@ -61,5 +61,7 @@ data class PipelineAgentStartupEvent(
     override var delayMills: Int = 0,
     val executeCount: Int?,
     override var routeKeySuffix: String? = null,
-    val customBuildEnv: Map<String, String>? = null
+    val customBuildEnv: Map<String, String>? = null,
+    val maxParallelInSingle: Int? = 0,
+    val maxParallelInAll: Int? = 0,
 ) : IPipelineRoutableEvent(routeKeySuffix, actionType, source, projectId, pipelineId, userId, delayMills)

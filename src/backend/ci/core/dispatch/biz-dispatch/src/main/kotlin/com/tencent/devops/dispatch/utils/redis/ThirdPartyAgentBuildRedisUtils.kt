@@ -59,6 +59,24 @@ class ThirdPartyAgentBuildRedisUtils @Autowired constructor(
             )
         )
 
+    fun getRunningJobWithAllAgent(containerHashId: String, agentId: String): Int {
+        val runningCount = redisOperation.hget(jobRunningHashKey(), allAgentHashField(containerHashId))
+        return runningCount?.toInt() ?: 0
+    }
+
+    fun getRunningJobWithSingleAgent(containerHashId: String, agentId: String): Int {
+        val runningCount = redisOperation.hget(jobRunningHashKey(), singleAgentHashField(containerHashId, agentId))
+        return runningCount?.toInt() ?: 0
+    }
+
+    /**
+     * 原子加/减当前job在同一agent下的运行数量以及在所有agent下的运行数量
+     */
+    fun increRunningJobWithAgentId(containerHashId: String, agentId: String, delta: Long) {
+        redisOperation.hIncrBy(jobRunningHashKey(), singleAgentHashField(containerHashId, agentId), delta)
+        redisOperation.hIncrBy(jobRunningHashKey(), allAgentHashField(containerHashId), delta)
+    }
+
     fun isThirdPartyAgentUpgrading(projectId: String, agentId: String): Boolean {
         return try {
             redisOperation.get(thirdPartyUpgradeKey(projectId, agentId)) == "true"
@@ -84,4 +102,22 @@ class ThirdPartyAgentBuildRedisUtils @Autowired constructor(
 
     private fun thirdPartyUpgradeKey(projectId: String, agentId: String) =
         "third_party_agent_upgrade_${projectId}_$agentId"
+
+    /**
+     * 统计job正在运行中数据
+     */
+    private fun jobRunningHashKey() =
+        "dispatch:job_running"
+
+    /**
+     * 单 job 单 agent hash field
+     */
+    private fun singleAgentHashField(containerHashId: String, agentId: String) =
+        "${containerHashId}_$agentId"
+
+    /**
+     * 单 job 全量 agent hash field
+     */
+    private fun allAgentHashField(containerHashId: String) =
+        containerHashId
 }
