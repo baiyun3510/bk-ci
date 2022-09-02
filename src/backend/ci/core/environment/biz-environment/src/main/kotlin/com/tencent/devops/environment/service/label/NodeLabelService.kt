@@ -109,6 +109,10 @@ class NodeLabelService @Autowired constructor(
         return true
     }
 
+    fun addByHashId(userId: String, projectId: String, nodeHashId: String, labelId: Long): Boolean {
+        return add(userId, projectId, HashUtil.decodeIdToLong(nodeHashId), labelId)
+    }
+
     fun delete(userId: String, projectId: String, nodeId: Long, labelId: Long): Boolean {
         logger.info("$userId delete nodeLabel nodeId: $nodeId, labelId: $labelId")
         nodeLabelDao.deleteNodeLabel(
@@ -121,6 +125,10 @@ class NodeLabelService @Autowired constructor(
         labelRedisUtils.deleteLabelBitMapHashKey(projectId, labelId)
 
         return true
+    }
+
+    fun deleteByHashId(userId: String, projectId: String, nodeHashId: String, labelId: Long): Boolean {
+        return delete(userId, projectId, HashUtil.decodeIdToLong(nodeHashId), labelId)
     }
 
     fun batchDeleteEnvLabel(userId: String, projectId: String, envName: String, nodeIdList: List<Long>) {

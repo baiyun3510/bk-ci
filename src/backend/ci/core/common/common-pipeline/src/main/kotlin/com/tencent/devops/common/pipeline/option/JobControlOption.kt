@@ -60,5 +60,9 @@ data class JobControlOption(
     @ApiModelProperty("containerId与jobId映射，depend on运行时使用的是containerId", required = false)
     var dependOnContainerId2JobIds: Map<String, String>? = null, // containerId与jobId映射，depend on运行时使用的是containerId
     @ApiModelProperty("是否失败继续", required = false)
-    val continueWhenFailed: Boolean? = false // 失败继续
+    val continueWhenFailed: Boolean? = false, // 失败继续,
+    @ApiModelProperty("当前Job在单节点上的最大并发数", required = false)
+    val maxParallelInSingle: Int? = 0,
+    @ApiModelProperty("当前Job在所有节点上的最大并发数", required = false)
+    val maxParallelInAll: Int? = 0,
 )

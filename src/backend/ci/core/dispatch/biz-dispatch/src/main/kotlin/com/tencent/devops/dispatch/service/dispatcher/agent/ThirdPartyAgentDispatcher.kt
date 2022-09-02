@@ -227,6 +227,16 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     return false
                 }
 
+                // 检验单Job在agent内的并发限制
+                if (checkAgentRunningJob(event, agent)) {
+                    logger.warn("The agent(${agent.agentId}) of project(${event.projectId}) " +
+                                    "running job(${event.containerHashId}) exceeds the limit " +
+                                    "maxParallelInSingle: ${event.maxParallelInSingle} or " +
+                                    "maxParallelInAll: ${event.maxParallelInAll}")
+                    log(event, "当前JOB达到了单节点最大并发数，重新调度- ${agent.hostname}/${agent.ip}")
+                    return false
+                }
+
                 // #5806 入库失败就不再写Redis
                 inQueue(agent = agent, event = event, agentId = agent.agentId, workspace = workspace)
                 // 保存构建详情
@@ -242,6 +252,28 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         } finally {
             redisLock.unlock()
         }
+    }
+
+    private fun checkAgentRunningJob(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent): Boolean {
+        if (event.maxParallelInSingle!! > 0) {
+            val singleAgentRunningCount = thirdPartyAgentBuildRedisUtils.getRunningJobWithSingleAgent(
+                event.containerHashId!!, agent.agentId)
+
+            if (singleAgentRunningCount >= event.maxParallelInSingle!!) {
+                return false
+            }
+        }
+
+        if (event.maxParallelInAll!! > 0) {
+            val allAgentRunningCount = thirdPartyAgentBuildRedisUtils.getRunningJobWithAllAgent(
+                event.containerHashId!!)
+
+            if (allAgentRunningCount >= event.maxParallelInAll!!) {
+                return false
+            }
+        }
+
+        return true
     }
 
     private fun log(event: PipelineAgentStartupEvent, logMessage: String) {
@@ -275,6 +307,9 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 atoms = event.atoms
             )
         )
+
+        // 只要入队成功，则Job运行统计 +1
+        thirdPartyAgentBuildRedisUtils.increRunningJobWithAgentId(event.containerHashId!!, agentId, 1)
     }
 
     private fun saveAgentInfoToBuildDetail(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent) {
@@ -431,7 +466,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     vmSeqId = event.vmSeqId
                 ).forEach {
                     val agent = agentMaps[it.agentId]
-                    if (agent != null) {
+                    if (agent != null && checkAgentRunningJob(event, agent)) {
                         preBuildAgents.add(agent)
                     }
                 }
