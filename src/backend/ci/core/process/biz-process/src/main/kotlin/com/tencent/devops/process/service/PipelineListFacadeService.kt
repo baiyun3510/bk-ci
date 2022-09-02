@@ -1378,6 +1378,10 @@ class PipelineListFacadeService @Autowired constructor(
                 pipelines.subList(offset, toIndex)
             }
         }
+        // 加上流水线组
+        val pipelineViewNameMap =
+            pipelineViewGroupService.getViewNameMap(projectId, list.map { it.pipelineId }.toMutableSet())
+        list.forEach { it.viewNames = pipelineViewNameMap[it.pipelineId] }
         return PipelineViewPipelinePage(
             page = pageNotNull,
             pageSize = pageSizeNotNull,
