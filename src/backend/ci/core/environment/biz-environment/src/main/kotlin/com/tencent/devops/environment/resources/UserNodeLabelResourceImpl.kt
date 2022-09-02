@@ -45,14 +45,14 @@ class UserNodeLabelResourceImpl @Autowired constructor(
         return Result(nodeLabelService.getByHashId(userId, nodeHashId))
     }
 
-    override fun add(userId: String, projectId: String, nodeId: Long, labelId: Long): Result<Boolean> {
-        return Result(nodeLabelService.add(userId, projectId, nodeId, labelId))
+    override fun add(userId: String, projectId: String, nodeHashId: String, labelId: Long): Result<Boolean> {
+        return Result(nodeLabelService.addByHashId(userId, projectId, nodeHashId, labelId))
     }
 
-    override fun batchAdd(userId: String, projectId: String, nodeId: Long, labelInfoList: List<LabelInfo>): Result<Boolean> {
-        logger.info("$userId batch add nodeLabel nodeId: $nodeId, labelInfoList: $labelInfoList")
+    override fun batchAdd(userId: String, projectId: String, nodeHashId: String, labelInfoList: List<LabelInfo>): Result<Boolean> {
+        logger.info("$userId batch add nodeLabel nodeId: $nodeHashId, labelInfoList: $labelInfoList")
 
-        val oldLabelInfoList = nodeLabelService.get(userId, nodeId)
+        val oldLabelInfoList = nodeLabelService.getByHashId(userId, nodeHashId)
 
         // 获取此次批量绑定新增标签列表
         val addLabelInfoList = labelInfoList.toMutableList()
@@ -67,7 +67,7 @@ class UserNodeLabelResourceImpl @Autowired constructor(
         // 批量新增标签并批量绑定
         val labelIdList = labelService.batchAdd(userId, projectId, addLabelInfoList)
         labelIdList.forEach {
-            nodeLabelService.add(userId, projectId, nodeId, it)
+            nodeLabelService.addByHashId(userId, projectId, nodeHashId, it)
         }
 
         // 获取解绑标签列表
@@ -82,14 +82,14 @@ class UserNodeLabelResourceImpl @Autowired constructor(
 
         // 解绑标签
         deleteLabelInfoList.forEach {
-            nodeLabelService.delete(userId, projectId, nodeId, it.labelId)
+            nodeLabelService.deleteByHashId(userId, projectId, nodeHashId, it.labelId)
         }
 
         return Result(true)
     }
 
-    override fun delete(userId: String, projectId: String, nodeId: Long, labelId: Long): Result<Boolean> {
-        return Result(nodeLabelService.delete(userId, projectId, nodeId, labelId))
+    override fun delete(userId: String, projectId: String, nodeHashId: String, labelId: Long): Result<Boolean> {
+        return Result(nodeLabelService.deleteByHashId(userId, projectId, nodeHashId, labelId))
     }
 
     override fun getLabelNodes(userId: String, projectId: String, labelId: Long): Result<List<Long>> {
