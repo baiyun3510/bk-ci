@@ -82,6 +82,7 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         var hasCodeChange = false
         var hasScmElement = false
         val variables = HashMap<String, String>()
+        LOG.info("execute timerTrigger")
         run outer@{
             model.stages.forEach { stage ->
                 stage.containers.forEach { container ->
@@ -100,6 +101,7 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
                         }
                     } else if (noScm && container is VMBuildContainer) {
                         container.elements.forEach ele@{ ele ->
+                            LOG.info("pipeline is $pipelineId | eleCode is ${ele.getAtomCode()}")
                             // 插件没有启用或者是post action不需要比较变更
                             if (!ele.isElementEnable() || ele.additionalOptions?.elementPostInfo != null) {
                                 return@ele

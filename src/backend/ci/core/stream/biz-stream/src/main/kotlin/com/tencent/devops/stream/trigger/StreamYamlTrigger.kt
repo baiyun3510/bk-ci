@@ -205,19 +205,11 @@ class StreamYamlTrigger @Autowired constructor(
             // 新建流水线放
             action.data.context.pipeline = pipeline
         } else {
-            if (needUpdateLastBuildBranch(action)) {
-                action.updateLastBranch(
-                    pipelineId = pipeline.pipelineId,
-                    branch = action.data.eventCommon.branch
-                )
-            }
-            // 判断是否需要更新displayName
-            if (needChangePipelineDisplayName(action)) {
-                action.updatePipelineDisplayName(
-                    pipelineId = pipeline.pipelineId,
-                    displayName = getDisplayName(action)
-                )
-            }
+            action.updatePipelineLastBranchAndDisplayName(
+                pipelineId = pipeline.pipelineId,
+                branch = if (needUpdateLastBuildBranch(action)) action.data.eventCommon.branch else null,
+                displayName = if (needChangePipelineDisplayName(action)) getDisplayName(action) else null
+            )
         }
 
         // 获取蓝盾流水线的pipelineAsCodeSetting

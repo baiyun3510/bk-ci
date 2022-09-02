@@ -223,6 +223,7 @@ class LambdaDataService @Autowired constructor(
             val taskAtom = task.taskAtom
             val taskParamMap = JsonUtil.toMap(task.taskParams)
 
+            logger.info("Atom : $taskAtom, check pushTaskDetail build detail: ${task.buildId}| taskId: ${task.taskId}| taskAtom: ${task.taskAtom} | taskType: ${task.taskType}")
             if (task.taskType == "VM" || task.taskType == "NORMAL") {
                 if (taskAtom == "dispatchVMShutdownTaskAtom") {
                     Thread.sleep(3000)
@@ -233,6 +234,9 @@ class LambdaDataService @Autowired constructor(
                         stageId = task.stageId,
                         containerId = task.containerId
                     )
+                    // 查看分配container分配情况
+                    logger.info("taskAtom: ${task.taskAtom} |taskId: ${task.taskId} has been assigned to ${task.containerId}")
+
                     if (buildContainer != null) {
                         @Suppress("UNCHECKED_CAST")
                         val dispatchType = taskParamMap["dispatchType"] as Map<String, Any>
@@ -265,9 +269,11 @@ class LambdaDataService @Autowired constructor(
                 }
             } else {
                 val taskParams = if (
+                    // @type 为buildType
                     taskParamMap["@type"] != "marketBuild" &&
                     taskParamMap["@type"] != "marketBuildLess"
                 ) {
+                    logger.info("The type of buildType equal to marketBuild or marketBuildLess")
                     val inputMap = mutableMapOf<String, String>()
                     when {
                         taskParamMap["@type"] == "linuxScript" -> {
@@ -293,6 +299,9 @@ class LambdaDataService @Autowired constructor(
                             if (taskParamMap["params"] != null) {
                                 inputMap["desc"] = taskParamMap["params"] as String
                             }
+
+                            // 查看人工审核插件上报流程是否走到这
+                            logger.info("Atom : $taskAtom | ${task.buildId}| taskId: ${task.taskId} | taskType: ${task.taskType}  had run over all of the process")
                         }
                         else -> {
                             inputMap["key"] = "value"
@@ -303,9 +312,11 @@ class LambdaDataService @Autowired constructor(
                     taskParamMap.toMutableMap()["data"] = dataMap
                     JSONObject(taskParamMap)
                 } else {
+                    logger.info("The type of buildType conflict to marketBuild or marketBuildLess")
                     JSONObject(JsonUtil.toMap(task.taskParams))
                 }
-
+                // 此时上报的插件
+                logger.info("At the  momount,${task.buildId}|${task.taskAtom} | taskId: ${task.taskId}  is pushing")
                 val dataPlatTaskDetail = DataPlatTaskDetail(
                     pipelineId = task.pipelineId,
                     buildId = task.buildId,
