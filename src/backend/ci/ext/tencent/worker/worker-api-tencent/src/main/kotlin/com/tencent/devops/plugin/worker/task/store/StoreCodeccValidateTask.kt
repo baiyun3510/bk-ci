@@ -36,6 +36,9 @@ import com.tencent.devops.common.pipeline.utils.ParameterUtils
 import com.tencent.devops.process.pojo.BuildTask
 import com.tencent.devops.process.pojo.BuildVariables
 import com.tencent.devops.process.utils.PIPELINE_START_USER_ID
+import com.tencent.devops.store.pojo.common.KEY_LANGUAGE
+import com.tencent.devops.store.pojo.common.KEY_STORE_CODE
+import com.tencent.devops.store.pojo.common.KEY_STORE_TYPE
 import com.tencent.devops.store.pojo.common.StoreValidateCodeccResultRequest
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.worker.common.api.store.StoreCodeccResourceApi
@@ -54,29 +57,30 @@ class StoreCodeccValidateTask : ITask() {
         logger.info("StoreCodeccValidateTask buildTask: $buildTask,buildVariables: $buildVariables")
         val buildId = buildTask.buildId
         val params = buildTask.params ?: mapOf()
-        val storeCode = params["storeCode"] ?: throw TaskExecuteException(
-            errorMsg = "param [storeCode] is empty",
+        val storeCode = params[KEY_STORE_CODE] ?: throw TaskExecuteException(
+            errorMsg = "param [$KEY_STORE_CODE] is empty",
             errorType = ErrorType.USER,
             errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
         )
-        val storeType = params["storeType"] ?: throw TaskExecuteException(
-            errorMsg = "param [storeType] is empty",
+        val storeType = params[KEY_STORE_TYPE] ?: throw TaskExecuteException(
+            errorMsg = "param [$KEY_STORE_TYPE] is empty",
             errorType = ErrorType.USER,
             errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
         )
-        val language = params["language"] ?: throw TaskExecuteException(
-            errorMsg = "param [language] is empty",
+        val language = params[KEY_LANGUAGE] ?: throw TaskExecuteException(
+            errorMsg = "param [$KEY_LANGUAGE] is empty",
             errorType = ErrorType.USER,
             errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
         )
         // 根据校验标准模型去校验codecc代码扫描的指标是否满足需求
         LoggerService.addNormalLine("codecc validate start")
         val storeCodeccResourceApi = StoreCodeccResourceApi()
-        val userId = ParameterUtils.getListValueByKey(buildVariables.variablesWithType, PIPELINE_START_USER_ID) ?: throw TaskExecuteException(
-            errorMsg = "user basic info error, please check environment.",
-            errorType = ErrorType.USER,
-            errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
-        )
+        val userId = ParameterUtils.getListValueByKey(buildVariables.variablesWithType, PIPELINE_START_USER_ID)
+            ?: throw TaskExecuteException(
+                errorMsg = "user basic info error, please check environment.",
+                errorType = ErrorType.USER,
+                errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
+            )
         val storeValidateCodeccResultRequest = StoreValidateCodeccResultRequest(
             projectCode = buildVariables.projectId,
             userId = userId,
