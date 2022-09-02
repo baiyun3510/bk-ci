@@ -34,10 +34,10 @@ import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.plugin.api.ServiceCodeccResource
 import com.tencent.devops.store.dao.atom.MarketAtomDao
 import com.tencent.devops.store.pojo.atom.enums.AtomStatusEnum
-import com.tencent.devops.store.pojo.common.STORE_REPO_CODECC_BUILD_KEY_PREFIX
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.TxStoreCodeccCommonService
 import com.tencent.devops.store.service.common.TxStoreCodeccService
+import com.tencent.devops.store.utils.TxStoreUtils
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -85,7 +85,7 @@ class TxAtomCronService @Autowired constructor(
                 val atomCode = it.atomCode
                 val storeType = StoreTypeEnum.ATOM.name
                 // 获取当次构建对应的buildId
-                val buildId = redisOperation.get("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$atomCode:$atomId")
+                val buildId = redisOperation.get(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, atomCode, atomId))
                 val repoId = "$pluginNameSpaceName/$atomCode"
                 val codeccMeasureInfoResult = client.get(ServiceCodeccResource::class).getCodeccMeasureInfo(
                     repoId = repoId,
@@ -119,8 +119,8 @@ class TxAtomCronService @Autowired constructor(
                     }
                 }
             }
-        } catch (e: Throwable) {
-            logger.error("updateAtomCodeccStatus error:", e)
+        } catch (ignored: Throwable) {
+            logger.error("BKSystemErrorMonitor|updateAtomCodeccStatus|error=${ignored.message}", ignored)
         } finally {
             redisLock.unlock()
         }
