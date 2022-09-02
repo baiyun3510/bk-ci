@@ -474,7 +474,6 @@ interface UserPipelineResource {
 
     @ApiOperation("列出等还原回收的流水线列表")
     @GET
-    // @Path("/projects/{projectId}/pipelineRecycleList")
     @Path("/{projectId}/pipelineRecycleList")
     fun recycleList(
         @ApiParam(value = "用户ID", required = true, defaultValue = AUTH_HEADER_USER_ID_DEFAULT_VALUE)
