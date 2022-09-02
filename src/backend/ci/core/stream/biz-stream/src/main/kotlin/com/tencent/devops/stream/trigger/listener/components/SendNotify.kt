@@ -295,8 +295,18 @@ class SendNotify @Autowired constructor(
         val paramMap = startParams.associate {
             it.key to it.value.toString()
         }
-        return receivers.map { receiver ->
-            EnvUtils.parseEnv(receiver, paramMap)
-        }.toMutableSet()
+
+        val parsedReceivers = mutableSetOf<String>()
+
+        receivers.forEach { receiver ->
+            val res = EnvUtils.parseEnv(receiver, paramMap)
+            if (res.contains(",")) {
+                parsedReceivers.addAll(res.split(",").map { it.trim() })
+            } else {
+                parsedReceivers.add(res)
+            }
+        }
+
+        return parsedReceivers
     }
 }
