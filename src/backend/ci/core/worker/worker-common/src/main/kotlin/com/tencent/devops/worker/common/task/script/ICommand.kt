@@ -71,22 +71,36 @@ interface ICommand {
         val acrossTargetProjectId by lazy {
             TemplateAcrossInfoUtil.getAcrossInfo(data, taskId)?.targetProjectId
         }
-
-        val parsedCredentialCommand = ReplacementUtils.replace(command, object : KeyReplacement {
-            override fun getReplacement(key: String, doubleCurlyBraces: Boolean): String = data[key] ?: try {
-                CredentialUtils.getCredential(buildId, key, false, acrossTargetProjectId)[0]
-            } catch (ignore: Exception) {
-                CredentialUtils.getCredentialContextValue(key, acrossTargetProjectId) ?: if (doubleCurlyBraces) {
-                    "\${{$key}}"
-                } else {
-                    "\${$key}"
+        val contextMap = variables.plus(
+            mapOf(
+                WORKSPACE_CONTEXT to dir.absolutePath,
+                CI_TOKEN_CONTEXT to (variables[CI_TOKEN_CONTEXT] ?: ""),
+                JOB_OS_CONTEXT to AgentEnv.getOS().name
+            )
+        )
+        return if (asCodeEnabled == true) {
+            EnvReplacementParser.parse(
+                obj = command,
+                contextMap = contextMap,
+                contextPair = EnvReplacementParser.getCustomExecutionContextByMap(
+                    variables = contextMap,
+                    extendNamedValueMap = listOf(
+                        CredentialUtils.CredentialRuntimeNamedValue(targetProjectId = acrossTargetProjectId)
+                    )
+                )
+            )
+        } else {
+            ReplacementUtils.replace(
+                command,
+                object : KeyReplacement {
+                    override fun getReplacement(key: String, doubleCurlyBraces: Boolean): String? =
+                        contextMap[key] ?: try {
+                            CredentialUtils.getCredential(buildId, key, false, acrossTargetProjectId)[0]
+                        } catch (ignore: Exception) {
+                            CredentialUtils.getCredentialContextValue(key, acrossTargetProjectId)
+                        } ?: if (doubleCurlyBraces) "\${{$key}}" else "\${$key}"
                 }
-            }
-        }, mapOf(
-            WORKSPACE_CONTEXT to dir.absolutePath,
-            CI_TOKEN_CONTEXT to (data[CI_TOKEN_CONTEXT] ?: ""),
-            JOB_OS_CONTEXT to AgentEnv.getOS().name
-        ))
-        return EnvReplacementParser.parse(parsedCredentialCommand, data, asCodeEnabled)
+            )
+        }
     }
 }
