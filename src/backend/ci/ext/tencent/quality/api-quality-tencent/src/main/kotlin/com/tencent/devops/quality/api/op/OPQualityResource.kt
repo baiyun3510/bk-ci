@@ -25,30 +25,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.environment.resources
+package com.tencent.devops.quality.api.op
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.environment.api.OpNodeResource
-import com.tencent.devops.environment.pojo.NodePage
-import com.tencent.devops.environment.service.OpNodeService
-import org.springframework.beans.factory.annotation.Autowired
+import javax.ws.rs.Consumes
+import javax.ws.rs.POST
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
+import javax.ws.rs.core.MediaType
 
-@RestResource
-class OpNodeResourceImpl @Autowired constructor(private val opNodeService: OpNodeService) : OpNodeResource {
-    override fun flushDisplayName(): Result<Int> {
-        return Result(opNodeService.flushDisplayName())
-    }
-
-    override fun list(page: Int, pageSize: Int, name: String?): Result<NodePage> {
-        return Result(NodePage(opNodeService.countPage(name), opNodeService.listPage(page, pageSize, name)))
-    }
-
-    override fun deleteNodes(projectId: String, nodeHashId: String): Result<Boolean> {
-        return Result(opNodeService.deleteNode(projectId, nodeHashId))
-    }
-
-    override fun addHashId() {
-        opNodeService.addHashId()
-    }
+@Path("/op/quality/")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+interface OPQualityResource {
+    @POST
+    @Path("/addhashid")
+    fun addHashId()
 }
