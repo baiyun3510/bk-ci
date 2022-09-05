@@ -27,10 +27,12 @@
 
 package com.tencent.devops.repository.resources
 
+import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.repository.api.OPRepositoryResource
 import com.tencent.devops.repository.service.impl.OPRepositoryService
 import org.springframework.beans.factory.annotation.Autowired
 
+@RestResource
 class OPRepositoryResourceImpl @Autowired constructor(
     private val opRepositoryService: OPRepositoryService
 ) : OPRepositoryResource {

@@ -27,10 +27,12 @@
 
 package com.tencent.devops.quality.resources
 
+import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.quality.api.op.OPQualityResource
 import com.tencent.devops.quality.service.OPQualityService
 import org.springframework.beans.factory.annotation.Autowired
 
+@RestResource
 class OPQualityResourceImpl @Autowired constructor(
     private val oPQualityService: OPQualityService
 ) : OPQualityResource {
