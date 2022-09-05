@@ -86,6 +86,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.Base64
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import javax.ws.rs.NotFoundException
 
 @Service
@@ -110,6 +113,8 @@ class RepositoryService @Autowired constructor(
 
     @Value("\${repository.git.devopsGroupName}")
     private lateinit var devopsGroupName: String
+
+    val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
 
     fun hasAliasName(projectId: String, repositoryHashId: String?, aliasName: String): Boolean {
         val repositoryId = if (repositoryHashId != null) HashUtil.decodeOtherIdToLong(repositoryHashId) else 0L
@@ -1746,6 +1751,23 @@ class RepositoryService @Autowired constructor(
             token = token,
             tokenType = finalTokenType
         )
+    }
+
+    fun addHashId() {
+        threadPoolExecutor.submit {
+            var offset = 0
+            val limit = 100
+            do {
+                val repoRecords = repositoryDao.getAllRepo(dslContext, limit, offset)
+                val repoSize = repoRecords?.size
+                repoRecords?.map {
+                    val id = it.value1()
+                    val hashId = HashUtil.encodeLongId(it.value1())
+                    repositoryDao.updateHashId(dslContext, id, hashId)
+                }
+                offset += limit
+            } while (repoSize == 100)
+        }
     }
 
     companion object {

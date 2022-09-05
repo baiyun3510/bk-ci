@@ -39,6 +39,7 @@ import com.tencent.devops.environment.constant.EnvironmentMessageCode.ERROR_NODE
 import com.tencent.devops.environment.constant.EnvironmentMessageCode.ERROR_NODE_NAME_DUPLICATE
 import com.tencent.devops.environment.constant.EnvironmentMessageCode.ERROR_NODE_NOT_EXISTS
 import com.tencent.devops.environment.constant.EnvironmentMessageCode.ERROR_NODE_NO_EDIT_PERMISSSION
+import com.tencent.devops.environment.dao.EnvDao
 import com.tencent.devops.environment.dao.EnvNodeDao
 import com.tencent.devops.environment.dao.NodeDao
 import com.tencent.devops.environment.dao.slave.SlaveGatewayDao
@@ -58,11 +59,16 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
-@Service@Suppress("ALL")
+@Service
+@Suppress("ALL")
 class NodeService @Autowired constructor(
     private val dslContext: DSLContext,
     private val nodeDao: NodeDao,
+    private val envDao: EnvDao,
     private val envNodeDao: EnvNodeDao,
     private val thirdPartyAgentDao: ThirdPartyAgentDao,
     private val slaveGatewayService: SlaveGatewayService,
@@ -76,6 +82,7 @@ class NodeService @Autowired constructor(
         private val logger = LoggerFactory.getLogger(NodeService::class.java)
     }
 
+    val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
     fun deleteNodes(userId: String, projectId: String, nodeHashIds: List<String>) {
         val nodeLongIds = nodeHashIds.map { HashUtil.decodeIdToLong(it) }
         val canDeleteNodeIds =
@@ -487,6 +494,34 @@ class NodeService @Autowired constructor(
         } catch (ignore: Throwable) {
             logger.error("AUTH|refreshGateway failed with error: ", ignore)
             false
+        }
+    }
+
+    fun addHashId() {
+        threadPoolExecutor.submit {
+            var offset = 0
+            val limit = 100
+            do {
+                val envRecords = envDao.getAllEnv(dslContext, limit, offset)
+                val envSize = envRecords?.size
+                envRecords?.map {
+                    val id = it.value1()
+                    val hashId = HashUtil.encodeLongId(it.value1())
+                    envDao.updateHashId(dslContext, id, hashId)
+                }
+                offset += limit
+            } while (envSize == 100)
+            offset = 0
+            do {
+                val nodeRecords = nodeDao.getAllNode(dslContext, limit, offset)
+                val nodeSize = nodeRecords?.size
+                nodeRecords?.map {
+                    val id = it.value1()
+                    val hashId = HashUtil.encodeLongId(it.value1())
+                    nodeDao.updateHashId(dslContext, id, hashId)
+                }
+                offset += limit
+            } while (nodeSize == 100)
         }
     }
 }
