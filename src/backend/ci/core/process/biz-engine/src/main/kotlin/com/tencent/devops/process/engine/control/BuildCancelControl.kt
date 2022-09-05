@@ -121,7 +121,6 @@ class BuildCancelControl @Autowired constructor(
                 setBuildCancelActionRedisFlag(buildId)
             }
             cancelAllPendingTask(event = event, model = model)
-
             if (event.actionType == ActionType.TERMINATE) {
                 // 修改detail model
                 pipelineBuildDetailService.buildCancel(
