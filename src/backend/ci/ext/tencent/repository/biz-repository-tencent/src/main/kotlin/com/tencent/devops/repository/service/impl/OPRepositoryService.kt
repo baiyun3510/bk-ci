@@ -25,30 +25,46 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.environment.resources
+package com.tencent.devops.repository.service.impl
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.environment.api.OpNodeResource
-import com.tencent.devops.environment.pojo.NodePage
-import com.tencent.devops.environment.service.OpNodeService
+import com.tencent.devops.common.api.util.HashUtil
+import com.tencent.devops.repository.dao.RepositoryDao
+import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
-@RestResource
-class OpNodeResourceImpl @Autowired constructor(private val opNodeService: OpNodeService) : OpNodeResource {
-    override fun flushDisplayName(): Result<Int> {
-        return Result(opNodeService.flushDisplayName())
+@Service
+class OPRepositoryService @Autowired constructor(
+    private val repositoryDao: RepositoryDao,
+    private val dslContext: DSLContext
+) {
+    fun addHashId() {
+        val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
+        threadPoolExecutor.submit {
+            var offset = 0
+            val limit = 100
+            try {
+                do {
+                    val repoRecords = repositoryDao.getAllRepo(dslContext, limit, offset)
+                    val repoSize = repoRecords?.size
+                    repoRecords?.map {
+                        val id = it.value1()
+                        val hashId = HashUtil.encodeLongId(it.value1())
+                        repositoryDao.updateHashId(dslContext, id, hashId)
+                    }
+                    offset += limit
+                } while (repoSize == 100)
+            } catch (e: Exception) {
+                logger.warn("OpRepositoryService：addHashId failed | $e ")
+            }
+        }
     }
 
-    override fun list(page: Int, pageSize: Int, name: String?): Result<NodePage> {
-        return Result(NodePage(opNodeService.countPage(name), opNodeService.listPage(page, pageSize, name)))
-    }
-
-    override fun deleteNodes(projectId: String, nodeHashId: String): Result<Boolean> {
-        return Result(opNodeService.deleteNode(projectId, nodeHashId))
-    }
-
-    override fun addHashId() {
-        opNodeService.addHashId()
+    companion object {
+        private val logger = LoggerFactory.getLogger(OPRepositoryService::class.java)
     }
 }

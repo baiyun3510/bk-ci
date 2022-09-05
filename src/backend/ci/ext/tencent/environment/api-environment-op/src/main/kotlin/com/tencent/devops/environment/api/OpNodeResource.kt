@@ -78,4 +78,8 @@ interface OpNodeResource {
         @PathParam("nodeHashId")
         nodeHashId: String
     ): Result<Boolean>
+
+    @POST
+    @Path("/addhashid")
+    fun addHashId()
 }

@@ -25,30 +25,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.environment.resources
+package com.tencent.devops.quality.resources
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.environment.api.OpNodeResource
-import com.tencent.devops.environment.pojo.NodePage
-import com.tencent.devops.environment.service.OpNodeService
+import com.tencent.devops.quality.api.op.OPQualityResource
+import com.tencent.devops.quality.service.OPQualityService
 import org.springframework.beans.factory.annotation.Autowired
 
-@RestResource
-class OpNodeResourceImpl @Autowired constructor(private val opNodeService: OpNodeService) : OpNodeResource {
-    override fun flushDisplayName(): Result<Int> {
-        return Result(opNodeService.flushDisplayName())
-    }
-
-    override fun list(page: Int, pageSize: Int, name: String?): Result<NodePage> {
-        return Result(NodePage(opNodeService.countPage(name), opNodeService.listPage(page, pageSize, name)))
-    }
-
-    override fun deleteNodes(projectId: String, nodeHashId: String): Result<Boolean> {
-        return Result(opNodeService.deleteNode(projectId, nodeHashId))
-    }
-
+class OPQualityResourceImpl @Autowired constructor(
+    private val oPQualityService: OPQualityService
+) : OPQualityResource {
     override fun addHashId() {
-        opNodeService.addHashId()
+        oPQualityService.addHashId()
     }
 }
