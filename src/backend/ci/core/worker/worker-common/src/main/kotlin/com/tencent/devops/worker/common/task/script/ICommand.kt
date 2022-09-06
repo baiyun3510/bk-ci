@@ -62,14 +62,14 @@ interface ICommand {
     fun parseTemplate(
         buildId: String,
         command: String,
-        data: Map<String, String>,
+        variables: Map<String, String>,
         dir: File,
         taskId: String?,
         asCodeEnabled: Boolean?
     ): String {
         // 解析跨项目模板信息
         val acrossTargetProjectId by lazy {
-            TemplateAcrossInfoUtil.getAcrossInfo(data, taskId)?.targetProjectId
+            TemplateAcrossInfoUtil.getAcrossInfo(variables, taskId)?.targetProjectId
         }
         val contextMap = variables.plus(
             mapOf(
