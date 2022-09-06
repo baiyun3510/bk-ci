@@ -112,7 +112,7 @@ class OpNodeService @Autowired constructor(
         val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
         threadPoolExecutor.submit {
             var offset = 0
-            val limit = 100
+            val limit = 1000
             try {
                 do {
                     val envRecords = envDao.getAllEnv(dslContext, limit, offset)
@@ -123,7 +123,7 @@ class OpNodeService @Autowired constructor(
                         envDao.updateHashId(dslContext, id, hashId)
                     }
                     offset += limit
-                } while (envSize == 100)
+                } while (envSize == 1000)
                 offset = 0
                 do {
                     val nodeRecords = nodeDao.getAllNode(dslContext, limit, offset)
@@ -134,7 +134,7 @@ class OpNodeService @Autowired constructor(
                         nodeDao.updateHashId(dslContext, id, hashId)
                     }
                     offset += limit
-                } while (nodeSize == 100)
+                } while (nodeSize == 1000)
             } catch (e: Exception) {
                 logger.warn("OpNodeService：addHashId failed | $e ")
             }

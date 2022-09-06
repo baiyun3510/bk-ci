@@ -50,7 +50,7 @@ class OPQualityService @Autowired constructor(
         val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
         threadPoolExecutor.submit {
             var offset = 0
-            val limit = 100
+            val limit = 1000
             try {
                 do {
                     val controlPointRecords = controlPointDao.getAllControlPoint(dslContext, limit, offset)
@@ -61,7 +61,7 @@ class OPQualityService @Autowired constructor(
                         controlPointDao.updateHashId(dslContext, id, hashId)
                     }
                     offset += limit
-                } while (controlPointSize == 100)
+                } while (controlPointSize == 1000)
                 offset = 0
                 do {
                     val ruleRecords = qualityRuleDao.getAllRule(dslContext, limit, offset)
@@ -72,7 +72,7 @@ class OPQualityService @Autowired constructor(
                         qualityRuleDao.updateHashId(dslContext, id, hashId)
                     }
                     offset += limit
-                } while (ruleSize == 100)
+                } while (ruleSize == 1000)
                 offset = 0
                 do {
                     val ruleBuildHisRecords = qualityRuleBuildHisDao.getAllRuleBuildHis(dslContext, limit, offset)
@@ -83,7 +83,7 @@ class OPQualityService @Autowired constructor(
                         qualityRuleBuildHisDao.updateHashId(dslContext, id, hashId)
                     }
                     offset += limit
-                } while (ruleBuildHisSize == 100)
+                } while (ruleBuildHisSize == 1000)
             } catch (e: Exception) {
                 logger.warn("OPQualityService：addHashId failed | $e ")
             }
