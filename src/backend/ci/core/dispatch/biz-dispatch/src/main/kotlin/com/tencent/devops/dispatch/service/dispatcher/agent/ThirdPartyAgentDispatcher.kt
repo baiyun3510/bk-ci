@@ -378,6 +378,24 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     Result(data = null)
                 }
             }
+            AgentType.LABEL -> {
+                if (!dispatchType.labelExpressions.isNullOrBlank()) {
+                    client.get(ServiceThirdPartyAgentResource::class)
+                        .getAgentsByLabels(
+                            projectId = event.projectId,
+                            labelQuery = LabelQuery(
+                                labelExpressions = formatLabelExpressions(event, dispatchType.labelExpressions!!),
+                                sharedProjectId = dispatchType.envProjectId
+                            )
+                        )
+                } else {
+                    client.get(ServiceThirdPartyAgentResource::class)
+                        .getAgentsByEnvId(
+                            event.projectId,
+                            dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
+                                ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                }
+            }
         }
 
         if (agentsResult.status == Response.Status.FORBIDDEN.statusCode) {
