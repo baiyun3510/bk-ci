@@ -209,17 +209,30 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                             val envList = mutableListOf<BuildEnv>()
                             val timeoutMills = transMinuteTimeoutToMills(c.jobControlOption?.timeout).second
                             val contextMap = pipelineContextService.getAllBuildContext(variables).toMutableMap()
-                            fillContainerContext(contextMap, c.customBuildEnv, c.matrixContext)
+                            fillContainerContext(contextMap, c.customBuildEnv, c.matrixContext, asCodeSettings?.enable)
+                            val contextPair = EnvReplacementParser.getCustomExecutionContextByMap(contextMap)
                             c.buildEnv?.forEach { env ->
                                 containerAppResource.getBuildEnv(
-                                    name = env.key, version = env.value, os = c.baseOS.name.toLowerCase()
+                                    name = env.key,
+                                    version = EnvReplacementParser.parse(
+                                        obj = env.value,
+                                        contextMap = contextMap,
+                                        onlyExpression = asCodeSettings?.enable,
+                                        contextPair = contextPair
+                                    ),
+                                    os = c.baseOS.name.toLowerCase()
                                 ).data?.let { self -> envList.add(self) }
                             }
 
                             // 设置Job环境变量customBuildEnv到variablesWithType和variables中
                             // TODO 此处应收敛到variablesWithType或variables的其中一个
                             c.customBuildEnv?.map { (t, u) ->
-                                val value = EnvReplacementParser.parse(u, contextMap)
+                                val value = EnvReplacementParser.parse(
+                                    obj = u,
+                                    contextMap = contextMap,
+                                    onlyExpression = asCodeSettings?.enable,
+                                    contextPair = contextPair
+                                )
                                 contextMap[t] = value
                                 BuildParameters(
                                     key = t,
@@ -234,7 +247,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                         is NormalContainer -> {
                             val timeoutMills = transMinuteTimeoutToMills(c.jobControlOption?.timeout).second
                             val contextMap = pipelineContextService.getAllBuildContext(variables).toMutableMap()
-                            fillContainerContext(contextMap, null, c.matrixContext)
+                            fillContainerContext(contextMap, null, c.matrixContext, asCodeSettings?.enable)
                             Triple(mutableListOf(), contextMap, timeoutMills)
                         }
                         else -> throw OperationException("vmName($vmName) is an illegal container type: $c")
@@ -283,12 +296,13 @@ class EngineVMBuildService @Autowired(required = false) constructor(
     private fun fillContainerContext(
         context: MutableMap<String, String>,
         customBuildEnv: Map<String, String>?,
-        matrixContext: Map<String, String>?
+        matrixContext: Map<String, String>?,
+        asCodeEnabled: Boolean?
     ) {
         customBuildEnv?.let {
             context.putAll(
                 customBuildEnv.map {
-                    "$ENV_CONTEXT_KEY_PREFIX${it.key}" to EnvReplacementParser.parse(it.value, context)
+                    "$ENV_CONTEXT_KEY_PREFIX${it.key}" to EnvReplacementParser.parse(it.value, context, asCodeEnabled)
                 }.toMap()
             )
         }
@@ -832,15 +846,17 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         task?.run {
             errorType?.also { // #5046 增加错误信息
                 val errMsg = "Error: Process completed with exit code $errorCode: $errorMsg. " +
-                    (errorCode?.let {
-                        "\n${
+                    (
+                        errorCode?.let {
+                            "\n${
                             MessageCodeUtil.getCodeLanMessage(
                                 messageCode = errorCode.toString(),
                                 checkUrlDecoder = true
                             )
-                        }\n"
-                    }
-                        ?: "") +
+                            }\n"
+                        }
+                            ?: ""
+                        ) +
                     when (errorType) {
                         ErrorType.USER -> "Please check your input or service."
                         ErrorType.THIRD_PARTY -> "Please contact the third-party service provider."
