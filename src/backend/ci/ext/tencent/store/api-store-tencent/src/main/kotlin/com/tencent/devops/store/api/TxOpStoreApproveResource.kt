@@ -44,11 +44,11 @@ import javax.ws.rs.core.MediaType
 @Path("/open/market/approval")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface TxServiceStoreApproveResource {
+interface TxOpStoreApproveResource {
 
     @ApiOperation("moa审批回调")
     @POST
-    @Path("/moa/callBack/{token}")
+    @Path("/moa/callBack")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun moaApproveCallBack(
         @ApiParam(value = "审批人", required = true)
@@ -64,7 +64,7 @@ interface TxServiceStoreApproveResource {
         @FormParam("message")
         message: String,
         @ApiParam(value = "token", required = true)
-        @PathParam("token")
+        @QueryParam("token")
         token: String
     ): Result<Boolean>
 }
