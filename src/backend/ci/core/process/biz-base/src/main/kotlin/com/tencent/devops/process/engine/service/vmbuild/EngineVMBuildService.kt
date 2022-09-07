@@ -33,7 +33,6 @@ import com.tencent.devops.common.api.pojo.ErrorCode
 import com.tencent.devops.common.api.pojo.ErrorInfo
 import com.tencent.devops.common.api.pojo.ErrorType
 import com.tencent.devops.common.api.util.JsonUtil
-import com.tencent.devops.common.api.util.KeyReplacement
 import com.tencent.devops.common.api.util.ObjectReplaceEnvVarUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.api.util.timestampmilli
@@ -210,14 +209,17 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                             val timeoutMills = transMinuteTimeoutToMills(c.jobControlOption?.timeout).second
                             val contextMap = pipelineContextService.getAllBuildContext(variables).toMutableMap()
                             fillContainerContext(contextMap, c.customBuildEnv, c.matrixContext, asCodeSettings?.enable)
-                            val contextPair = EnvReplacementParser.getCustomExecutionContextByMap(contextMap)
+                            val asCodeEnabled = asCodeSettings?.enable == true
+                            val contextPair = if (asCodeEnabled) {
+                                EnvReplacementParser.getCustomExecutionContextByMap(contextMap)
+                            } else null
                             c.buildEnv?.forEach { env ->
                                 containerAppResource.getBuildEnv(
                                     name = env.key,
                                     version = EnvReplacementParser.parse(
-                                        obj = env.value,
+                                        value = env.value,
                                         contextMap = contextMap,
-                                        onlyExpression = asCodeSettings?.enable,
+                                        onlyExpression = asCodeEnabled,
                                         contextPair = contextPair
                                     ),
                                     os = c.baseOS.name.toLowerCase()
@@ -228,9 +230,9 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                             // TODO 此处应收敛到variablesWithType或variables的其中一个
                             c.customBuildEnv?.map { (t, u) ->
                                 val value = EnvReplacementParser.parse(
-                                    obj = u,
+                                    value = u,
                                     contextMap = contextMap,
-                                    onlyExpression = asCodeSettings?.enable,
+                                    onlyExpression = asCodeEnabled,
                                     contextPair = contextPair
                                 )
                                 contextMap[t] = value
@@ -440,13 +442,22 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             val task = allTasks.firstOrNull()
                 ?: return BuildTask(buildId, vmSeqId, BuildTaskStatus.WAIT)
 
-            return claim(task = task, buildId = buildId, userId = task.starter, vmSeqId = vmSeqId)
+            return claim(
+                task = task, buildId = buildId, userId = task.starter, vmSeqId = vmSeqId,
+                asCodeEnabled = pipelineAsCodeService.asCodeEnabled(task.projectId, task.pipelineId) == true
+            )
         } finally {
             containerIdLock.unlock()
         }
     }
 
-    private fun claim(task: PipelineBuildTask, buildId: String, userId: String, vmSeqId: String): BuildTask {
+    private fun claim(
+        task: PipelineBuildTask,
+        buildId: String,
+        userId: String,
+        vmSeqId: String,
+        asCodeEnabled: Boolean
+    ): BuildTask {
         LOG.info("ENGINE|$buildId|BC_ING|${task.projectId}|j($vmSeqId)|[${task.taskId}-${task.taskName}]")
         return when {
             task.status == BuildStatus.QUEUE -> { // 初始化状态，表明任务还未准备好
@@ -537,12 +548,11 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                     stepId = task.stepId,
                     type = task.taskType,
                     params = task.taskParams.map {
-                        val obj = ObjectReplaceEnvVarUtil.replaceEnvVar(
-                            it.value, buildVariable,
-                            object : KeyReplacement {
-                                override fun getReplacement(key: String, doubleCurlyBraces: Boolean) =
-                                    if (doubleCurlyBraces) "\${{$key}}" else "\${$key}"
-                            }
+                        // 在pipeline as code模式下，此处直接保持原文传给worker
+                        val obj = if (asCodeEnabled) {
+                            it.value
+                        } else ObjectReplaceEnvVarUtil.replaceEnvVar(
+                            it.value, buildVariable
                         )
                         it.key to JsonUtil.toJson(obj, formatted = false)
                     }.filter {

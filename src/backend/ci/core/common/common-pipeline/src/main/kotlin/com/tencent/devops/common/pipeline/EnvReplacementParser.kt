@@ -28,7 +28,6 @@
 package com.tencent.devops.common.pipeline
 
 import com.tencent.devops.common.api.util.JsonUtil
-import com.tencent.devops.common.api.util.KeyReplacement
 import com.tencent.devops.common.api.util.ObjectReplaceEnvVarUtil
 import com.tencent.devops.common.expression.ExecutionContext
 import com.tencent.devops.common.expression.ExpressionParseException
@@ -54,33 +53,34 @@ object EnvReplacementParser {
 
     /**
      * 根据环境变量map进行object处理并保持原类型
-     * @param obj 等待进行环境变量替换的对象，可以是任意类型
+     * @param value 等待进行环境变量替换的对象，可以是任意类型
      * @param contextMap 环境变量map值
      * @param contextPair 自定义表达式计算上下文（如果指定则不使用表达式替换或默认替换逻辑）
      * @param onlyExpression 只进行表达式替换（若指定了自定义替换逻辑此字段无效，为false）
      */
     fun parse(
-        obj: String?,
+        value: String?,
         contextMap: Map<String, String>,
         onlyExpression: Boolean? = false,
         contextPair: Pair<ExecutionContext, List<NamedValueInfo>>? = null
     ): String {
-        if (obj.isNullOrBlank()) return ""
+        if (value.isNullOrBlank()) return ""
         return if (onlyExpression == true) {
-            val (context, nameValues) = contextPair ?: getCustomExecutionContextByMap(contextMap)
-            parseExpressionTwice(
-                value = obj,
-                context = context,
-                nameValues = nameValues
-            )
+            try {
+                val (context, nameValues) = contextPair
+                    ?: getCustomExecutionContextByMap(contextMap)
+                    ?: return value
+                parseExpressionTwice(
+                    value = value,
+                    context = context,
+                    nameValues = nameValues
+                )
+            } catch (ignore: Throwable) {
+                logger.warn("[$value]|EnvReplacementParser expression invalid: ", ignore)
+                value
+            }
         } else {
-            ObjectReplaceEnvVarUtil.replaceEnvVar(
-                obj, contextMap,
-                object : KeyReplacement {
-                    override fun getReplacement(key: String, doubleCurlyBraces: Boolean) =
-                        if (doubleCurlyBraces) "\${{$key}}" else "\${$key}"
-                }
-            ).let {
+            ObjectReplaceEnvVarUtil.replaceEnvVar(value, contextMap).let {
                 JsonUtil.toJson(it, false)
             }
         }
@@ -89,18 +89,23 @@ object EnvReplacementParser {
     fun getCustomExecutionContextByMap(
         variables: Map<String, String>,
         extendNamedValueMap: List<RuntimeNamedValue>? = null
-    ): Pair<ExecutionContext, List<NamedValueInfo>> {
-        val context = ExecutionContext(DictionaryContextData())
-        val nameValue = mutableListOf<NamedValueInfo>()
-        extendNamedValueMap?.forEach { namedValue ->
-            nameValue.add(NamedValueInfo(namedValue.key, ContextValueNode()))
-            context.expressionValues.add(
-                namedValue.key,
-                RuntimeDictionaryContextData(namedValue)
-            )
+    ): Pair<ExecutionContext, List<NamedValueInfo>>? {
+        try {
+            val context = ExecutionContext(DictionaryContextData())
+            val nameValue = mutableListOf<NamedValueInfo>()
+            extendNamedValueMap?.forEach { namedValue ->
+                nameValue.add(NamedValueInfo(namedValue.key, ContextValueNode()))
+                context.expressionValues.add(
+                    namedValue.key,
+                    RuntimeDictionaryContextData(namedValue)
+                )
+            }
+            ExpressionParser.fillContextByMap(variables, context, nameValue)
+            return Pair(context, nameValue)
+        } catch (ignore: Throwable) {
+            logger.warn("EnvReplacementParser context invalid: $variables", ignore)
+            return null
         }
-        ExpressionParser.fillContextByMap(variables, context, nameValue)
-        return Pair(context, nameValue)
     }
 
     private fun parseExpressionTwice(
