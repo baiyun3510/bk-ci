@@ -242,7 +242,9 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
                 containerHashId = task.containerHashId,
                 queueTimeoutMinutes = param.jobControlOption?.prepareTimeout,
                 containerType = task.containerType,
-                customBuildEnv = param.customBuildEnv
+                customBuildEnv = param.customBuildEnv,
+                maxParallelInSingle = param.jobControlOption?.maxParallelInSingle,
+                maxParallelInAll = param.jobControlOption?.maxParallelInAll
             )
         )
     }
