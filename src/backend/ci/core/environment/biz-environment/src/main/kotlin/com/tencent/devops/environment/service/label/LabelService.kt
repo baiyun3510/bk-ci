@@ -183,10 +183,10 @@ class LabelService @Autowired constructor(
         )
 
         return when(labelExpression.operator) {
-            Operator.IN, Operator.EXIST -> {
+            Operator.EQUAL, Operator.IN, Operator.EXIST -> {
                 getInOrExistBitMap(projectId, labelIds)
             }
-            Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
+            Operator.DOES_NOT_EQUAL, Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
                 getNotInOrNotExistBitMap(projectId, labelIds)
             }
             else -> {

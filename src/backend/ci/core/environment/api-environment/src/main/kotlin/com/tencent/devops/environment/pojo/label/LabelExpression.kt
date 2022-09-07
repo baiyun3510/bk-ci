@@ -34,6 +34,8 @@ data class LabelExpression(
 )
 
 enum class Operator{
+    EQUAL,
+    DOES_NOT_EQUAL,
     IN,
     NOT_IN,
     EXIST,
