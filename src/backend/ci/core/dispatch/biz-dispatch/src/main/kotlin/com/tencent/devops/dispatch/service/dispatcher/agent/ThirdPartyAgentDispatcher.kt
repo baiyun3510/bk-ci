@@ -228,7 +228,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 }
 
                 // 检验单Job在agent内的并发限制
-                if (checkAgentRunningJob(event, agent)) {
+                if (exceedAgentRunningJobs(event, agent)) {
                     logger.warn("The agent(${agent.agentId}) of project(${event.projectId}) " +
                                     "running job(${event.containerHashId}) exceeds the limit " +
                                     "maxParallelInSingle: ${event.maxParallelInSingle} or " +
@@ -254,13 +254,13 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         }
     }
 
-    private fun checkAgentRunningJob(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent): Boolean {
+    private fun exceedAgentRunningJobs(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent): Boolean {
         if (event.maxParallelInSingle!! > 0) {
             val singleAgentRunningCount = thirdPartyAgentBuildRedisUtils.getRunningJobWithSingleAgent(
                 event.containerHashId!!, agent.agentId)
 
             if (singleAgentRunningCount >= event.maxParallelInSingle!!) {
-                return false
+                return true
             }
         }
 
@@ -269,11 +269,11 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 event.containerHashId!!)
 
             if (allAgentRunningCount >= event.maxParallelInAll!!) {
-                return false
+                return true
             }
         }
 
-        return true
+        return false
     }
 
     private fun log(event: PipelineAgentStartupEvent, logMessage: String) {
@@ -484,7 +484,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     vmSeqId = event.vmSeqId
                 ).forEach {
                     val agent = agentMaps[it.agentId]
-                    if (agent != null && checkAgentRunningJob(event, agent)) {
+                    if (agent != null && exceedAgentRunningJobs(event, agent)) {
                         preBuildAgents.add(agent)
                     }
                 }
