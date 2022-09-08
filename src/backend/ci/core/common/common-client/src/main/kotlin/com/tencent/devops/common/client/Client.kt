@@ -42,6 +42,7 @@ import com.tencent.devops.common.service.utils.KubernetesUtils
 import com.tencent.devops.common.service.utils.SpringContextUtil
 import feign.Contract
 import feign.Feign
+import feign.Logger
 import feign.MethodMetadata
 import feign.Request
 import feign.RequestInterceptor
@@ -273,7 +274,7 @@ class Client @Autowired constructor(
             logger.info("[$clz]|try to proxy by feign: ${ignored.message}")
         }
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
-        return Feign.builder()
+        return Feign.builder().logLevel(Logger.Level.FULL)
             .client(feignClient)
             .errorDecoder(clientErrorDecoder)
             .encoder(jacksonEncoder)
