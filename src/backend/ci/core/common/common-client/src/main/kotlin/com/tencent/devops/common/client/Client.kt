@@ -62,6 +62,7 @@ import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.stereotype.Component
 import java.lang.reflect.Method
 import java.security.cert.CertificateException
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
@@ -274,9 +275,10 @@ class Client @Autowired constructor(
             logger.info("[$clz]|try to proxy by feign: ${ignored.message}")
         }
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
-        return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.NoOpLogger() {
-            override fun log(configKey: String?, format: String?, vararg args: Any?) {
-                logger.debug("FEIGN_DEBUG|$configKey|${format?.format(args)}")
+        return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
+            override fun log(configKey: String, format: String, vararg args: Any) {
+                logger.debug("FEIGN_LOGGER|$configKey|")
+                logger.debug("FEIGN_DEBUG|$configKey|${Formatter().format(format, args)}")
                 super.log(configKey, format, *args)
             }
         })
