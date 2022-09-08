@@ -277,8 +277,9 @@ class Client @Autowired constructor(
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
         return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
             override fun log(configKey: String, format: String, vararg args: Any) {
-                logger.debug("FEIGN_LOGGER|$configKey|")
-                logger.debug("FEIGN_DEBUG|$configKey|${Formatter().format(format, args)}")
+                logger.info("FEIGN_LOGGER|$configKey|")
+                logger.info("FEIGN_DEBUG|$configKey|$format|$args")
+                logger.info("FEIGN_DEBUG_FORMAT|$configKey|${String.format(methodTag(configKey) + format, args)}")
                 super.log(configKey, format, *args)
             }
         })
