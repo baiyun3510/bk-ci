@@ -47,7 +47,7 @@ interface TxOpStoreApproveResource {
 
     @ApiOperation("moa审批回调")
     @POST
-    @Path("/moa/callBack/token/{token}")
+    @Path("/moa/tokens/{token}/callBack")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun moaApproveCallBack(
         @ApiParam(value = "审批人", required = true)
