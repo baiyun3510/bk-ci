@@ -306,7 +306,7 @@ class LabelService @Autowired constructor(
     private fun getProjectNodes(projectId: String): String {
         val bitMapProjectNodes = labelRedisUtils.getProjectNodes(projectId)
         if (bitMapProjectNodes == null) {
-            val projectNodes = nodeDao.listNodes(dslContext, projectId)
+            val projectNodes = nodeDao.listThirdpartyNodes(dslContext, projectId)
             return labelRedisUtils.refreshProjectNodes(
                 projectId = projectId,
                 nodeIds = projectNodes.stream().map { it.nodeId }.toList()
