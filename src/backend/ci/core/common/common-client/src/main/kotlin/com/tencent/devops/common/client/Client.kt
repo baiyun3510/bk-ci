@@ -182,7 +182,17 @@ class Client @Autowired constructor(
 
     fun <T : Any> getWithoutRetry(clz: KClass<T>): T {
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
-        return Feign.builder()
+        return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
+            override fun log(configKey: String, format: String, vararg args: Any) {
+                val value = args.map { it.toString() }
+                try {
+                    logger.info("FEIGN_DEBUG_FORMAT|$configKey|${Formatter().format(format, value)}")
+                } catch (e: Throwable) {
+                    logger.info("FEIGN_DEBUG|$configKey|$format|$value")
+                }
+                super.log(configKey, format, *args)
+            }
+        })
             .client(longRunClient)
             .errorDecoder(clientErrorDecoder)
             .encoder(jacksonEncoder)
@@ -277,7 +287,6 @@ class Client @Autowired constructor(
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
         return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
             override fun log(configKey: String, format: String, vararg args: Any) {
-                logger.info("FEIGN_LOGGER|$configKey|")
                 val value = args.map { it.toString() }
                 try {
                     logger.info("FEIGN_DEBUG_FORMAT|$configKey|${Formatter().format(format, value)}")

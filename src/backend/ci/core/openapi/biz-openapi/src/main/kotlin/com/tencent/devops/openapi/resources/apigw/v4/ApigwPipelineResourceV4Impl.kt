@@ -176,7 +176,7 @@ class ApigwPipelineResourceV4Impl @Autowired constructor(
         pipelineIds: List<String>
     ): Result<List<Pipeline>> {
         logger.info("OPENAPI_PIPELINE_V4|$userId|get batch|$projectId|$pipelineIds")
-        return client.get(ServicePipelineResource::class).getBatch(
+        return client.getWithoutRetry(ServicePipelineResource::class).getBatch(
             userId = userId,
             projectId = projectId,
             pipelineIds = pipelineIds,
