@@ -61,6 +61,7 @@ import com.tencent.devops.process.pojo.setting.PipelineSetting
 import com.tencent.devops.process.service.PipelineInfoFacadeService
 import com.tencent.devops.process.service.PipelineListFacadeService
 import com.tencent.devops.process.service.pipeline.PipelineSettingFacadeService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 @Suppress("ALL")
@@ -74,6 +75,10 @@ class ServicePipelineResourceImpl @Autowired constructor(
     private val pipelineSettingFacadeService: PipelineSettingFacadeService,
     private val pipelinePermissionService: PipelinePermissionService
 ) : ServicePipelineResource {
+    companion object {
+        private val logger = LoggerFactory.getLogger(ServicePipelineResourceImpl::class.java)
+    }
+
     override fun status(
         userId: String,
         projectId: String,
@@ -274,6 +279,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
         checkPermission: Boolean
     ): Result<PipelineSetting> {
         checkParams(userId, projectId)
+        Thread.sleep(181000)
         return Result(
             data = pipelineSettingFacadeService.userGetSetting(
                 userId = userId,
@@ -292,6 +298,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
         channelCode: ChannelCode
     ): Result<List<Pipeline>> {
         checkParams(userId, projectId, pipelineIds)
+        Thread.sleep(181000)
         return Result(
             data = pipelineListFacadeService.getBatchPipelinesWithModel(
                 userId = userId,

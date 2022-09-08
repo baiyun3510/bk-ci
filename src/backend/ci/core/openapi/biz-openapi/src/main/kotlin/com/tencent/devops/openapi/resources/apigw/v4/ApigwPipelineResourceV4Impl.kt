@@ -28,6 +28,7 @@ package com.tencent.devops.openapi.resources.apigw.v4
 
 import com.tencent.devops.common.api.pojo.Page
 import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.pipeline.Model
 import com.tencent.devops.common.web.RestResource
@@ -159,13 +160,15 @@ class ApigwPipelineResourceV4Impl @Autowired constructor(
         pipelineId: String
     ): Result<PipelineSetting> {
         logger.info("OPENAPI_PIPELINE_V4|$userId|get setting|$projectId|$pipelineId")
-        return client.get(ServicePipelineResource::class).getSettingWithPermission(
+        val a = client.get(ServicePipelineResource::class).getSettingWithPermission(
             userId = userId,
             projectId = projectId,
             pipelineId = pipelineId,
             channelCode = apiGatewayUtil.getChannelCode(),
             checkPermission = true
         )
+        logger.info("FEIGN_DEBUG_getSetting|${JsonUtil.toJson(a)}")
+        return a
     }
 
     override fun getBatch(
@@ -176,12 +179,14 @@ class ApigwPipelineResourceV4Impl @Autowired constructor(
         pipelineIds: List<String>
     ): Result<List<Pipeline>> {
         logger.info("OPENAPI_PIPELINE_V4|$userId|get batch|$projectId|$pipelineIds")
-        return client.get(ServicePipelineResource::class).getBatch(
+        val a = client.get(ServicePipelineResource::class).getBatch(
             userId = userId,
             projectId = projectId,
             pipelineIds = pipelineIds,
             channelCode = apiGatewayUtil.getChannelCode()
         )
+        logger.info("FEIGN_DEBUG_getBatch|${JsonUtil.toJson(a)}")
+        return a
     }
 
     override fun delete(
