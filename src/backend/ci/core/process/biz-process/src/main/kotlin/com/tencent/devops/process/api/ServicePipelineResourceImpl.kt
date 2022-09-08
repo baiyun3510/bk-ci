@@ -297,7 +297,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
         channelCode: ChannelCode
     ): Result<List<Pipeline>> {
         checkParams(userId, projectId, pipelineIds)
-        Thread.sleep(300000)
+        Thread.sleep(181000)
         return Result(
             data = pipelineListFacadeService.getBatchPipelinesWithModel(
                 userId = userId,
