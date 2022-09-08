@@ -714,7 +714,7 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
         logger.info("[$projectId|$labelQuery] Get the agents by label expressions")
 
         // 如果使用的共享节点，优先查询共享项目下符合标签的节点
-        val realProjectId = if (labelQuery.sharedProjectId != null) {
+        val realProjectId = if (!labelQuery.sharedProjectId.isNullOrBlank()) {
             labelQuery.sharedProjectId!!
         } else {
             projectId
