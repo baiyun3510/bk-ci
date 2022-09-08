@@ -47,8 +47,4 @@ class OpNodeResourceImpl @Autowired constructor(private val opNodeService: OpNod
     override fun deleteNodes(projectId: String, nodeHashId: String): Result<Boolean> {
         return Result(opNodeService.deleteNode(projectId, nodeHashId))
     }
-
-    override fun addHashId() {
-        opNodeService.addHashId()
-    }
 }

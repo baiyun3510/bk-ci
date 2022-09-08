@@ -36,9 +36,6 @@ import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 
 @Service
 class OpNodeService @Autowired constructor(
@@ -106,38 +103,5 @@ class OpNodeService @Autowired constructor(
         logger.info("deleteNode, projectId:$projectId, nodeId: $nodeId, nodeHashId: $nodeHashId")
         nodeDao.batchDeleteNode(dslContext, projectId, listOf(nodeId))
         return true
-    }
-
-    fun addHashId() {
-        val threadPoolExecutor = ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS, LinkedBlockingQueue(50))
-        threadPoolExecutor.submit {
-            var offset = 0
-            val limit = 1000
-            try {
-                do {
-                    val envRecords = envDao.getAllEnv(dslContext, limit, offset)
-                    val envSize = envRecords?.size
-                    envRecords?.map {
-                        val id = it.value1()
-                        val hashId = HashUtil.encodeLongId(it.value1())
-                        envDao.updateHashId(dslContext, id, hashId)
-                    }
-                    offset += limit
-                } while (envSize == 1000)
-                offset = 0
-                do {
-                    val nodeRecords = nodeDao.getAllNode(dslContext, limit, offset)
-                    val nodeSize = nodeRecords?.size
-                    nodeRecords?.map {
-                        val id = it.value1()
-                        val hashId = HashUtil.encodeLongId(it.value1())
-                        nodeDao.updateHashId(dslContext, id, hashId)
-                    }
-                    offset += limit
-                } while (nodeSize == 1000)
-            } catch (e: Exception) {
-                logger.warn("OpNodeService：addHashId failed | $e ")
-            }
-        }
     }
 }
