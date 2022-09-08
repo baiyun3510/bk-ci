@@ -183,11 +183,17 @@ class LabelService @Autowired constructor(
         )
 
         return when(labelExpression.operator) {
-            Operator.EQUAL, Operator.IN, Operator.EXIST -> {
-                getInOrExistBitMap(projectId, labelIds)
+            Operator.IN -> {
+                getInBitMap(projectId, labelIds)
             }
-            Operator.DOES_NOT_EQUAL, Operator.NOT_IN, Operator.DOES_NOT_EXIST -> {
-                getNotInOrNotExistBitMap(projectId, labelIds)
+            Operator.EQUAL, Operator.EXIST -> {
+                getEqualOrExistBitMap(projectId, labelIds)
+            }
+            Operator.NOT_IN -> {
+                getNotInBitMap(projectId, labelIds)
+            }
+            Operator.DOES_NOT_EQUAL, Operator.DOES_NOT_EXIST -> {
+                getNotEqualOrNotExistBitMap(projectId, labelIds)
             }
             else -> {
                 throw LabelException("Label expression operator not exist. ${labelExpression.operator}")
@@ -195,7 +201,29 @@ class LabelService @Autowired constructor(
         }
     }
 
-    private fun getInOrExistBitMap(
+    private fun getInBitMap(
+        projectId: String,
+        labelIds: List<Long>
+    ): Roaring64Bitmap {
+        try {
+            var inRoaringBitmap = Roaring64Bitmap()
+            for (index in labelIds.indices) {
+                val bitMapNodes = getLabelBindingNodes(projectId, labelIds[index])
+                if (index == 0) {
+                    inRoaringBitmap = strToBitMap(bitMapNodes)
+                } else {
+                    inRoaringBitmap.or(strToBitMap(bitMapNodes))
+                }
+            }
+
+            return inRoaringBitmap
+        } catch (e: Exception) {
+            logger.error("$projectId Get In bitmap get error.", e)
+            throw LabelException("Get In bitmap get error.")
+        }
+    }
+
+    private fun getEqualOrExistBitMap(
         projectId: String,
         labelIds: List<Long>
     ): Roaring64Bitmap {
@@ -212,23 +240,38 @@ class LabelService @Autowired constructor(
 
             return inRoaringBitmap
         } catch (e: Exception) {
-            logger.error("$projectId Get In or Exist bitmap get error.", e)
-            throw LabelException("Get In or Exist bitmap get error.")
+            logger.error("$projectId Get Equal or Exist bitmap get error.", e)
+            throw LabelException("Get Equal or Exist bitmap get error.")
         }
     }
 
-    private fun getNotInOrNotExistBitMap(
+    private fun getNotInBitMap(
         projectId: String,
         labelIds: List<Long>
     ): Roaring64Bitmap {
         try {
-            val inNodesBitMap = getInOrExistBitMap(projectId, labelIds)
+            val inNodesBitMap = getInBitMap(projectId, labelIds)
             val allProjectNodesBitmap = strToBitMap(getProjectNodes(projectId))
             allProjectNodesBitmap.andNot(inNodesBitMap)
             return allProjectNodesBitmap
         } catch (e: Exception) {
-            logger.error("$projectId Get NotIn or NotExist bitmap get error.", e)
-            throw LabelException("Get NotIn or NotExist bitmap get error.")
+            logger.error("$projectId Get NotIn bitmap get error.", e)
+            throw LabelException("Get NotIn bitmap get error.")
+        }
+    }
+
+    private fun getNotEqualOrNotExistBitMap(
+        projectId: String,
+        labelIds: List<Long>
+    ): Roaring64Bitmap {
+        try {
+            val equalNodesBitMap = getEqualOrExistBitMap(projectId, labelIds)
+            val allProjectNodesBitmap = strToBitMap(getProjectNodes(projectId))
+            allProjectNodesBitmap.andNot(equalNodesBitMap)
+            return allProjectNodesBitmap
+        } catch (e: Exception) {
+            logger.error("$projectId Get NotEqual or NotExist bitmap get error.", e)
+            throw LabelException("Get NotEqual or NotExist bitmap get error.")
         }
     }
 
