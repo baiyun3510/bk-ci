@@ -279,6 +279,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
         checkPermission: Boolean
     ): Result<PipelineSetting> {
         checkParams(userId, projectId)
+        Thread.sleep(181000)
         return Result(
             data = pipelineSettingFacadeService.userGetSetting(
                 userId = userId,
