@@ -274,7 +274,12 @@ class Client @Autowired constructor(
             logger.info("[$clz]|try to proxy by feign: ${ignored.message}")
         }
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
-        return Feign.builder().logLevel(Logger.Level.FULL)
+        return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.NoOpLogger() {
+            override fun log(configKey: String?, format: String?, vararg args: Any?) {
+                logger.debug("FEIGN_DEBUG|$configKey|${format?.format(args)}")
+                super.log(configKey, format, *args)
+            }
+        })
             .client(feignClient)
             .errorDecoder(clientErrorDecoder)
             .encoder(jacksonEncoder)
