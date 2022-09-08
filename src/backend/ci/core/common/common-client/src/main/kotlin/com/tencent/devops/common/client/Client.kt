@@ -278,8 +278,9 @@ class Client @Autowired constructor(
         return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
             override fun log(configKey: String, format: String, vararg args: Any) {
                 logger.info("FEIGN_LOGGER|$configKey|")
-                logger.info("FEIGN_DEBUG|$configKey|$format|$args")
-                logger.info("FEIGN_DEBUG_FORMAT|$configKey|${String.format(methodTag(configKey) + format, args)}")
+                val value = args.toList()
+                logger.info("FEIGN_DEBUG|$configKey|$format|${value}")
+                logger.info("FEIGN_DEBUG_FORMAT|$configKey|${String.format(methodTag(configKey) + format, value)}")
                 super.log(configKey, format, *args)
             }
         })
