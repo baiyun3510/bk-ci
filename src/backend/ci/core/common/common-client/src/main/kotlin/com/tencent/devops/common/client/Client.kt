@@ -304,6 +304,7 @@ class Client @Autowired constructor(
             .requestInterceptor(requestInterceptor)
             .retryer(object : Retryer.Default() {
                 override fun continueOrPropagate(e: RetryableException) {
+                    logger.info("FEIGN_DEBUG|continueOrPropagate|${e.method()}|${e.message}", e)
                     if (e.method() != Request.HttpMethod.GET) {
                         throw e
                     } else {
