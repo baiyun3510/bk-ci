@@ -43,6 +43,7 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
 @Api(tags = ["USER_LABEL"], description = "用户-label")
@@ -60,7 +61,10 @@ interface UserLabelResource {
         userId: String,
         @ApiParam(value = "项目ID", required = true)
         @PathParam("projectId")
-        projectId: String
+        projectId: String,
+        @ApiParam(value = "环境ID", required = false)
+        @QueryParam("envHashId")
+        envHashId: String?
     ): Result<List<LabelInfo>>
 
     @ApiOperation("添加项目标签")

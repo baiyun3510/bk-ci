@@ -29,5 +29,7 @@ package com.tencent.devops.environment.pojo.label
 
 data class LabelQuery(
     val labelExpressions: List<LabelExpression>,
-    val sharedProjectId: String?
+    val envHashId: String? = null,
+    val envName: String? = null,
+    val envProjectId: String? = null
 )

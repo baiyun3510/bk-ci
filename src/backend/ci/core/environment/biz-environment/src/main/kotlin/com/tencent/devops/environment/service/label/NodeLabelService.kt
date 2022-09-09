@@ -53,11 +53,11 @@ class NodeLabelService @Autowired constructor(
 ) {
     fun getByHashId(userId: String, nodeHashId: String): List<LabelInfo> {
         val nodeId = HashUtil.decodeIdToLong(nodeHashId)
-        return get(userId, nodeId)
+        return getNodeLabels(userId, listOf(nodeId))
     }
 
-    fun get(userId: String, nodeId: Long): List<LabelInfo> {
-        val nodeLabelRecords = nodeLabelDao.getNodeLabels(dslContext, nodeId)
+    fun getNodeLabels(userId: String, nodeIds: List<Long>): List<LabelInfo> {
+        val nodeLabelRecords = nodeLabelDao.getNodeLabels(dslContext, nodeIds.toSet())
         val labelList = mutableListOf<LabelInfo>()
         nodeLabelRecords.let { result ->
             result!!.forEach {
@@ -73,6 +73,13 @@ class NodeLabelService @Autowired constructor(
         }
 
         return labelList
+    }
+
+    fun getLabelsByEnvId(userId: String, projectId: String, envHashId: String): List<LabelInfo> {
+        val envNodes = envNodeDao.list(dslContext, projectId, listOf(HashUtil.decodeIdToLong(envHashId)))
+        return getNodeLabels(userId, envNodes.map {
+            it.nodeId
+        }.toList())
     }
 
     fun add(userId: String, projectId: String, nodeId: Long, labelId: Long): Boolean {

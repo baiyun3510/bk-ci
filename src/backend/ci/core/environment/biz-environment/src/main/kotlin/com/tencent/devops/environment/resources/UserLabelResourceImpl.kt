@@ -34,14 +34,20 @@ import com.tencent.devops.environment.exception.LabelException
 import com.tencent.devops.environment.pojo.label.LabelInfo
 import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.service.label.LabelService
+import com.tencent.devops.environment.service.label.NodeLabelService
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class UserLabelResourceImpl @Autowired constructor(
-    private val labelService: LabelService
+    private val labelService: LabelService,
+    private val nodeLabelService: NodeLabelService
 ) : UserLabelResource {
-    override fun get(userId: String, projectId: String): Result<List<LabelInfo>> {
-        return Result(labelService.get(userId, projectId))
+    override fun get(userId: String, projectId: String, envHashId: String?): Result<List<LabelInfo>> {
+        return if (envHashId.isNullOrBlank()) {
+            Result(labelService.get(userId, projectId))
+        } else {
+            Result(nodeLabelService.getLabelsByEnvId(userId, projectId, envHashId))
+        }
     }
 
     override fun add(userId: String, projectId: String, labelInfo: LabelInfo): Result<Boolean> {
