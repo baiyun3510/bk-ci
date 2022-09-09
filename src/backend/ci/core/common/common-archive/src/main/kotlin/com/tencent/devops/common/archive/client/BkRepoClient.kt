@@ -31,8 +31,10 @@ import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -49,6 +51,8 @@ import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeRenameRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.project.UserProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
@@ -59,7 +63,7 @@ import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_PROJECT_ID
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.OkhttpUtils
-import com.tencent.devops.common.archive.config.BkRepoConfig
+import com.tencent.devops.common.archive.config.BkRepoClientConfig
 import com.tencent.devops.common.archive.constant.REPO_CUSTOM
 import com.tencent.devops.common.archive.constant.REPO_LOG
 import com.tencent.devops.common.archive.constant.REPO_PIPELINE
@@ -80,24 +84,38 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import org.springframework.util.FileCopyUtils
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.URLEncoder
 import java.nio.file.FileSystems
 import java.nio.file.Paths
+import javax.ws.rs.NotFoundException
 
+@Component
 class BkRepoClient constructor(
     private val objectMapper: ObjectMapper,
     private val commonConfig: CommonConfig,
-    private val bkRepoConfig: BkRepoConfig
+    private val bkRepoClientConfig: BkRepoClientConfig
 ) {
+
     private fun getGatewayUrl(): String {
         return HomeHostUtil.getHost(commonConfig.devopsHostGateway!!)
     }
 
+    private fun getBkRepoUrl(): String {
+        return bkRepoClientConfig.bkRepoBaseUrl.removeSuffix("/")
+    }
+
+    fun useBkRepo(): Boolean {
+        return BKREPO_REALM == bkRepoClientConfig.artifactoryRealm
+    }
+
     fun createBkRepoResource(userId: String, projectId: String): Boolean {
-        val logRepoCredentialsKey = bkRepoConfig.logRepoCredentialsKey.ifBlank { null }
+        val logRepoCredentialsKey = bkRepoClientConfig.logRepoCredentialsKey.ifBlank { null }
         return try {
             createProject(userId, projectId)
             createGenericRepo(userId, projectId, REPO_PIPELINE)
@@ -407,7 +425,6 @@ class BkRepoClient constructor(
     }
 
     fun move(userId: String, projectId: String, repoName: String, fromPath: String, toPath: String) {
-        // todo 校验path参数
         logger.info(
             "move, userId: $userId, projectId: $projectId, repoName: $repoName, fromPath: $fromPath," +
                 " toPath: $toPath"
@@ -444,7 +461,6 @@ class BkRepoClient constructor(
         toRepo: String,
         toPath: String
     ) {
-        // todo 校验path参数
         logger.info(
             "copy, userId: $userId, fromProject: $fromProject, fromRepo: $fromRepo, fromPath: $fromPath," +
                 " toProject: $toProject, toRepo: $toRepo, toPath: $toPath"
@@ -473,7 +489,6 @@ class BkRepoClient constructor(
     }
 
     fun rename(userId: String, projectId: String, repoName: String, fromPath: String, toPath: String) {
-        // todo 校验path参数
         logger.info(
             "rename, userId: $userId, projectId: $projectId, repoName: $repoName, fromPath: $fromPath," +
                     " toPath: $toPath"
@@ -594,6 +609,34 @@ class BkRepoClient constructor(
                 AUTH_HEADER_DEVOPS_PROJECT_ID to projectId
             )
         )
+    }
+
+    fun downloadFile(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        outputStream: OutputStream
+    ) {
+        val url = "${getBkRepoUrl()}/generic/$projectId/$repoName/${fullPath.removePrefix("/")}"
+        val request = Request.Builder().url(url)
+            .header("Authorization", bkRepoClientConfig.bkRepoAuthorization)
+            .header(BK_REPO_UID, userId)
+            .header(AUTH_HEADER_DEVOPS_PROJECT_ID, projectId)
+            .get()
+            .build()
+        OkhttpUtils.doHttp(request).use { response ->
+            if (response.code() == 404) {
+                logger.warn("file($url) not found")
+                throw NotFoundException("File is not exist!")
+            }
+            if (!response.isSuccessful) {
+                val responseContent = response.body()?.string()
+                logger.warn("download file($url) failed, code ${response.code()}, content: $responseContent")
+                throw RemoteServiceException("download file failed", response.code(), responseContent)
+            }
+            FileCopyUtils.copy(response.body()!!.byteStream(), outputStream)
+        }
     }
 
     fun listFileByPattern(
@@ -986,6 +1029,24 @@ class BkRepoClient constructor(
         doRequest(request)
     }
 
+    fun getPackageVersions(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String? = null,
+        metadata: Map<String, String>? = null
+    ): List<PackageVersion> {
+        val url = "${getGatewayUrl()}/bkrepo/api/service/repository/api/version/list/${projectId}/${repoName}?packageKey=$packageKey"
+        val versionListOption = VersionListOption(version = version)
+        val requestBody = RequestBody.create(
+            MediaType.parse(MediaTypes.APPLICATION_JSON),
+            versionListOption.toJsonString()
+        )
+        val request = Request.Builder().url(url).header(BK_REPO_UID, userId).post(requestBody).build()
+        return doRequest(request).resolveResponse<Response<List<PackageVersion>>>()!!.data!!
+    }
+
     private fun query(userId: String, projectId: String, rule: Rule, page: Int, pageSize: Int): List<QueryNodeInfo> {
         logger.info("query, userId: $userId, rule: $rule, page: $page, pageSize: $pageSize")
         val queryModel = QueryModel(
@@ -1052,6 +1113,8 @@ class BkRepoClient constructor(
 
         private const val ERROR_PROJECT_EXISTED = 251005
         private const val ERROR_REPO_EXISTED = 251007
+
+        private const val BKREPO_REALM = "bkrepo"
 
         const val FILE_SIZE_EXCEEDS_LIMIT = "2102003" // 文件大小不能超过{0}
         const val INVALID_CUSTOM_ARTIFACTORY_PATH = "2102004" // 非法自定义仓库路径
