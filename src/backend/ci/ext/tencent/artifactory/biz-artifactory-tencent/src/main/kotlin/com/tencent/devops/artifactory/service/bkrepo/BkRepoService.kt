@@ -543,7 +543,7 @@ class BkRepoService @Autowired constructor(
             val imageName = fullPathList[1]
             val version = fullPathList[3]
             val packageKey = "docker://$imageName"
-            val packageVersion = bkRepoClient.getPackageVersions(projectId, repoName, packageKey, version).first()
+            val packageVersion = bkRepoClient.getPackageVersions(createdBy, projectId, repoName, packageKey, version).first()
             return FileInfo(
                 name = imageName,
                 fullName = "$imageName:$version",
