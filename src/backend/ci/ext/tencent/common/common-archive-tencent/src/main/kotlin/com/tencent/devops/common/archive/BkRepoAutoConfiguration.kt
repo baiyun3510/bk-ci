@@ -28,16 +28,18 @@
 package com.tencent.devops.common.archive
 
 import com.tencent.devops.common.archive.client.DirectBkRepoClient
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.core.Ordered
 
-@Configuration
-@ConditionalOnWebApplication
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-class BkRepoAutoConfiguration {
+//@Configuration
+//@ConditionalOnWebApplication
+//@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+//class BkRepoAutoConfiguration {
 
 //    @Bean
 //    fun bkRepoConfig() = BkRepoConfig()
@@ -50,6 +52,6 @@ class BkRepoAutoConfiguration {
 //        @Autowired bkRepoConfig: BkRepoConfig
 //    ) = BkRepoClient(objectMapper, commonConfig, bkRepoConfig)
 
-    @Bean
-    fun directBkRepoClient() = DirectBkRepoClient()
-}
+//    @Bean
+//    fun directBkRepoClient() = DirectBkRepoClient()
+//}
