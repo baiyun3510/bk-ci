@@ -187,7 +187,7 @@ class BkRepoSearchService @Autowired constructor(
     ): Pair<Long, List<FileInfo>> {
         logger.info("serviceSearchFileAndProperty, projectId: $projectId, searchProps: $searchProps, customized: $customized")
         val repoNames = when (customized) {
-            null -> listOf(RepoUtils.PIPELINE_REPO, RepoUtils.CUSTOM_REPO)
+            null -> emptyList()
             true -> listOf(RepoUtils.CUSTOM_REPO)
             false -> listOf(RepoUtils.PIPELINE_REPO)
         }
