@@ -113,7 +113,7 @@ data class GithubUser(
 //    @JsonProperty("subscriptions_url")
 //    val subscriptionsUrl: String, // https://api.github.com/users/yongyiduan/subscriptions
     @JsonProperty("type")
-    val type: String, // User
+    val type: String // User
 //    @JsonProperty("url")
 //    val url: String // https://api.github.com/users/yongyiduan
 )
@@ -234,10 +234,6 @@ data class GithubRepository(
 //    val labelsUrl: String, // https://api.github.com/repos/yongyiduan/webhook-test/labels{/name}
     @JsonProperty("language")
     val language: String?, // null
-//    @JsonProperty("languages_url")
-//    val languagesUrl: String, // https://api.github.com/repos/yongyiduan/webhook-test/languages
-    @JsonProperty("license")
-    val license: String?, // null
     @JsonProperty("master_branch")
     val masterBranch: String?, // main
 //    @JsonProperty("merges_url")

@@ -39,7 +39,6 @@ import com.tencent.devops.process.yaml.v2.models.on.TriggerOn
 import com.tencent.devops.stream.dao.StreamBasicSettingDao
 import com.tencent.devops.stream.pojo.GitRequestEvent
 import com.tencent.devops.stream.pojo.enums.TriggerReason
-import com.tencent.devops.stream.trigger.StreamTriggerRequestService
 import com.tencent.devops.stream.trigger.actions.BaseAction
 import com.tencent.devops.stream.trigger.actions.GitActionCommon
 import com.tencent.devops.stream.trigger.actions.GitBaseAction
@@ -56,7 +55,6 @@ import com.tencent.devops.stream.trigger.git.pojo.ApiRequestRetryInfo
 import com.tencent.devops.stream.trigger.git.pojo.StreamGitCred
 import com.tencent.devops.stream.trigger.git.pojo.github.GithubCred
 import com.tencent.devops.stream.trigger.git.pojo.github.GithubFileInfo
-import com.tencent.devops.stream.trigger.git.pojo.tgit.TGitCred
 import com.tencent.devops.stream.trigger.git.service.GithubApiService
 import com.tencent.devops.stream.trigger.parsers.MergeConflictCheck
 import com.tencent.devops.stream.trigger.parsers.PipelineDelete
@@ -215,18 +213,6 @@ class GithubPRActionGit(
     }
 
     override fun skipStream(): Boolean {
-        // fork触发进行权限校验
-        if (!this.checkMrForkReview()) {
-            logger.warn(
-                "check mr fork review false, return, gitProjectId: ${this.data.getGitProjectId()}, " +
-                    "eventId: ${this.data.context.requestEventId}"
-            )
-            throw StreamTriggerException(
-                this,
-                TriggerReason.TRIGGER_NOT_MATCH,
-                reasonParams = listOf("current trigger user(${this.data.eventCommon.userId}) not in whitelist")
-            )
-        }
         // 目前先把不支持的action全部过滤不触发
         return GithubPrEventAction.get(event()) == GithubPrEventAction.STREAM_NOT_SUPPORT
     }
@@ -388,7 +374,7 @@ class GithubPRActionGit(
                         "because git content blank"
                 )
             }
-            MrYamlInfo(event.pullRequest.head.sha, c,sourceFile.blobId)
+            MrYamlInfo(event.pullRequest.head.sha, c, sourceFile.blobId)
         }
 
         if (targetFile?.blobId.isNullOrBlank()) {
@@ -479,56 +465,56 @@ class GithubPRActionGit(
         }
     }
 
-        @Suppress("ComplexMethod")
-        fun checkPrYamlPathList(
-            sourceBranchYamlPathList: Set<Pair<String, String?>>,
-            targetBranchYamlPathList: Set<Pair<String, String?>>,
-            changeSet: Set<String>,
-            sourceRef: String,
-            targetRef: String
-        ): List<YamlPathListEntry> {
-            val sourceList = sourceBranchYamlPathList.map { it.first }
-            val targetList = targetBranchYamlPathList.map { it.first }
-            val result = mutableListOf<YamlPathListEntry>()
+    @Suppress("ComplexMethod")
+    fun checkPrYamlPathList(
+        sourceBranchYamlPathList: Set<Pair<String, String?>>,
+        targetBranchYamlPathList: Set<Pair<String, String?>>,
+        changeSet: Set<String>,
+        sourceRef: String,
+        targetRef: String
+    ): List<YamlPathListEntry> {
+        val sourceList = sourceBranchYamlPathList.map { it.first }
+        val targetList = targetBranchYamlPathList.map { it.first }
+        val result = mutableListOf<YamlPathListEntry>()
 
-            sourceBranchYamlPathList.forEach { (source, blobId) ->
-                when {
-                    // 源分支有，目标分支没有，变更列表有，以源分支为主，不需要校验版本
-                    source !in targetList && source in changeSet -> {
-                        result.add(YamlPathListEntry(source, CheckType.NO_NEED_CHECK, sourceRef, blobId))
-                    }
-                    // 源分支有，目标分支没有，变更列表没有，不触发且提示错误
-                    source !in targetList && source !in changeSet -> {
-                        result.add(YamlPathListEntry(source, CheckType.NO_TRIGGER, sourceRef, blobId))
-                    }
-                    // 源分支有，目标分支有，变更列表有，需要校验版本
-                    source in targetList && source in changeSet -> {
-                        result.add(YamlPathListEntry(source, CheckType.NEED_CHECK, sourceRef, blobId))
-                    }
-                    // 源分支有，目标分支有，变更列表无，以目标分支为主，不需要校验版本
-                    source in targetList && source !in changeSet -> {
-                        result.add(YamlPathListEntry(source, CheckType.NO_NEED_CHECK, targetRef, blobId))
-                    }
+        sourceBranchYamlPathList.forEach { (source, blobId) ->
+            when {
+                // 源分支有，目标分支没有，变更列表有，以源分支为主，不需要校验版本
+                source !in targetList && source in changeSet -> {
+                    result.add(YamlPathListEntry(source, CheckType.NO_NEED_CHECK, sourceRef, blobId))
+                }
+                // 源分支有，目标分支没有，变更列表没有，不触发且提示错误
+                source !in targetList && source !in changeSet -> {
+                    result.add(YamlPathListEntry(source, CheckType.NO_TRIGGER, sourceRef, blobId))
+                }
+                // 源分支有，目标分支有，变更列表有，需要校验版本
+                source in targetList && source in changeSet -> {
+                    result.add(YamlPathListEntry(source, CheckType.NEED_CHECK, sourceRef, blobId))
+                }
+                // 源分支有，目标分支有，变更列表无，以目标分支为主，不需要校验版本
+                source in targetList && source !in changeSet -> {
+                    result.add(YamlPathListEntry(source, CheckType.NO_NEED_CHECK, targetRef, blobId))
                 }
             }
+        }
 
-            targetBranchYamlPathList.forEach { (target, blobId) ->
-                if (target in result.map { it.yamlPath }.toSet()) {
+        targetBranchYamlPathList.forEach { (target, blobId) ->
+            if (target in result.map { it.yamlPath }.toSet()) {
+                return@forEach
+            }
+            when {
+                // 源分支没有，目标分支有，变更列表有，说明是删除，无需触发
+                target !in sourceList && target in changeSet -> {
                     return@forEach
                 }
-                when {
-                    // 源分支没有，目标分支有，变更列表有，说明是删除，无需触发
-                    target !in sourceList && target in changeSet -> {
-                        return@forEach
-                    }
-                    // 源分支没有，目标分支有，变更列表没有，说明是目标分支新增的，加入文件列表
-                    target !in sourceList && target !in changeSet -> {
-                        result.add(YamlPathListEntry(target, CheckType.NO_NEED_CHECK, targetRef, blobId))
-                    }
+                // 源分支没有，目标分支有，变更列表没有，说明是目标分支新增的，加入文件列表
+                target !in sourceList && target !in changeSet -> {
+                    result.add(YamlPathListEntry(target, CheckType.NO_NEED_CHECK, targetRef, blobId))
                 }
             }
-            return result
         }
+        return result
+    }
 
     override fun isMatch(triggerOn: TriggerOn): TriggerResult {
         val event = event()
@@ -562,7 +548,7 @@ class GithubPRActionGit(
 
     override fun needSaveOrUpdateBranch() = !event().isPrForkEvent()
 
-    override fun sendUnlockWebhook() {}
+    override fun sendUnlockWebhook() = Unit
 }
 
 private fun GithubPullRequestEvent.getActionValue(): String? {

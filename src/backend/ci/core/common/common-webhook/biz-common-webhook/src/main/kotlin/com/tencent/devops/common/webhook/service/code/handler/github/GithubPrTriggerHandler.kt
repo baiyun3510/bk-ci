@@ -45,13 +45,6 @@ import com.tencent.devops.common.pipeline.utils.PIPELINE_GIT_MR_TITLE
 import com.tencent.devops.common.pipeline.utils.PIPELINE_GIT_MR_URL
 import com.tencent.devops.common.pipeline.utils.PIPELINE_GIT_REPO_URL
 import com.tencent.devops.common.webhook.annotation.CodeWebhookHandler
-import com.tencent.devops.common.webhook.pojo.code.WebHookParams
-import com.tencent.devops.common.webhook.pojo.code.github.GithubPullRequest
-import com.tencent.devops.common.webhook.pojo.code.github.GithubPullRequestEvent
-import com.tencent.devops.common.webhook.service.code.filter.WebhookFilter
-import com.tencent.devops.common.webhook.service.code.handler.GitHookTriggerHandler
-import com.tencent.devops.common.webhook.service.code.matcher.ScmWebhookMatcher
-import com.tencent.devops.repository.pojo.Repository
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_ASSIGNEE
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_AUTHOR
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_CREATE_TIME
@@ -83,9 +76,13 @@ import com.tencent.devops.common.webhook.pojo.code.PIPELINE_WEBHOOK_TARGET_BRANC
 import com.tencent.devops.common.webhook.pojo.code.PIPELINE_WEBHOOK_TARGET_PROJECT_ID
 import com.tencent.devops.common.webhook.pojo.code.PIPELINE_WEBHOOK_TARGET_REPO_NAME
 import com.tencent.devops.common.webhook.pojo.code.PIPELINE_WEBHOOK_TARGET_URL
-import com.tencent.devops.common.webhook.pojo.code.git.GitMergeRequestEvent
+import com.tencent.devops.common.webhook.pojo.code.WebHookParams
+import com.tencent.devops.common.webhook.pojo.code.github.GithubPullRequestEvent
+import com.tencent.devops.common.webhook.service.code.filter.WebhookFilter
+import com.tencent.devops.common.webhook.service.code.handler.GitHookTriggerHandler
+import com.tencent.devops.common.webhook.service.code.matcher.ScmWebhookMatcher
 import com.tencent.devops.common.webhook.util.WebhookUtils
-import com.tencent.devops.scm.pojo.GitMrInfo
+import com.tencent.devops.repository.pojo.Repository
 import com.tencent.devops.scm.utils.code.git.GitUtils
 import org.slf4j.LoggerFactory
 
@@ -178,6 +175,7 @@ class GithubPrTriggerHandler : GitHookTriggerHandler<GithubPullRequestEvent> {
         return startParams
     }
 
+    @Suppress("ComplexMethod")
     private fun pullRequestStartParam(event: GithubPullRequestEvent, startParams: MutableMap<String, Any>) {
         with(event) {
             startParams[BK_REPO_GIT_WEBHOOK_MR_TARGET_URL] = pullRequest.base.repo.cloneUrl
@@ -219,8 +217,8 @@ class GithubPrTriggerHandler : GitHookTriggerHandler<GithubPullRequestEvent> {
             startParams[PIPELINE_GIT_HEAD_REF] = pullRequest.base.ref
             startParams[PIPELINE_GIT_BASE_REF] = pullRequest.head.ref
             startParams[PIPELINE_WEBHOOK_EVENT_TYPE] = CodeEventType.PULL_REQUEST.name
-            startParams[PIPELINE_WEBHOOK_SOURCE_URL] = pullRequest.head.repo.url
-            startParams[PIPELINE_WEBHOOK_TARGET_URL] = pullRequest.base.repo.url
+            startParams[PIPELINE_WEBHOOK_SOURCE_URL] = pullRequest.head.repo.cloneUrl
+            startParams[PIPELINE_WEBHOOK_TARGET_URL] = pullRequest.base.repo.cloneUrl
             startParams[PIPELINE_GIT_MR_ID] = pullRequest.id.toString()
             startParams[PIPELINE_GIT_MR_IID] = pullRequest.number.toString()
             startParams[PIPELINE_GIT_COMMIT_AUTHOR] = pullRequest.head.user.login
