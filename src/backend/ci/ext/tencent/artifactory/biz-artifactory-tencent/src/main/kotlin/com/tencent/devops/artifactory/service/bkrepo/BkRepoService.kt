@@ -510,6 +510,8 @@ class BkRepoService @Autowired constructor(
                             )
                         )
                     }
+                } else if (RepoUtils.isImageFile(it)) {
+                    fileInfoList.add(buildImageArtifactInfo(it))
                 } else {
                     fileInfoList.add(
                         FileInfo(
@@ -532,6 +534,27 @@ class BkRepoService @Autowired constructor(
             return fileInfoList
         } finally {
             logger.info("transferFileInfo cost: ${System.currentTimeMillis() - startTimestamp}ms")
+        }
+    }
+
+    private fun buildImageArtifactInfo(manifestInfo: QueryNodeInfo): FileInfo {
+        with(manifestInfo) {
+            val fullPathList = fullPath.split("/")
+            val imageName = fullPathList[1]
+            val version = fullPathList[2]
+            val packageKey = "docker://$imageName"
+            val packageVersion = bkRepoClient.getPackageVersions(projectId, repoName, packageKey, version).first()
+            return FileInfo(
+                name = imageName,
+                fullName = "$imageName:$version",
+                path = fullPath,
+                fullPath = fullPath,
+                size = packageVersion.size,
+                folder = false,
+                modifiedTime = packageVersion.lastModifiedDate.timestamp(),
+                artifactoryType = ArtifactoryType.IMAGE,
+                properties = packageVersion.metadata.map { Property(it.key, it.value.toString()) }
+            )
         }
     }
 

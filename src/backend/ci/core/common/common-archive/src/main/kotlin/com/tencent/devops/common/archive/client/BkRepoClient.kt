@@ -31,8 +31,10 @@ import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -49,6 +51,8 @@ import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeRenameRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.project.UserProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
@@ -1023,6 +1027,24 @@ class BkRepoClient constructor(
             )
             .build()
         doRequest(request)
+    }
+
+    fun getPackageVersions(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String? = null,
+        metadata: Map<String, String>? = null
+    ): List<PackageVersion> {
+        val url = "${getGatewayUrl()}/bkrepo/api/service/repository/api/version/list/${projectId}/${repoName}?packageKey=$packageKey"
+        val versionListOption = VersionListOption(version = version)
+        val requestBody = RequestBody.create(
+            MediaType.parse(MediaTypes.APPLICATION_JSON),
+            versionListOption.toJsonString()
+        )
+        val request = Request.Builder().url(url).post(requestBody).build()
+        return doRequest(request).resolveResponse<Response<List<PackageVersion>>>()!!.data!!
     }
 
     private fun query(userId: String, projectId: String, rule: Rule, page: Int, pageSize: Int): List<QueryNodeInfo> {

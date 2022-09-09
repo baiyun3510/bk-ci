@@ -70,6 +70,10 @@ object RepoUtils {
         return nodeInfo.repoName == PIPELINE_REPO
     }
 
+    fun isImageFile(nodeInfo: QueryNodeInfo): Boolean {
+        return nodeInfo.repoName == IMAGE_REPO
+    }
+
     fun toFileInfo(fileInfo: NodeInfo): FileInfo {
         val fullPath = refineFullPath(fileInfo)
         return FileInfo(
