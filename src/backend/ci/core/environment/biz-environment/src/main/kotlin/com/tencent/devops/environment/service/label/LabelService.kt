@@ -136,7 +136,12 @@ class LabelService @Autowired constructor(
     /**
      * 计算标签表达式节点
      */
-    fun calculateNodes(userId: String, projectId: String, labelQuery: LabelQuery): List<Long> {
+    fun calculateNodes(
+        userId: String,
+        projectId: String,
+        labelQuery: LabelQuery,
+        envNodes: List<Long> = emptyList()
+    ): List<Long> {
         logger.info("$userId calculateNodes projectId: $projectId " +
                         "labelQuery: ${JsonUtil.toJson(labelQuery)}")
         if (labelQuery.labelExpressions.isEmpty()) {
@@ -151,6 +156,10 @@ class LabelService @Autowired constructor(
             } else {
                 finalRoaring64Bitmap.and(expressionBitMap)
             }
+        }
+
+        if (envNodes.isNotEmpty()) {
+            finalRoaring64Bitmap.and(Roaring64Bitmap.bitmapOf(*envNodes.toLongArray()))
         }
 
         return finalRoaring64Bitmap.toArray().toList()
