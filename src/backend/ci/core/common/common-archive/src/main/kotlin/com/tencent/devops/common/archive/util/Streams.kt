@@ -25,12 +25,28 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.artifactory.pojo.bkrepo
+package com.tencent.devops.common.archive.util
 
-data class QueryData(
-    var count: Int,
-    var page: Int,
-    var pageSize: Int,
-    var totalPages: Int,
-    var records: List<QueryNodeInfo>
-)
+import java.io.Closeable
+import java.nio.channels.FileLock
+
+/**
+ * Returns the default buffer size when working with buffered streams.
+ */
+const val STREAM_BUFFER_SIZE: Int = 8 * 1024
+
+fun Closeable.closeQuietly() {
+    try {
+        this.close()
+    } catch (ignored: Throwable) {
+    }
+}
+
+fun FileLock.releaseQuietly() {
+    try {
+        if (this.isValid) {
+            this.release()
+        }
+    } catch (ignored: Throwable) {
+    }
+}

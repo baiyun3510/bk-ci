@@ -25,31 +25,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.archive
+package com.tencent.devops.common.archive.pojo
 
-import com.tencent.devops.common.archive.client.DirectBkRepoClient
-import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.core.Ordered
-
-@Configuration
-@ConditionalOnWebApplication
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-class BkRepoAutoConfiguration {
-
-//    @Bean
-//    fun bkRepoConfig() = BkRepoConfig()
-//
-//    @Bean
-//    @Primary
-//    fun bkRepoClient(
-//        @Autowired objectMapper: ObjectMapper,
-//        @Autowired commonConfig: CommonConfig,
-//        @Autowired bkRepoConfig: BkRepoConfig
-//    ) = BkRepoClient(objectMapper, commonConfig, bkRepoConfig)
-
-    @Bean
-    fun directBkRepoClient() = DirectBkRepoClient()
-}
+data class ArtifactorySearchParam(
+    val userId: String,
+    val projectId: String,
+    val pipelineId: String,
+    val buildId: String,
+    val regexPath: String,
+    val custom: Boolean,
+    val executeCount: Int = 1, // 打印日志用到
+    val elementId: String = "", // 打印日志用到
+    val containerId: String = "" // 打印日志用到
+)

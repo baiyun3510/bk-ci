@@ -25,9 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.archive.constant
+package com.tencent.devops.common.archive.pojo
 
-const val REPO_PIPELINE = "pipeline"
-const val REPO_CUSTOM = "custom"
-const val REPO_REPORT = "report"
-const val REPO_LOG = "log"
+data class QueryData(
+    var count: Int,
+    var page: Int,
+    var pageSize: Int,
+    var totalPages: Int,
+    var records: List<QueryNodeInfo>
+)

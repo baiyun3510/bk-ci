@@ -25,15 +25,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.artifactory.pojo.bkrepo
+package com.tencent.devops.common.archive.config
 
-data class ArtifactorySearchParam(
-    val projectId: String,
-    val pipelineId: String,
-    val buildId: String,
-    val regexPath: String,
-    val custom: Boolean,
-    val executeCount: Int = 1, // 打印日志用到
-    val elementId: String = "", // 打印日志用到
-    val containerId: String = "" // 打印日志用到
-)
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
+
+/**
+ * 仓库配置
+ */
+@Component
+class BkRepoClientConfig {
+
+    @Value("\${artifactory.realm:}")
+    lateinit var artifactoryRealm: String
+
+    @Value("\${artifactory.bkrepo.baseUrl:}")
+    lateinit var bkRepoBaseUrl: String
+
+    @Value("\${artifactory.bkrepo.authorization:}")
+    lateinit var bkRepoAuthorization: String
+
+    @Value("\${bkrepo.logRepoCredentialsKey:}")
+    lateinit var logRepoCredentialsKey: String
+}

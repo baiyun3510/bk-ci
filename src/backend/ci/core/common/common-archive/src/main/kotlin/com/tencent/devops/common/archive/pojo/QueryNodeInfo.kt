@@ -25,31 +25,42 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.archive
+package com.tencent.devops.common.archive.pojo
 
-import com.tencent.devops.common.archive.client.DirectBkRepoClient
-import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.core.Ordered
+import com.tencent.bkrepo.generic.pojo.FileInfo
+import com.tencent.devops.common.api.util.timestamp
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-@Configuration
-@ConditionalOnWebApplication
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-class BkRepoAutoConfiguration {
-
-//    @Bean
-//    fun bkRepoConfig() = BkRepoConfig()
-//
-//    @Bean
-//    @Primary
-//    fun bkRepoClient(
-//        @Autowired objectMapper: ObjectMapper,
-//        @Autowired commonConfig: CommonConfig,
-//        @Autowired bkRepoConfig: BkRepoConfig
-//    ) = BkRepoClient(objectMapper, commonConfig, bkRepoConfig)
-
-    @Bean
-    fun directBkRepoClient() = DirectBkRepoClient()
+data class QueryNodeInfo(
+    var createdBy: String,
+    var createdDate: String,
+    var lastModifiedBy: String,
+    var lastModifiedDate: String,
+    var folder: Boolean,
+    var path: String,
+    var name: String,
+    var fullPath: String,
+    var size: Long,
+    var sha256: String? = null,
+    var md5: String? = null,
+    var projectId: String,
+    var repoName: String,
+    var metadata: Map<String, String>?
+) {
+    fun toFileInfo() = FileInfo(
+        createdBy = createdBy,
+        createdDate = createdDate,
+        lastModifiedBy = lastModifiedBy,
+        lastModifiedDate = lastModifiedDate,
+        folder = folder,
+        path = path,
+        name = name,
+        fullPath = fullPath,
+        size = size,
+        sha256 = sha256,
+        md5 = md5,
+        projectId = projectId,
+        repoName = repoName
+    )
 }
