@@ -1043,7 +1043,7 @@ class BkRepoClient constructor(
             MediaType.parse(MediaTypes.APPLICATION_JSON),
             versionListOption.toJsonString()
         )
-        val request = Request.Builder().url(url).post(requestBody).build()
+        val request = Request.Builder().url(url).header(BK_REPO_UID, userId).post(requestBody).build()
         return doRequest(request).resolveResponse<Response<List<PackageVersion>>>()!!.data!!
     }
 
