@@ -27,7 +27,11 @@
 
 package com.tencent.devops.common.archive
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.tencent.devops.common.archive.client.BkRepoClient
 import com.tencent.devops.common.archive.client.DirectBkRepoClient
+import com.tencent.devops.common.archive.config.BkRepoClientConfig
+import com.tencent.devops.common.service.config.CommonConfig
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -36,22 +40,22 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.core.Ordered
 
-//@Configuration
-//@ConditionalOnWebApplication
-//@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-//class BkRepoAutoConfiguration {
+@Configuration
+@ConditionalOnWebApplication
+@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+class BkRepoAutoConfiguration {
 
-//    @Bean
-//    fun bkRepoConfig() = BkRepoConfig()
-//
-//    @Bean
-//    @Primary
-//    fun bkRepoClient(
-//        @Autowired objectMapper: ObjectMapper,
-//        @Autowired commonConfig: CommonConfig,
-//        @Autowired bkRepoConfig: BkRepoConfig
-//    ) = BkRepoClient(objectMapper, commonConfig, bkRepoConfig)
+    @Bean
+    fun bkRepoClientConfig() = BkRepoClientConfig()
 
-//    @Bean
-//    fun directBkRepoClient() = DirectBkRepoClient()
-//}
+    @Bean
+    @Primary
+    fun bkRepoClient(
+        @Autowired objectMapper: ObjectMapper,
+        @Autowired commonConfig: CommonConfig,
+        @Autowired bkRepoClientConfig: BkRepoClientConfig
+    ) = BkRepoClient(objectMapper, commonConfig, bkRepoClientConfig)
+
+    @Bean
+    fun directBkRepoClient() = DirectBkRepoClient()
+}
