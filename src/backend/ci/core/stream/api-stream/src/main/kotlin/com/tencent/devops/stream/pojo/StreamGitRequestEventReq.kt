@@ -122,9 +122,8 @@ data class StreamGitRequestEventReq(
         jumpUrl = null,
         buildTitle = null,
         buildSource = null,
-        changeYamlList = null
+        changeYamlList = gitRequestEvent.changeYamlList as List<ChangeYamlList>
     ) {
-        changeYamlList = gitRequestEvent.changeYamlList
         // 组装信息：用于传给前端页面使用
         when (gitRequestEvent.gitEvent) {
             is GitNoteEvent -> {
