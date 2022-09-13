@@ -1,33 +1,38 @@
 package com.tencent.devops.openapi.service.apigw
 
-import com.tencent.devops.common.api.exception.ErrorCodeException
+import com.google.common.cache.CacheBuilder
+import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.client.Client
-import com.tencent.devops.openapi.constant.OpenAPIMessageCode
 import com.tencent.devops.openapi.service.op.OpAppUserService
 import com.tencent.devops.project.api.service.service.ServiceTxUserResource
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.concurrent.TimeUnit
 
 @Service("opAppUserService")
 class TxOpUserService @Autowired constructor(
     val client: Client
 ) : OpAppUserService {
+    private val errorUserId = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(2, TimeUnit.HOURS)
+        .build<String, Boolean>()
 
     override fun checkUser(userId: String): Boolean {
+        if (errorUserId.getIfPresent(userId) != null &&
+            errorUserId.getIfPresent(userId) == true) {
+            return false
+        }
         return try {
-            val userResult =
-                client.get(ServiceTxUserResource::class).get(userId)
-            if (userResult.isNotOk()) {
-                throw ErrorCodeException(
-                    errorCode = OpenAPIMessageCode.USER_CHECK_FAIL,
-                    defaultMessage = "checkUser fail",
-                    params = arrayOf(userId)
-                )
-            }
+            client.get(ServiceTxUserResource::class).get(userId)
             true
+        } catch (e: RemoteServiceException) {
+            logger.warn("Fail to request tof : userId = $userId")
+            false
         } catch (e: Exception) {
-            logger.warn("checkUser failed : $e")
+            logger.warn("checkUser $userId failed : $e")
+            errorUserId.put(userId, true)
             false
         }
     }
