@@ -31,7 +31,6 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.plugin.api.BuildJinGangAppResource
 import com.tencent.devops.plugin.service.JinGangService
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
@@ -48,7 +47,6 @@ class BuildJinGangAppResourceImpl @Autowired constructor(
         scanUrl: String,
         result: String
     ) {
-        logger.info("buildJinGang|updateTask|$projectId|$pipelineId|$buildId")
         jinGangService.updateTask(buildId, md5, status, taskId, scanUrl, result)
     }
 
@@ -64,19 +62,7 @@ class BuildJinGangAppResourceImpl @Autowired constructor(
         version: String,
         type: Int
     ): Result<Long> {
-        logger.info("buildJinGang|createTask|$projectId|$pipelineId|$buildId|$userId")
-        return Result(jinGangService.createTask(
-            projectId = projectId,
-            pipelineId = pipelineId,
-            buildId = buildId,
-            buildNo = buildNo,
-            userId = userId,
-            path = path,
-            md5 = md5,
-            size = size,
-            version = version,
-            type = type
-        ))
+        return Result(jinGangService.createTask(projectId, pipelineId, buildId, buildNo, userId, path, md5, size, version, type))
     }
 
     override fun scanApp(
@@ -90,7 +76,6 @@ class BuildJinGangAppResourceImpl @Autowired constructor(
         isCustom: Boolean,
         runType: String
     ): Result<String> {
-        logger.info("buildJinGang|scanApp|$projectId|$pipelineId|$buildId|$userId")
         return Result(jinGangService.scanApp(
             userId = userId,
             projectId = projectId,
@@ -102,9 +87,5 @@ class BuildJinGangAppResourceImpl @Autowired constructor(
             isCustom = isCustom,
             runType = runType
         ))
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(BuildJinGangAppResourceImpl::class.java)
     }
 }

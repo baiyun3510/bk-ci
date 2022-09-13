@@ -59,7 +59,6 @@ import com.tencent.devops.plugin.pojo.JinGangAppResultReponse
 import com.tencent.devops.process.api.service.ServiceJfrogResource
 import com.tencent.devops.process.api.service.ServicePipelineResource
 import com.tencent.devops.project.api.service.ServiceProjectResource
-import com.tencent.devops.project.api.service.ServiceUserResource
 import javassist.NotFoundException
 import okhttp3.MediaType
 import okhttp3.Request
@@ -350,9 +349,7 @@ class JinGangService @Autowired constructor(
     }
 
     private fun getProjectManager(projectId: String): List<StarUser> {
-        val manager = client.get(ServiceUserResource::class).getProjectUserRoles(projectId, BkAuthGroup.MANAGER)
-            .data ?: emptyList()
-//        val manager = authProjectApi.getProjectUsers(vsServiceCode, projectId, BkAuthGroup.MANAGER)
+        val manager = authProjectApi.getProjectUsers(pipelineServiceCode, projectId, BkAuthGroup.MANAGER)
         return listOf(StarUser(roleName = "项目管理员", roleId = "37", user = manager.joinToString(";")))
     }
 
