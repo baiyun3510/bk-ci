@@ -53,6 +53,7 @@ import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.common.web.utils.AtomRuntimeUtil
 import com.tencent.devops.common.websocket.enum.RefreshType
 import com.tencent.devops.engine.api.pojo.HeartBeatInfo
+import com.tencent.devops.process.engine.common.Timeout
 import com.tencent.devops.process.engine.common.Timeout.transMinuteTimeoutToMills
 import com.tencent.devops.process.engine.common.Timeout.transMinuteTimeoutToSec
 import com.tencent.devops.process.engine.common.VMUtils
@@ -72,6 +73,7 @@ import com.tencent.devops.process.engine.service.PipelineTaskService
 import com.tencent.devops.process.engine.service.detail.ContainerBuildDetailService
 import com.tencent.devops.process.engine.service.detail.TaskBuildDetailService
 import com.tencent.devops.process.engine.service.measure.MeasureService
+import com.tencent.devops.process.engine.utils.BuildUtils
 import com.tencent.devops.process.jmx.elements.JmxElements
 import com.tencent.devops.process.pojo.BuildTask
 import com.tencent.devops.process.pojo.BuildTaskResult
@@ -583,12 +585,6 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             LOG.warn("ENGINE|$buildId|BCT_DUPLICATE|$projectId|job#$vmSeqId|$taskId")
             return
         }
-        // 当该task的任务的取消逻辑未完成时不执行上报逻辑
-        val cancelTaskSetKey = TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false)
-        if (redisOperation.isMember(cancelTaskSetKey, taskId)) {
-            LOG.warn("ENGINE|$buildId|BCT_CANCEL_NOT_FINISH|$projectId|job#$vmSeqId|$taskId")
-            return
-        }
         // #5109 不需要Job级别的Redis锁保护的数据, 仅查询用
         val buildTask = pipelineTaskService.getBuildTask(projectId, buildId, taskId)
         val taskStatus = buildTask?.status
@@ -650,7 +646,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             }
         }
         val errorType = ErrorType.getErrorType(result.errorType)
-        val buildStatus = getCompleteTaskBuildStatus(result, buildId, buildInfo)
+        val buildStatus = getCompleteTaskBuildStatus(result, buildId, buildInfo, vmSeqId)
         val updateTaskStatusInfos = taskBuildDetailService.taskEnd(
             TaskBuildEndParam(
                 projectId = buildInfo.projectId,
@@ -711,6 +707,12 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             }
         }
 
+        if (buildStatus == BuildStatus.CANCELED) {
+            // 删除redis中取消构建操作标识
+            redisOperation.delete(BuildUtils.getCancelActionBuildKey(buildId))
+            redisOperation.delete(TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false))
+        }
+
         pipelineEventDispatcher.dispatch(
             PipelineBuildStatusBroadCastEvent(
                 source = "task-end-${result.taskId}", projectId = buildInfo.projectId,
@@ -731,31 +733,41 @@ class EngineVMBuildService @Autowired(required = false) constructor(
     private fun getCompleteTaskBuildStatus(
         result: BuildTaskResult,
         buildId: String,
-        buildInfo: BuildInfo
+        buildInfo: BuildInfo,
+        vmSeqId: String
     ): BuildStatus {
-        return if (result.success) {
-            pipelineTaskService.removeRetryCache(buildId, result.taskId)
-            pipelineTaskService.removeFailTaskVar(
-                buildId = buildId, projectId = buildInfo.projectId,
-                pipelineId = buildInfo.pipelineId, taskId = result.taskId
-            ) // 清理插件错误信息（重试插件成功的情况下）
-            BuildStatus.SUCCEED
-        } else {
-            when {
-                pipelineTaskService.isRetryWhenFail(
-                    projectId = buildInfo.projectId,
-                    taskId = result.taskId,
-                    buildId = buildId
-                ) -> {
-                    BuildStatus.RETRY
-                }
-                else -> { // 记录错误插件信息
-                    pipelineTaskService.createFailTaskVar(
-                        buildId = buildId, projectId = buildInfo.projectId,
-                        pipelineId = buildInfo.pipelineId, taskId = result.taskId
-                    )
-                    if (result.errorCode == ErrorCode.USER_TASK_OUTTIME_LIMIT) BuildStatus.EXEC_TIMEOUT
-                    else BuildStatus.FAILED
+        val taskId = result.taskId
+        val cancelTaskSetKey = TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false)
+        return when {
+            redisOperation.isMember(cancelTaskSetKey, taskId) -> {
+                LOG.warn("ENGINE|$buildId|BCT_CANCEL_NOT_FINISH|${buildInfo.projectId}|job#$vmSeqId|$taskId")
+                BuildStatus.CANCELED
+            }
+            result.success -> {
+                pipelineTaskService.removeRetryCache(buildId, result.taskId)
+                pipelineTaskService.removeFailTaskVar(
+                    buildId = buildId, projectId = buildInfo.projectId,
+                    pipelineId = buildInfo.pipelineId, taskId = result.taskId
+                ) // 清理插件错误信息（重试插件成功的情况下）
+                BuildStatus.SUCCEED
+            }
+            else -> {
+                when {
+                    pipelineTaskService.isRetryWhenFail(
+                        projectId = buildInfo.projectId,
+                        taskId = result.taskId,
+                        buildId = buildId
+                    ) -> {
+                        BuildStatus.RETRY
+                    }
+                    else -> { // 记录错误插件信息
+                        pipelineTaskService.createFailTaskVar(
+                            buildId = buildId, projectId = buildInfo.projectId,
+                            pipelineId = buildInfo.pipelineId, taskId = result.taskId
+                        )
+                        if (result.errorCode == ErrorCode.USER_TASK_OUTTIME_LIMIT) BuildStatus.EXEC_TIMEOUT
+                        else BuildStatus.FAILED
+                    }
                 }
             }
         }
