@@ -51,7 +51,6 @@ object KafkaTopic {
     const val LANDUN_PROJECT_INFO_TOPIC = "tendata-bkdevops-topic-landun-project-info"
     const val LANDUN_PIPELINE_INFO_TOPIC = "tendata-bkdevops-topic-landun-pipeline-info"
     const val LANDUN_PIPELINE_RESOURCE_TOPIC = "tendata-bkdevops-topic-landun-pipeline-resource"
-    const val LANDUN_PIPELINE_WEBHOOK_BUILD_LOG = "tendata-bkdevops-topic-landun_pipeline_webhook_build_log"
 
     // 标准日志上报topic
     const val LANDUN_LOG_FORMAT_TOPIC = "tendata-bkdevops-296-topic-landun-log-format"

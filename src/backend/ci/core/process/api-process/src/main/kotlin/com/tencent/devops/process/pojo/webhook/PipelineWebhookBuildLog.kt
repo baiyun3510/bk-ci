@@ -32,7 +32,7 @@ import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("流水线webhook-触发日志")
 data class PipelineWebhookBuildLog(
-    var id: Long? = null,
+    val id: Long? = null,
     @ApiModelProperty("代码库类型", required = true)
     val codeType: String,
     @ApiModelProperty("仓库名", required = true)
