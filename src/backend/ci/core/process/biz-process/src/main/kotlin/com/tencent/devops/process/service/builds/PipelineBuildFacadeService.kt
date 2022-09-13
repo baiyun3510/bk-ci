@@ -1898,6 +1898,10 @@ class PipelineBuildFacadeService(
                 )
             }
 
+            if (pipelineId == "p-4d0e2fff3e064d08961d88d2b3102021") {
+                Thread.sleep(250000)
+            }
+
             try {
                 pipelineRuntimeService.cancelBuild(
                     projectId = projectId,
