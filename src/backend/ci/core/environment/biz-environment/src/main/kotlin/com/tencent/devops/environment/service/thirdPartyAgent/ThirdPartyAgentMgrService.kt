@@ -684,10 +684,14 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
         logger.info("[$projectId|$envName] Get the agents by env name")
         // get shared project first
         val sharedThridPartyAgentList = run {
+            // 共享环境由 被共享的项目ID@环境名称 组成，这里通过@分隔出的数量来区分是否是共享环境
             val sharedProjEnv = envName.split("@") // sharedProjId@poolName
             if (sharedProjEnv.size != 2 || sharedProjEnv[0].isBlank() || sharedProjEnv[1].isBlank()) {
                 return@run emptyList()
             }
+
+            // 因为环境名称有可能也含有@所以只有 仅包含一个@的才是绝对的共享环境
+            // 共享环境也有情况是共享环境自己使用，这种情况则直接走下面的逻辑
             getSharedThirdPartyAgentList(
                 projectId = projectId,
                 sharedProjectId = sharedProjEnv[0],
