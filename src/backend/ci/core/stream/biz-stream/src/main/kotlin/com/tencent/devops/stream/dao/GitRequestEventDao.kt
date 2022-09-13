@@ -27,6 +27,7 @@
 
 package com.tencent.devops.stream.dao
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.tencent.devops.common.api.enums.ScmType
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.service.utils.CommonUtils
@@ -163,7 +164,7 @@ class GitRequestEventDao {
                     commitAuthorName = null,
                     gitProjectName = null,
                     changeYamlList = try {
-                        JsonUtil.to(record.changeYamlList)
+                        JsonUtil.to(record.changeYamlList, object : TypeReference<List<ChangeYamlList>>() {})
                     } catch (ignore: Throwable) {
                         emptyList()
                     }
