@@ -238,60 +238,53 @@ class TOFService @Autowired constructor(
         bkTicket: String,
         userCache: Boolean? = true
     ): StaffInfoResponse {
-        try {
-            var info: StaffInfoResponse? = null
-            if (userCache!!) {
-                info = userInfoCache.getIfPresent(userId)
-            }
-            if (info == null) {
-                val startTime = System.currentTimeMillis()
-                logger.info("[$operator|$userId|$bkTicket] Start to get the staff info")
-                val path = "get_staff_info_by_login_name"
-                val responseContent = request(
-                    path, StaffInfoRequest(
-                    tofAppCode!!,
-                    tofAppSecret!!, operator, userId, bkTicket
-                    ), MessageCodeUtil.getCodeLanMessage(QUERY_USER_INFO_FAIL, "获取用户信息$userId 失败", arrayOf(userId))
-                )
-                val response: Response<StaffInfoResponse> = objectMapper.readValue(responseContent)
-                if (response.data == null) {
-                    uploadTofStatus(
-                        requestTime = startTime,
-                        statusCode = response.code,
-                        statusMessage = response.message,
-                        errorCode = QUERY_USER_INFO_FAIL,
-                        errorMessage = MessageCodeUtil.getCodeLanMessage(
-                            messageCode = QUERY_USER_INFO_FAIL,
-                            defaultMessage = "获取用户$userId 信息失败",
-                            params = arrayOf(userId)
-                        )
-                    )
-                    logger.warn("Fail to get the staff info|$userId|$bkTicket|$responseContent")
-                    throw OperationException(MessageCodeUtil.getCodeLanMessage(
-                        messageCode = QUERY_USER_INFO_FAIL,
-                        defaultMessage = "获取用户$userId 信息失败",
-                        params = arrayOf(userId)
-                    ))
-                }
+        var info: StaffInfoResponse? = null
+        if (userCache!!) {
+            info = userInfoCache.getIfPresent(userId)
+        }
+        if (info == null) {
+            val startTime = System.currentTimeMillis()
+            logger.info("[$operator|$userId|$bkTicket] Start to get the staff info")
+            val path = "get_staff_info_by_login_name"
+            val responseContent = request(
+                path, StaffInfoRequest(
+                tofAppCode!!,
+                tofAppSecret!!, operator, userId, bkTicket
+            ), MessageCodeUtil.getCodeLanMessage(QUERY_USER_INFO_FAIL, "获取用户信息$userId 失败", arrayOf(userId))
+            )
+            val response: Response<StaffInfoResponse> = objectMapper.readValue(responseContent)
+            if (response.data == null) {
                 uploadTofStatus(
                     requestTime = startTime,
                     statusCode = response.code,
-                    statusMessage = "success",
-                    errorCode = SUCCESS,
-                    errorMessage = "call tof success"
+                    statusMessage = response.message,
+                    errorCode = QUERY_USER_INFO_FAIL,
+                    errorMessage = MessageCodeUtil.getCodeLanMessage(
+                        messageCode = QUERY_USER_INFO_FAIL,
+                        defaultMessage = "获取用户$userId 信息失败",
+                        params = arrayOf(userId)
+                    )
                 )
-                info = response.data
-                userInfoCache.put(userId, info)
+                logger.warn("Fail to get the staff info|$userId|$bkTicket|$responseContent")
+                throw OperationException(
+                    MessageCodeUtil.getCodeLanMessage(
+                        messageCode = QUERY_USER_INFO_FAIL,
+                        defaultMessage = "获取用户$userId 信息失败",
+                        params = arrayOf(userId)
+                    )
+                )
             }
-            return info
-        } catch (t: Throwable) {
-            logger.warn("Fail to get the staff info of userId $userId with ticket $bkTicket", t)
-            throw OperationException(MessageCodeUtil.getCodeLanMessage(
-                messageCode = QUERY_USER_INFO_FAIL,
-                defaultMessage = "获取用户$userId 信息失败",
-                params = arrayOf(userId)
-            ))
+            uploadTofStatus(
+                requestTime = startTime,
+                statusCode = response.code,
+                statusMessage = "success",
+                errorCode = SUCCESS,
+                errorMessage = "call tof success"
+            )
+            info = response.data
+            userInfoCache.put(userId, info)
         }
+        return info
     }
 
     fun getStaffInfo(userId: String, bkTicket: String): StaffInfoResponse {
