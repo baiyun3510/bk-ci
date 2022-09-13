@@ -48,6 +48,7 @@ import com.tencent.devops.common.pipeline.enums.BuildFormPropertyType
 import com.tencent.devops.common.pipeline.enums.BuildStatus
 import com.tencent.devops.common.pipeline.enums.BuildTaskStatus
 import com.tencent.devops.common.pipeline.pojo.BuildParameters
+import com.tencent.devops.common.pipeline.pojo.element.RunCondition
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.common.web.utils.AtomRuntimeUtil
@@ -615,7 +616,8 @@ class EngineVMBuildService @Autowired(required = false) constructor(
                 buildId = buildId,
                 result = result,
                 buildInfo = buildInfo,
-                vmSeqId = vmSeqId
+                vmSeqId = vmSeqId,
+                runCondition = buildTask.additionalOptions?.runCondition
             )
         } finally {
             redisOperation.delete(key = tCompleteTaskKey)
@@ -629,7 +631,8 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         buildId: String,
         result: BuildTaskResult,
         buildInfo: BuildInfo,
-        vmSeqId: String
+        vmSeqId: String,
+        runCondition: RunCondition? = null
     ) {
         // 只要buildResult不为空，都写入到环境变量里面
         if (result.buildResult.isNotEmpty()) {
@@ -646,7 +649,13 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             }
         }
         val errorType = ErrorType.getErrorType(result.errorType)
-        val buildStatus = getCompleteTaskBuildStatus(result, buildId, buildInfo, vmSeqId)
+        val buildStatus = getCompleteTaskBuildStatus(
+            result = result,
+            buildId = buildId,
+            buildInfo = buildInfo,
+            vmSeqId = vmSeqId,
+            runCondition = runCondition
+        )
         val updateTaskStatusInfos = taskBuildDetailService.taskEnd(
             TaskBuildEndParam(
                 projectId = buildInfo.projectId,
@@ -734,12 +743,14 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         result: BuildTaskResult,
         buildId: String,
         buildInfo: BuildInfo,
-        vmSeqId: String
+        vmSeqId: String,
+        runCondition: RunCondition? = null
     ): BuildStatus {
         val taskId = result.taskId
         val cancelTaskSetKey = TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false)
         return when {
-            redisOperation.isMember(cancelTaskSetKey, taskId) -> {
+            runCondition != RunCondition.PRE_TASK_FAILED_EVEN_CANCEL &&
+                redisOperation.isMember(cancelTaskSetKey, taskId) -> {
                 LOG.warn("ENGINE|$buildId|BCT_CANCEL_NOT_FINISH|${buildInfo.projectId}|job#$vmSeqId|$taskId")
                 BuildStatus.CANCELED
             }
