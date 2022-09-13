@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service
 @Service
 class TxProcessRelatedPlatformDataClearServiceImpl(
     properties: BasicAuthProperties
-): ProcessRelatedPlatformDataClearService {
+) : ProcessRelatedPlatformDataClearService {
 
     private val basicAuths = properties.basicAuths
 
@@ -70,13 +70,12 @@ class TxProcessRelatedPlatformDataClearServiceImpl(
         userName: String,
         password: String
     ) {
-        logger.info("cleanBuildDataRequest|$projectId|$pipelineId|buildIds = $buildIds")
         val context = mapOf<String, Any>(
             "projectId" to projectId,
             "pipelineId" to pipelineId,
             "buildIds" to buildIds
         )
-        logger.info("cleanBuildDataRequest|$url|$userName")
+
         val body = RequestBody.create(
             MediaType.parse("application/json"),
             JsonUtil.toJson(context)
