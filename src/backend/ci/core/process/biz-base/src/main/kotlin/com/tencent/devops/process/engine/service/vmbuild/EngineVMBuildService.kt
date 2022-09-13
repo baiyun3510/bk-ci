@@ -577,17 +577,24 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         result: BuildTaskResult
     ) {
         val tCompleteTaskKey = completeTaskKey(buildId, vmSeqId)
+        val taskId = result.taskId
         // #5109 提前做重复请求检测, 当弱网络或平台故障降级处理之前的请求较慢时，key仍然存在，需要拒绝客户端的重试产生的请求
-        if (redisOperation.get(key = tCompleteTaskKey) == result.taskId) {
-            LOG.warn("ENGINE|$buildId|BCT_DUPLICATE|$projectId|job#$vmSeqId|${result.taskId}")
+        if (redisOperation.get(key = tCompleteTaskKey) == taskId) {
+            LOG.warn("ENGINE|$buildId|BCT_DUPLICATE|$projectId|job#$vmSeqId|$taskId")
+            return
+        }
+        // 当该task的任务的取消逻辑未完成时不执行上报逻辑
+        val cancelTaskSetKey = TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false)
+        if (redisOperation.isMember(cancelTaskSetKey, taskId)) {
+            LOG.warn("ENGINE|$buildId|BCT_CANCEL_NOT_FINISH|$projectId|job#$vmSeqId|$taskId")
             return
         }
         // #5109 不需要Job级别的Redis锁保护的数据, 仅查询用
-        val buildTask = pipelineTaskService.getBuildTask(projectId, buildId, result.taskId)
+        val buildTask = pipelineTaskService.getBuildTask(projectId, buildId, taskId)
         val taskStatus = buildTask?.status
         if (taskStatus == null) {
             // 当上报的任务不存在，则直接返回
-            LOG.warn("ENGINE|$buildId|BCT_INVALID_TASK|$projectId|$vmName|${result.taskId}|")
+            LOG.warn("ENGINE|$buildId|BCT_INVALID_TASK|$projectId|$vmName|$taskId|")
             return
         }
 
@@ -597,7 +604,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         }
         // #5109 提前判断，防止异常数据流入，后续各类Redis锁定出现无必要的额外开启。
         if (taskStatus.isFinish() || buildInfo.isFinish()) {
-            LOG.warn("ENGINE|BCT_END|$buildId|$projectId|j($vmSeqId)|${result.taskId}|$taskStatus|${buildInfo.status}")
+            LOG.warn("ENGINE|BCT_END|$buildId|$projectId|j($vmSeqId)|$taskId|$taskStatus|${buildInfo.status}")
             return
         }
 
