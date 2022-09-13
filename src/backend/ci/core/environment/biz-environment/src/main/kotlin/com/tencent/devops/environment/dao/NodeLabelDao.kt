@@ -42,12 +42,12 @@ class NodeLabelDao {
     /**
      * 获取节点关联的标签
      */
-    fun getNodeLabels(dslContext: DSLContext, nodeId: Long): Result<Record4<Long, String, String, String>>? {
+    fun getNodeLabels(dslContext: DSLContext, nodeIds: Set<Long>): Result<Record4<Long, String, String, String>>? {
         val t1 = TNodeLabel.T_NODE_LABEL.`as`("t1")
         val t2 = TLabel.T_LABEL.`as`("t2")
         return dslContext.select(t1.LABEL_ID, t2.LABEL_KEY, t2.LABEL_VALUE, t2.DESCRIPTION)
             .from(t1).leftJoin(t2).on(t1.LABEL_ID.eq(t2.ID))
-            .where(t1.NODE_ID.eq(nodeId))
+            .where(t1.NODE_ID.`in`(nodeIds))
             .fetch()
     }
 

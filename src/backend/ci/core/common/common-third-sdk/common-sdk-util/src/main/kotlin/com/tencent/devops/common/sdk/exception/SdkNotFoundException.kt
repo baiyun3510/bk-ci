@@ -25,20 +25,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package job
+package com.tencent.devops.common.sdk.exception
 
-import (
-	"fmt"
-	"github.com/Tencent/bk-ci/src/agent/src/pkg/api"
-	"testing"
-	"time"
-)
-
-func Test_BuildManager_01(t *testing.T) {
-	fmt.Println("start")
-	GBuildManager.AddBuild(6124, &api.ThirdPartyBuildInfo{})
-	for {
-		time.Sleep(5 * time.Second)
-		fmt.Println("instanceCount: ", GBuildManager.GetInstanceCount())
-	}
-}
+class SdkNotFoundException(errMsg: String) : RuntimeException(errMsg)

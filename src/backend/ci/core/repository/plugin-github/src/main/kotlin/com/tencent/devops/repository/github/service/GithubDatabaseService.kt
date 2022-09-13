@@ -27,6 +27,7 @@
 
 package com.tencent.devops.repository.github.service
 
+import com.tencent.devops.common.sdk.exception.SdkNotFoundException
 import com.tencent.devops.common.sdk.github.DefaultGithubClient
 import com.tencent.devops.common.sdk.github.request.GetTreeRequest
 import com.tencent.devops.common.sdk.github.response.GetTreeResponse
@@ -35,13 +36,16 @@ import org.springframework.stereotype.Service
 
 @Service
 class GithubDatabaseService @Autowired constructor(
-    private val defaultGithubClient: DefaultGithubClient,
+    private val defaultGithubClient: DefaultGithubClient
 ) {
-
     fun getTree(
         request: GetTreeRequest,
         token: String
-    ): GetTreeResponse {
-        return defaultGithubClient.execute(request = request, oauthToken = token)
+    ): GetTreeResponse? {
+        return try {
+            defaultGithubClient.execute(request = request, oauthToken = token)
+        } catch (ignore: SdkNotFoundException) {
+            null
+        }
     }
 }

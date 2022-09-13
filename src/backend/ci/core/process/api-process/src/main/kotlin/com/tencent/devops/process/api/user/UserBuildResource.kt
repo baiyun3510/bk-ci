@@ -33,7 +33,6 @@ import com.tencent.devops.common.api.pojo.BuildHistoryPage
 import com.tencent.devops.common.api.pojo.IdValue
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.pipeline.enums.BuildStatus
-import com.tencent.devops.common.pipeline.enums.ChannelCode
 import com.tencent.devops.common.pipeline.enums.StartType
 import com.tencent.devops.common.pipeline.pojo.BuildParameters
 import com.tencent.devops.common.pipeline.pojo.StageReviewRequest
@@ -482,10 +481,7 @@ interface UserBuildResource {
         buildId: String,
         @ApiParam("是否通过审核", required = true)
         @QueryParam("approve")
-        approve: Boolean,
-        @ApiParam("渠道号，默认为BS", required = false)
-        @QueryParam("channelCode")
-        channelCode: ChannelCode
+        approve: Boolean
     ): Result<Boolean>
 
     @ApiOperation("手动触发启动阶段")

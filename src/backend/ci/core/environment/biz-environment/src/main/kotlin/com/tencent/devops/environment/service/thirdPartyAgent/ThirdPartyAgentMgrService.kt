@@ -92,6 +92,7 @@ import com.tencent.devops.environment.service.slave.SlaveGatewayService
 import com.tencent.devops.environment.utils.FileMD5CacheUtils.getAgentJarFile
 import com.tencent.devops.environment.utils.FileMD5CacheUtils.getFileMD5
 import com.tencent.devops.environment.utils.NodeStringIdUtils
+import com.tencent.devops.model.environment.tables.records.TEnvShareProjectRecord
 import com.tencent.devops.model.environment.tables.records.TEnvironmentThirdpartyAgentRecord
 import com.tencent.devops.repository.api.ServiceOauthResource
 import com.tencent.devops.repository.api.scm.ServiceGitResource
@@ -683,50 +684,161 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
 
     fun getAgentByEnvName(projectId: String, envName: String): List<ThirdPartyAgent> {
         logger.info("[$projectId|$envName] Get the agents by env name")
-        // get shared project first
-        val sharedThridPartyAgentList = run {
-            val sharedProjEnv = envName.split("@") // sharedProjId@poolName
-            if (sharedProjEnv.size != 2 || sharedProjEnv[0].isBlank() || sharedProjEnv[1].isBlank()) {
-                return@run emptyList()
+        // 共享环境由 被共享的项目ID@环境名称 组成，这里通过@分隔出的数量来区分是否是共享环境
+        val envNameItems = envName.split("@")
+        val thirdPartyAgentList = mutableListOf<ThirdPartyAgent>()
+
+        // 因为环境名称有可能也含有@所以只有 仅包含一个@的才是绝对的共享环境
+        // 共享环境也有情况是共享环境自己使用，这种情况则直接走下面的逻辑
+        var realEnvName = envName
+        run sharedEnv@{
+            if (envNameItems.size == 2 && envNameItems[0].isNotBlank() && envNameItems[1].isNotBlank()) {
+                if (projectId == envNameItems[0]) {
+                    realEnvName = envNameItems[1]
+                    return@sharedEnv
+                }
+                thirdPartyAgentList.addAll(
+                    getSharedThirdPartyAgentList(
+                        projectId = projectId,
+                        sharedProjectId = envNameItems[0],
+                        sharedEnvName = envNameItems[1],
+                        sharedEnvId = null
+                    )
+                )
+                return thirdPartyAgentList
             }
-            getSharedThirdPartyAgentList(
-                projectId = projectId,
-                sharedProjectId = sharedProjEnv[0],
-                sharedEnvName = sharedProjEnv[1],
-                sharedEnvId = null
-            )
-        }
-        val envRecord = envDao.getByEnvName(dslContext = dslContext, projectId = projectId, envName = envName)
-        if (envRecord == null && sharedThridPartyAgentList.isEmpty()) {
-            logger.warn("[$projectId|$envName] The env is not exist")
-            throw CustomException(
-                Response.Status.FORBIDDEN,
-                "第三方构建机环境不存在($projectId:$envName)"
-            )
         }
 
-        return (if (envRecord != null) {
+        val envRecord = envDao.getByEnvName(dslContext = dslContext, projectId = projectId, envName = realEnvName)
+        if (envRecord == null) {
+            logger.warn("[$projectId|$realEnvName] The env is not exist")
+            throw CustomException(
+                Response.Status.FORBIDDEN,
+                "第三方构建机环境不存在($projectId:$realEnvName)"
+            )
+        }
+        thirdPartyAgentList.addAll(
             getAgentByEnvId(projectId = projectId, envHashId = HashUtil.encodeLongId(envRecord.envId))
-        } else {
-            emptyList()
-        }).plus(sharedThridPartyAgentList)
+        )
+
+        return thirdPartyAgentList
     }
 
     fun getAgentByLabelExpressions(projectId: String, labelQuery: LabelQuery): List<ThirdPartyAgent> {
         logger.info("[$projectId|$labelQuery] Get the agents by label expressions")
 
-        // 如果使用的共享节点，优先查询共享项目下符合标签的节点
-        val realProjectId = if (!labelQuery.sharedProjectId.isNullOrBlank()) {
-            labelQuery.sharedProjectId!!
-        } else {
-            projectId
+        // 如果没有指定envHashId或者envName,则匹配当前项目所有标签节点
+        if (labelQuery.envHashId.isNullOrBlank() || labelQuery.envName.isNullOrBlank()) {
+            val nodeIds = labelService.calculateNodes("", projectId, labelQuery)
+            return getThirdPartyAgentByNodeIds(nodeIds.toSet(), projectId)
         }
 
-        val nodeIds = labelService.calculateNodes("", realProjectId,labelQuery)
-        return getThirdPartyAgentByNodeIds(nodeIds.toSet(), projectId)
+        // 共享环境处理逻辑
+        if (!labelQuery.envProjectId.isNullOrBlank()) {
+            val shareEnvRecords = getSharedEnvRecords(
+                sharedEnvHashId = labelQuery.envHashId,
+                sharedEnvName = labelQuery.envName,
+                sharedProjectId = labelQuery.envProjectId!!
+            )
+            return getSharedThirdPartyAgentList(
+                projectId = projectId,
+                sharedProjectId = labelQuery.envProjectId!!,
+                sharedEnvName = null,
+                sharedEnvHashId = labelQuery.envHashId,
+                labelQuery = labelQuery,
+                shareEnvRecords = shareEnvRecords
+            )
+        }
+
+        // 自有环境处理逻辑
+        val envId = formatEnvIdByLabelQuery(projectId, labelQuery)
+        val nodes = envNodeDao.list(dslContext = dslContext, projectId = projectId, envIds = listOf(envId))
+        if (nodes.isEmpty()) {
+            logger.warn("[$projectId|${labelQuery.envHashId}] The env is not exist")
+            throw CustomException(
+                Response.Status.FORBIDDEN,
+                "第三方构建机环境节点不存在($projectId:${labelQuery.envHashId})"
+            )
+        }
+
+        val labelNodeIds = labelService.calculateNodes("", projectId, labelQuery, nodes.map {
+            it.nodeId
+        }.toList())
+
+        return getThirdPartyAgentByNodeIds(labelNodeIds.toSet(), projectId)
     }
 
-    fun getAgentByEnvId(projectId: String, envHashId: String): List<ThirdPartyAgent> {
+    private fun formatEnvIdByLabelQuery(projectId: String, labelQuery: LabelQuery): Long {
+        return if (labelQuery.envName != null && labelQuery.envName!!.isNotEmpty()) {
+            val envRecord = envDao.getByEnvName(
+                dslContext = dslContext,
+                projectId = projectId,
+                envName = labelQuery.envName!!
+            )
+            if (envRecord == null) {
+                logger.warn("[$projectId|${labelQuery.envName}] The env is not exist")
+                throw CustomException(
+                    Response.Status.FORBIDDEN,
+                    "第三方构建机环境不存在($projectId:${labelQuery.envName})"
+                )
+            }
+            envRecord.envId
+        } else if (labelQuery.envHashId != null && labelQuery.envHashId!!.isNotEmpty()) {
+            HashUtil.decodeIdToLong(labelQuery.envHashId!!)
+        } else {
+            logger.warn("[$projectId|${labelQuery.envName}] The env is not exist")
+            throw CustomException(
+                Response.Status.FORBIDDEN,
+                "第三方构建机环境不存在($projectId:${labelQuery.envName})"
+            )
+        }
+    }
+
+    private fun getSharedEnvRecords(
+        sharedEnvHashId: String?,
+        sharedProjectId: String,
+        sharedEnvName: String?
+    ): List<TEnvShareProjectRecord> {
+        when {
+            !sharedEnvName.isNullOrBlank() -> {
+                return envShareProjectDao.list(
+                    dslContext = dslContext,
+                    mainProjectId = sharedProjectId,
+                    envName = sharedEnvName,
+                    envId = null
+                ).ifEmpty {
+                    val env = envDao.getByEnvName(
+                        dslContext = dslContext,
+                        projectId = sharedProjectId,
+                        envName = sharedEnvName
+                    ) ?: throw CustomException(
+                        Response.Status.FORBIDDEN,
+                        "第三方构建机环境不存在($sharedProjectId:$sharedEnvHashId)"
+                    )
+                    envShareProjectDao.list(
+                        dslContext = dslContext,
+                        mainProjectId = sharedProjectId,
+                        envName = null,
+                        envId = env.envId
+                    )
+                }
+            }
+            sharedEnvHashId != null -> {
+                val envId = HashUtil.decodeIdToLong(sharedEnvHashId)
+                return envShareProjectDao.list(
+                    dslContext = dslContext,
+                    mainProjectId = sharedProjectId,
+                    envName = null,
+                    envId = envId
+                )
+            }
+            else -> {
+                return emptyList()
+            }
+        }
+    }
+
+    fun getAgentByEnvId(projectId: String, envHashId: String, labelQuery: LabelQuery? = null): List<ThirdPartyAgent> {
         logger.info("[$projectId|$envHashId] Get the agents by envId")
         val sharedThirdPartyAgentList = run {
             val sharedProjEnv = envHashId.split("@") // sharedProjId@poolName
@@ -737,7 +849,7 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                 projectId = projectId,
                 sharedProjectId = sharedProjEnv[0],
                 sharedEnvName = null,
-                sharedEnvId = HashUtil.decodeIdToLong(sharedProjEnv[1])
+                sharedEnvHashId = sharedProjEnv[1]
             )
         }
         val envId = HashUtil.decodeIdToLong(envHashId)
@@ -749,9 +861,17 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                 "第三方构建机环境节点不存在($projectId:$envHashId)"
             )
         }
-        val nodeIds = nodes.map {
-            it.nodeId
-        }.toSet()
+
+        val nodeIds = if (labelQuery == null) {
+            nodes.map {
+                it.nodeId
+            }.toSet()
+        } else {
+            labelService.calculateNodes("", projectId, labelQuery, nodes.map {
+                it.nodeId
+            }.toList()).toSet()
+        }
+
         return getThirdPartyAgentByNodeIds(nodeIds, projectId, sharedThirdPartyAgentList)
     }
 
@@ -1249,43 +1369,13 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
         projectId: String,
         sharedProjectId: String,
         sharedEnvName: String?,
-        sharedEnvId: Long?
+        sharedEnvHashId: String?,
+        labelQuery: LabelQuery? = null,
+        shareEnvRecords: List<TEnvShareProjectRecord>? = null
     ): List<ThirdPartyAgent> {
-        logger.info("[$projectId|$sharedProjectId|$sharedEnvName|$sharedEnvId]get shared third party agent list")
-        val sharedEnvRecord = when {
-            !sharedEnvName.isNullOrBlank() -> {
-                envShareProjectDao.list(
-                    dslContext = dslContext,
-                    mainProjectId = sharedProjectId,
-                    envName = sharedEnvName,
-                    envId = null
-                ).ifEmpty {
-                    val env = envDao.getByEnvName(
-                        dslContext = dslContext,
-                        projectId = sharedProjectId,
-                        envName = sharedEnvName
-                    ) ?: throw CustomException(
-                        Response.Status.FORBIDDEN,
-                        "第三方构建机环境不存在($sharedProjectId:$sharedEnvId)"
-                    )
-                    envShareProjectDao.list(
-                        dslContext = dslContext,
-                        mainProjectId = sharedProjectId,
-                        envName = null,
-                        envId = env.envId
-                    )
-                }
-            }
-            sharedEnvId != null -> {
-                envShareProjectDao.list(
-                    dslContext = dslContext,
-                    mainProjectId = sharedProjectId,
-                    envName = null,
-                    envId = sharedEnvId
-                )
-            }
-            else -> emptyList()
-        }
+        logger.info("[$projectId|$sharedProjectId|$sharedEnvName|$sharedEnvHashId]get shared third party agent list")
+        val sharedEnvRecord = shareEnvRecords
+            ?: getSharedEnvRecords(sharedEnvHashId, sharedProjectId, sharedEnvName)
         // 兼容如果更改了环境名称
         sharedEnvRecord.getOrNull(0)?.let {
             val env = envDao.getOrNull(
@@ -1294,7 +1384,7 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                 envId = it.envId
             ) ?: throw CustomException(
                 Response.Status.FORBIDDEN,
-                "第三方构建机环境不存在($sharedProjectId:$sharedEnvId)"
+                "第三方构建机环境不存在($sharedProjectId:$sharedEnvHashId)"
             )
             if (env.envName != it.envName) {
                 envShareProjectDao.batchUpdateEnvName(dslContext, it.envId, env.envName)
@@ -1302,12 +1392,12 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
         }
         if (sharedEnvRecord.isEmpty()) {
             logger.info(
-                "env name not exists, envName: $sharedEnvName, envId: $sharedEnvId, projectId：$projectId, " +
+                "env name not exists, envName: $sharedEnvName, envId: $sharedEnvHashId, projectId：$projectId, " +
                     "mainProjectId: $sharedProjectId"
             )
             throw CustomException(
                 Response.Status.FORBIDDEN,
-                "无权限使用第三方构建机环境($sharedProjectId:${sharedEnvName ?: sharedEnvId})"
+                "无权限使用第三方构建机环境($sharedProjectId:${sharedEnvName ?: sharedEnvHashId})"
             )
         }
         logger.info("sharedEnvRecord size: ${sharedEnvRecord.size}")
@@ -1344,7 +1434,13 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                     }
                 }
 
-                sharedThirdPartyAgents.addAll(getAgentByEnvId(it.mainProjectId, HashUtil.encodeLongId(it.envId)))
+                sharedThirdPartyAgents.addAll(
+                    getAgentByEnvId(
+                        projectId = it.mainProjectId,
+                        envHashId = HashUtil.encodeLongId(it.envId),
+                        labelQuery = labelQuery
+                    )
+                )
                 // 找到了环境可用就可以退出了
                 return@outSide
             }

@@ -26,6 +26,7 @@
  */
 
 package com.tencent.devops.stream.trigger.actions.tgit
+
 import com.tencent.devops.common.api.enums.ScmType
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.util.DateTimeUtil
@@ -53,8 +54,6 @@ import com.tencent.devops.stream.trigger.actions.data.EventCommonData
 import com.tencent.devops.stream.trigger.actions.data.EventCommonDataCommit
 import com.tencent.devops.stream.trigger.actions.data.StreamTriggerPipeline
 import com.tencent.devops.stream.trigger.actions.data.context.StreamMrInfo
-import com.tencent.devops.stream.trigger.actions.data.StreamTriggerSetting
-import com.tencent.devops.stream.trigger.actions.github.GithubPRActionGit
 import com.tencent.devops.stream.trigger.actions.streamActions.StreamMrAction
 import com.tencent.devops.stream.trigger.exception.CommitCheck
 import com.tencent.devops.stream.trigger.exception.StreamTriggerException
@@ -65,7 +64,6 @@ import com.tencent.devops.stream.trigger.git.pojo.tgit.TGitFileInfo
 import com.tencent.devops.stream.trigger.git.service.TGitApiService
 import com.tencent.devops.stream.trigger.parsers.MergeConflictCheck
 import com.tencent.devops.stream.trigger.parsers.PipelineDelete
-import com.tencent.devops.stream.trigger.parsers.triggerMatch.TriggerBody
 import com.tencent.devops.stream.trigger.parsers.triggerMatch.TriggerMatcher
 import com.tencent.devops.stream.trigger.parsers.triggerMatch.TriggerResult
 import com.tencent.devops.stream.trigger.parsers.triggerParameter.GitRequestEventHandle
@@ -194,18 +192,6 @@ class TGitMrActionGit(
     }
 
     override fun skipStream(): Boolean {
-        // fork触发进行权限校验
-        if (!this.checkMrForkReview()) {
-            logger.warn(
-                "check mr fork review false, return, gitProjectId: ${this.data.getGitProjectId()}, " +
-                    "eventId: ${this.data.context.requestEventId}"
-            )
-            throw StreamTriggerException(
-                this,
-                TriggerReason.TRIGGER_NOT_MATCH,
-                reasonParams = listOf("current trigger user(${this.data.eventCommon.userId}) not in whitelist")
-            )
-        }
         return false
     }
 
