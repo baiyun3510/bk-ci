@@ -24,6 +24,7 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 package com.tencent.devops.store.api.common
 
 import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_USER_ID
@@ -54,6 +55,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
+        @ApiParam("发布者数据同步请求", required = true)
         publishers: List<PublishersRequest>
     ): Result<Int>
 
@@ -64,6 +66,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
+        @ApiParam("发布者数据同步请求", required = true)
         publishers: List<PublishersRequest>
     ): Result<Int>
 
@@ -74,6 +77,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
+        @ApiParam("发布者数据同步请求", required = true)
         publishers: List<PublishersRequest>
     ): Result<Int>
 
@@ -84,6 +88,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
+        @ApiParam("store组件对接平台请求", required = true)
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
     ): Result<Int>
 
@@ -94,6 +99,7 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
+        @ApiParam("store组件对接平台请求", required = true)
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
     ): Result<Int>
 
@@ -104,6 +110,20 @@ interface ServicePublishersResource {
         @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
         @ApiParam("用户ID", required = true)
         userId: String,
+        @ApiParam("store组件对接平台请求", required = true)
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
     ): Result<Int>
+
+    @ApiOperation("同步更新工具平台信息")
+    @POST
+    @Path("/platforms/update")
+    fun synUpdatePlatformsLogoInfo(
+        @HeaderParam(AUTH_HEADER_DEVOPS_USER_ID)
+        @ApiParam("用户ID", required = true)
+        userId: String,
+        @ApiParam("平台代码", required = true)
+        platformCode: String,
+        @ApiParam("logoUrl", required = true)
+        logoUrl: String
+    )
 }

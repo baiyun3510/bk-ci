@@ -24,6 +24,7 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 package com.tencent.devops.store.resources.common
 
 import com.tencent.devops.common.web.RestResource
@@ -37,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired
 @RestResource
 class ServicePublishersResourceImpl @Autowired constructor(
     private val publishersDataService: PublishersDataService
-): ServicePublishersResource {
+) : ServicePublishersResource {
     override fun synAddPublisherData(userId: String, publishers: List<PublishersRequest>): Result<Int> {
         return Result(publishersDataService.createPublisherData(userId, publishers))
     }
@@ -71,4 +72,7 @@ class ServicePublishersResourceImpl @Autowired constructor(
         return Result(publishersDataService.updatePlatformsData(userId, storeDockingPlatformRequests))
     }
 
+    override fun synUpdatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String) {
+        publishersDataService.updatePlatformsLogoInfo(userId, platformCode, logoUrl)
+    }
 }
