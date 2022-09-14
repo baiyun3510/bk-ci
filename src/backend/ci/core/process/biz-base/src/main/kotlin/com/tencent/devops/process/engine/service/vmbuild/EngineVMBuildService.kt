@@ -75,6 +75,7 @@ import com.tencent.devops.process.engine.service.detail.ContainerBuildDetailServ
 import com.tencent.devops.process.engine.service.detail.TaskBuildDetailService
 import com.tencent.devops.process.engine.service.measure.MeasureService
 import com.tencent.devops.process.engine.utils.BuildUtils
+import com.tencent.devops.process.engine.utils.ContainerUtils
 import com.tencent.devops.process.jmx.elements.JmxElements
 import com.tencent.devops.process.pojo.BuildTask
 import com.tencent.devops.process.pojo.BuildTaskResult
@@ -748,9 +749,21 @@ class EngineVMBuildService @Autowired(required = false) constructor(
     ): BuildStatus {
         val taskId = result.taskId
         val cancelTaskSetKey = TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false)
+        val cancelFlag = redisOperation.isMember(cancelTaskSetKey, taskId)
+        val failedEvenCancelFlag = runCondition == RunCondition.PRE_TASK_FAILED_EVEN_CANCEL
+        if (cancelFlag && failedEvenCancelFlag) {
+            redisOperation.set(
+                key = ContainerUtils.getContainerRunEvenCancelTaskKey(
+                    pipelineId = buildInfo.pipelineId,
+                    buildId = buildInfo.buildId,
+                    containerId = vmSeqId
+                ),
+                value = taskId,
+                expiredInSecond = TimeUnit.DAYS.toSeconds(Timeout.MAX_JOB_RUN_DAYS)
+            )
+        }
         return when {
-            runCondition != RunCondition.PRE_TASK_FAILED_EVEN_CANCEL &&
-                redisOperation.isMember(cancelTaskSetKey, taskId) -> {
+            !failedEvenCancelFlag && cancelFlag -> {
                 LOG.warn("ENGINE|$buildId|BCT_CANCEL_NOT_FINISH|${buildInfo.projectId}|job#$vmSeqId|$taskId")
                 BuildStatus.CANCELED
             }
