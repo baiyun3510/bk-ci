@@ -115,7 +115,7 @@ interface ServicePublishersResource {
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
     ): Result<Int>
 
-    @ApiOperation("同步更新工具平台信息")
+    @ApiOperation("同步更新工具平台logo信息")
     @POST
     @Path("/platforms/logo/update")
     fun synUpdatePlatformsLogoInfo(
@@ -128,5 +128,5 @@ interface ServicePublishersResource {
         @ApiParam("logoUrl", required = true)
         @QueryParam("logoUrl")
         logoUrl: String
-    )
+    ): Result<Boolean>
 }
