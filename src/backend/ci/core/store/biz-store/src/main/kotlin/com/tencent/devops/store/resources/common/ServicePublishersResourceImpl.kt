@@ -72,7 +72,8 @@ class ServicePublishersResourceImpl @Autowired constructor(
         return Result(publishersDataService.updatePlatformsData(userId, storeDockingPlatformRequests))
     }
 
-    override fun synUpdatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String) {
+    override fun synUpdatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String): Result<Boolean> {
         publishersDataService.updatePlatformsLogoInfo(userId, platformCode, logoUrl)
+        return Result(true)
     }
 }

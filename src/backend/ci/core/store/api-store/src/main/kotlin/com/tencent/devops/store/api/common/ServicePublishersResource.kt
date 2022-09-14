@@ -128,5 +128,5 @@ interface ServicePublishersResource {
         @ApiParam("logoUrl", required = true)
         @QueryParam("logoUrl")
         logoUrl: String
-    )
+    ): Result<Boolean>
 }
