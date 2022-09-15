@@ -96,7 +96,8 @@ class QualityRuleCheckService @Autowired constructor(
     private val objectMapper: ObjectMapper,
     private val qualityCacheService: QualityCacheService,
     private val qualityRuleBuildHisService: QualityRuleBuildHisService,
-    private val qualityUrlBean: QualityUrlBean
+    private val qualityUrlBean: QualityUrlBean,
+    private val indicatorService: QualityIndicatorService
 ) {
     private val executors = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
@@ -652,7 +653,14 @@ class QualityRuleCheckService @Autowired constructor(
         interceptRecordList: List<QualityRuleInterceptRecord>,
         params: Map<String, String>
     ): RuleCheckSingleResult {
-        val messageList = interceptRecordList.map {
+        // 根据指标权重顺序打印日志
+        val indicatorList = indicatorService.serviceList(interceptRecordList.map {
+            HashUtil.decodeIdToLong(it.indicatorId)
+        }).associateBy { it.hashId }
+        interceptRecordList.forEach { it ->
+            it.weight = indicatorList[it.indicatorId]?.weight
+        }
+        val messageList = interceptRecordList.sortedByDescending { it.weight }.map {
             val thresholdOperationName = ThresholdOperationUtil.getOperationName(it.operation)
 
             val sb = StringBuilder()

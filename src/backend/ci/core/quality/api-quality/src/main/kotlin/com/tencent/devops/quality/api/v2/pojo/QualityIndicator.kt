@@ -52,7 +52,8 @@ data class QualityIndicator(
     val logPrompt: String,
     val enable: Boolean?,
     val range: String?,
-    var taskName: String? = null
+    var taskName: String? = null,
+    val weight: Int? = null
 ) {
     data class Metadata(
         val hashId: String,
