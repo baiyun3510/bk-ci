@@ -131,7 +131,7 @@ class QualityIndicatorService @Autowired constructor(
                         detailCnName,
                         codeccToolDescMap[elementDetail]
                             ?: "",
-                        indicatorList)
+                        indicatorList.sortedByDescending { it.weight })
                 }
                 IndicatorStageGroup.IndicatorControlPointGroup(encoder.encodeToString(controlPoint.key.toByteArray()),
                     elementType, ElementUtils.getElementCnName(elementType, projectId), detailGroups)
@@ -574,7 +574,8 @@ class QualityIndicatorService @Autowired constructor(
             desc = indicator.desc,
             logPrompt = indicator.logPrompt,
             enable = indicator.enable ?: false,
-            range = indicator.indicatorRange
+            range = indicator.indicatorRange,
+            weight = indicator.weight
         )
     }
 
@@ -680,9 +681,11 @@ class QualityIndicatorService @Autowired constructor(
         private val logger = LoggerFactory.getLogger(QualityIndicatorService::class.java)
 
         val codeccToolNameMap = mapOf(
-            "STANDARD" to "代码规范",
             "DEFECT" to "代码缺陷",
             "SECURITY" to "安全漏洞",
+            "STANDARD" to "代码规范",
+            "CCN" to "圈复杂度",
+            "DUPC" to "重复率",
             "COVERITY" to "Coverity",
             "KLOCWORK" to "Klocwork",
             "RIPS" to "啄木鸟漏洞扫描-PHP",
@@ -698,9 +701,7 @@ class QualityIndicatorService @Autowired constructor(
             "OCCHECK" to "OCCheck",
             "PHPCS" to "PHPCS",
             "PYLINT" to "PyLint",
-            "STYLECOP" to "StyleCop",
-            "CCN" to "圈复杂度",
-            "DUPC" to "重复率")
+            "STYLECOP" to "StyleCop")
 
         private val codeccToolDescMap = mapOf(
             "STANDARD" to "按维度(推荐)",

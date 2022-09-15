@@ -214,6 +214,7 @@ class QualityIndicatorDao {
                 if (type != null) update.set(TYPE, type.toString())
                 if (!tag.isNullOrBlank()) update.set(TAG, tag)
                 if (logPrompt != null) update.set(LOG_PROMPT, logPrompt)
+                if (weight != null) update.set(WEIGHT, weight)
             }
             update.set(UPDATE_TIME, LocalDateTime.now())
                 .set(UPDATE_USER, userId)
