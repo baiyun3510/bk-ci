@@ -123,11 +123,20 @@ class WeworkRobotServiceImpl @Autowired constructor(
                 "send wework robot message fail : weworkNotifyTextMessage = $weworkNotifyTextMessage " +
                     "| errorMessage :$errMsg"
             )
-            saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", false, errMsg)
-            throw RemoteServiceException("send wework robot message fail")
+            saveResult(
+                receivers = weworkNotifyTextMessage.receivers,
+                body = "type:${weworkNotifyTextMessage.message}\n",
+                success = false,
+                errMsg = errMsg
+            )
         } else {
             logger.info("send wework robot message success : $weworkNotifyTextMessage")
-            saveResult(weworkNotifyTextMessage.receivers, "type:${weworkNotifyTextMessage.message}\n", true, null)
+            saveResult(
+                receivers = weworkNotifyTextMessage.receivers,
+                body = "type:${weworkNotifyTextMessage.message}\n",
+                success = true,
+                errMsg = null
+            )
         }
     }
 
