@@ -25,58 +25,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.process.api.service
+package com.tencent.devops.repository.api
 
-import com.tencent.devops.common.api.pojo.Result
-import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
 import javax.ws.rs.Consumes
-import javax.ws.rs.GET
+import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
-import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["SERVICE_VARIABLE"], description = "服务-构建参数")
-@Path("/service/variable")
+@Path("/op/repo/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface ServiceVarResource {
-
-    @ApiOperation("获取指定构建或指定流水线下的构建变量")
-    @Path("/get_build_variable")
-    @GET
-    fun getBuildVar(
-        @ApiParam(value = "项目ID", required = true)
-        @QueryParam("projectId")
-        projectId: String,
-        @ApiParam(value = "构建ID", required = true)
-        @QueryParam("buildId")
-        buildId: String,
-        @ApiParam(value = "变量名称", required = false)
-        @QueryParam("varName")
-        varName: String?,
-        @ApiParam(value = "流水线ID", required = false)
-        @QueryParam("pipelineId")
-        pipelineId: String?
-    ): Result<Map<String, String>>
-
-    @ApiOperation("获取指定构建或指定构建下的上下文变量")
-    @Path("/get_build_context")
-    @GET
-    fun getContextVar(
-        @ApiParam(value = "项目ID", required = true)
-        @QueryParam("projectId")
-        projectId: String,
-        @ApiParam(value = "流水线ID", required = true)
-        @QueryParam("pipelineId")
-        pipelineId: String,
-        @ApiParam(value = "构建ID", required = true)
-        @QueryParam("buildId")
-        buildId: String,
-        @ApiParam(value = "变量名称", required = false)
-        @QueryParam("contextName")
-        contextName: String?
-    ): Result<Map<String, String>>
+interface OPRepositoryResource {
+    @ApiOperation("用于对数据库表填充哈希值")
+    @POST
+    @Path("/addhashid")
+    fun addHashId()
 }

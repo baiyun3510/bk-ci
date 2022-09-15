@@ -4,6 +4,7 @@
             <router-link
                 class="header-logo"
                 to="/console/"
+                @click.native="setDocumentTitle"
             >
                 <Logo
                     name="devops-logo"
@@ -276,6 +277,10 @@
 
         closeTooltip (): void {
             this.isShowTooltip = false
+        }
+
+        setDocumentTitle () {
+            document.title = String(this.$t('documentTitleHome'))
         }
     }
 </script>
