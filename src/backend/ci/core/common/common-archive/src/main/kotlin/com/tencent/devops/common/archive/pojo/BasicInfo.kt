@@ -25,39 +25,37 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.artifactory.service
+package com.tencent.devops.common.archive.pojo
 
-import com.tencent.devops.artifactory.pojo.FileInfo
-import com.tencent.devops.artifactory.pojo.Property
-import com.tencent.devops.artifactory.pojo.SearchProps
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiModelProperty
 
-interface RepoSearchService {
-    fun searchFileAndProperty(
-        userId: String,
-        projectId: String,
-        searchProps: SearchProps
-    ): Pair<Long, List<FileInfo>>
-
-    fun serviceSearchFileByRegex(
-        projectId: String,
-        pipelineId: String,
-        buildId: String,
-        regexPath: String,
-        customized: Boolean
-    ): Pair<Long, List<FileInfo>>
-
-    fun serviceSearchFileAndProperty(
-        userId: String,
-        projectId: String,
-        searchProps: List<Property>,
-        customized: Boolean? = null,
-        generateShortUrl: Boolean = false
-    ): Pair<Long, List<FileInfo>>
-
-    fun serviceSearchFileAndPropertyByOr(
-        userId: String,
-        projectId: String,
-        searchProps: List<Property>,
-        customized: Boolean? = null
-    ): Pair<Long, List<FileInfo>>
-}
+@Api("基础信息")
+data class BasicInfo(
+    @ApiModelProperty("版本字段")
+    val version: String,
+    @ApiModelProperty("完整路径")
+    val fullPath: String,
+    @ApiModelProperty("文件大小，单位byte")
+    val size: Long,
+    @ApiModelProperty("文件sha256")
+    val sha256: String,
+    @ApiModelProperty("文件md5")
+    val md5: String,
+    @ApiModelProperty("晋级状态标签")
+    val stageTag: List<String>,
+    @ApiModelProperty("所属项目id")
+    val projectId: String,
+    @ApiModelProperty("所属仓库名称")
+    val repoName: String,
+    @ApiModelProperty("下载次数")
+    val downloadCount: Long,
+    @ApiModelProperty("创建者")
+    val createdBy: String,
+    @ApiModelProperty("创建时间")
+    val createdDate: String,
+    @ApiModelProperty("修改者")
+    val lastModifiedBy: String,
+    @ApiModelProperty("修改时间")
+    val lastModifiedDate: String
+)

@@ -33,7 +33,6 @@ import com.tencent.devops.artifactory.pojo.SearchProps
 import com.tencent.devops.artifactory.service.PipelineService
 import com.tencent.devops.artifactory.service.RepoSearchService
 import com.tencent.devops.artifactory.util.RepoUtils
-import com.tencent.devops.common.api.exception.OperationException
 import com.tencent.devops.common.api.util.timestamp
 import com.tencent.devops.common.archive.client.BkRepoClient
 import com.tencent.devops.common.archive.constant.ARCHIVE_PROPS_FILE_NAME
@@ -238,10 +237,6 @@ class BkRepoSearchService @Autowired constructor(
         customized: Boolean?
     ): Pair<Long, List<FileInfo>> {
         return serviceSearchFileAndProperty(userId, projectId, searchProps, customized)
-    }
-
-    override fun getJforgInfoByteewTime(page: Int, pageSize: Int, startTime: Long, endTime: Long): List<FileInfo> {
-        throw OperationException("not supported")
     }
 
     companion object {
