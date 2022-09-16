@@ -109,11 +109,23 @@ class BkRepoService @Autowired constructor(
     override fun show(userId: String, projectId: String, artifactoryType: ArtifactoryType, path: String): FileDetail {
         logger.info("show, userId: $userId, projectId: $projectId, artifactoryType: $artifactoryType, path: $path")
         val normalizedPath = PathUtils.checkAndNormalizeAbsPath(path)
-        val fileDetail =
-            bkRepoClient.getFileDetail(userId, projectId, RepoUtils.getRepoByType(artifactoryType), normalizedPath)
-                ?: throw NotFoundException("文件不存在")
-
-        return RepoUtils.toFileDetail(fileDetail)
+        return if (artifactoryType == ArtifactoryType.IMAGE) {
+            val (imageName, version) = PathUtils.getImageNameAndVersion(normalizedPath)
+            val packageKey = "docker://$imageName"
+            val packageVersion = bkRepoClient.getPackageVersionInfo(
+                userId = userId,
+                projectId = projectId,
+                repoName = RepoUtils.getRepoByType(artifactoryType),
+                packageKey = packageKey,
+                version = version
+            )
+            RepoUtils.toFileDetail(imageName, packageVersion)
+        } else {
+            val fileDetail =
+                bkRepoClient.getFileDetail(userId, projectId, RepoUtils.getRepoByType(artifactoryType), normalizedPath)
+                    ?: throw NotFoundException("文件不存在")
+            RepoUtils.toFileDetail(fileDetail)
+        }
     }
 
     override fun folderSize(
@@ -539,21 +551,22 @@ class BkRepoService @Autowired constructor(
 
     private fun buildImageArtifactInfo(manifestInfo: QueryNodeInfo): FileInfo {
         with(manifestInfo) {
-            val fullPathList = fullPath.split("/")
-            val imageName = fullPathList[1]
-            val version = fullPathList[3]
+            val (imageName, version) = PathUtils.getImageNameAndVersion(fullPath)
             val packageKey = "docker://$imageName"
-            val packageVersion = bkRepoClient.getPackageVersions(createdBy, projectId, repoName, packageKey, version).first()
+            val packageVersion = bkRepoClient.getPackageVersionInfo(createdBy, projectId, repoName, packageKey, version)
             return FileInfo(
                 name = imageName,
                 fullName = "$imageName:$version",
                 path = fullPath,
                 fullPath = fullPath,
-                size = packageVersion.size,
+                size = packageVersion.basic.size,
                 folder = false,
-                modifiedTime = packageVersion.lastModifiedDate.timestamp(),
+                modifiedTime = LocalDateTime.parse(
+                    packageVersion.basic.lastModifiedDate,
+                    DateTimeFormatter.ISO_DATE_TIME
+                ).timestamp(),
                 artifactoryType = ArtifactoryType.IMAGE,
-                properties = packageVersion.metadata.map { Property(it.key, it.value.toString()) }
+                properties = packageVersion.metadata.map { Property(it["key"].toString(), it["value"].toString()) }
             )
         }
     }
