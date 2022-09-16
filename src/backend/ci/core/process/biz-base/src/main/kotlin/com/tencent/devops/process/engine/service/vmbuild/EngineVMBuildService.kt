@@ -613,8 +613,6 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             // 锁定先 长过期保证降级
             redisOperation.set(tCompleteTaskKey, result.taskId, expiredInSecond = TimeUnit.HOURS.toSeconds(5))
             executeCompleteTaskBus(
-                projectId = projectId,
-                buildId = buildId,
                 result = result,
                 buildInfo = buildInfo,
                 vmSeqId = vmSeqId,
@@ -628,13 +626,13 @@ class EngineVMBuildService @Autowired(required = false) constructor(
     }
 
     private fun executeCompleteTaskBus(
-        projectId: String,
-        buildId: String,
         result: BuildTaskResult,
         buildInfo: BuildInfo,
         vmSeqId: String,
         runCondition: RunCondition? = null
     ) {
+        val projectId = buildInfo.projectId
+        val buildId = buildInfo.buildId
         // 只要buildResult不为空，都写入到环境变量里面
         if (result.buildResult.isNotEmpty()) {
             LOG.info("ENGINE|$buildId|BCT_ADD_VAR|$projectId| vars=${result.buildResult.size}")
@@ -652,7 +650,6 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         val errorType = ErrorType.getErrorType(result.errorType)
         val buildStatus = getCompleteTaskBuildStatus(
             result = result,
-            buildId = buildId,
             buildInfo = buildInfo,
             vmSeqId = vmSeqId,
             runCondition = runCondition
@@ -742,11 +739,11 @@ class EngineVMBuildService @Autowired(required = false) constructor(
 
     private fun getCompleteTaskBuildStatus(
         result: BuildTaskResult,
-        buildId: String,
         buildInfo: BuildInfo,
         vmSeqId: String,
         runCondition: RunCondition? = null
     ): BuildStatus {
+        val buildId = buildInfo.buildId
         val taskId = result.taskId
         val cancelTaskSetKey = TaskUtils.getCancelTaskIdRedisKey(buildId, vmSeqId, false)
         val cancelFlag = redisOperation.isMember(cancelTaskSetKey, taskId)
@@ -764,6 +761,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         }
         return when {
             !failedEvenCancelFlag && cancelFlag -> {
+                // 如果该任务运行时用户点击了取消则将任务的构建状态置为取消状态
                 LOG.warn("ENGINE|$buildId|BCT_CANCEL_NOT_FINISH|${buildInfo.projectId}|job#$vmSeqId|$taskId")
                 BuildStatus.CANCELED
             }
