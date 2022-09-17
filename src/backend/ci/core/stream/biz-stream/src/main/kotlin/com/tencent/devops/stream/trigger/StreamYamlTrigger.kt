@@ -45,7 +45,6 @@ import com.tencent.devops.process.yaml.v2.parsers.template.YamlTemplateConf
 import com.tencent.devops.process.yaml.v2.utils.ScriptYmlUtils
 import com.tencent.devops.process.yaml.v2.utils.YamlCommonUtils
 import com.tencent.devops.project.api.service.ServiceProjectResource
-import com.tencent.devops.project.api.service.ServiceProjectResource
 import com.tencent.devops.stream.config.StreamGitConfig
 import com.tencent.devops.stream.dao.GitRequestEventBuildDao
 import com.tencent.devops.stream.pojo.enums.TriggerReason
@@ -218,7 +217,7 @@ class StreamYamlTrigger @Autowired constructor(
         }
 
         // 获取蓝盾流水线的pipelineAsCodeSetting
-        val projectCode = GitCommonUtils.getCiProjectId(pipeline.gitProjectId.toLong())
+        val projectCode = GitCommonUtils.getCiProjectId(pipeline.gitProjectId.toLong(), streamGitConfig.getScmType())
         action.data.context.pipelineAsCodeSettings = try {
             if (pipeline.pipelineId.isNotBlank()) {
                 client.get(ServicePipelineSettingResource::class).getPipelineSetting(
