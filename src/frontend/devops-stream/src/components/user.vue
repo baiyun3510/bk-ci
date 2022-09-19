@@ -36,6 +36,7 @@
 
 <script>
     import { mapState } from 'vuex'
+    import { common } from '@/http'
 
     export default ({
         props: {
@@ -65,7 +66,7 @@
             },
 
             logout () {
-                location.href = window.getLoginUrl(`http://${location.hostname}/_logout/`)
+                common.logout()
             }
         }
     })

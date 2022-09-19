@@ -25,21 +25,37 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.pipeline.pojo
+package com.tencent.devops.common.archive.pojo
 
-import io.swagger.annotations.ApiModel
+import io.swagger.annotations.Api
 import io.swagger.annotations.ApiModelProperty
 
-@ApiModel("插件市场初始化流水线请求报文体")
-data class AtomMarketInitPipelineReq(
-    @ApiModelProperty("流水线模型", required = true)
-    val pipelineModel: String,
-    @ApiModelProperty("脚本任务插件Shell执行脚本", required = true)
-    val script: String,
-    @ApiModelProperty("插件基本信息", required = true)
-    val atomBaseInfo: AtomBaseInfo,
-    @ApiModelProperty("是否有可用的操作系统名称配置", required = false)
-    val validOsNameFlag: Boolean? = null,
-    @ApiModelProperty("是否有可用的操作系统cpu架构配置", required = false)
-    val validOsArchFlag: Boolean? = null,
+@Api("基础信息")
+data class BasicInfo(
+    @ApiModelProperty("版本字段")
+    val version: String,
+    @ApiModelProperty("完整路径")
+    val fullPath: String,
+    @ApiModelProperty("文件大小，单位byte")
+    val size: Long,
+    @ApiModelProperty("文件sha256")
+    val sha256: String,
+    @ApiModelProperty("文件md5")
+    val md5: String,
+    @ApiModelProperty("晋级状态标签")
+    val stageTag: List<String>,
+    @ApiModelProperty("所属项目id")
+    val projectId: String,
+    @ApiModelProperty("所属仓库名称")
+    val repoName: String,
+    @ApiModelProperty("下载次数")
+    val downloadCount: Long,
+    @ApiModelProperty("创建者")
+    val createdBy: String,
+    @ApiModelProperty("创建时间")
+    val createdDate: String,
+    @ApiModelProperty("修改者")
+    val lastModifiedBy: String,
+    @ApiModelProperty("修改时间")
+    val lastModifiedDate: String
 )
