@@ -149,7 +149,7 @@ class WeworkRobotServiceImpl @Autowired constructor(
         }
         val errMsg = requestBodies.asSequence().map {
             send(it)
-        }.filter { it.isPresent }.joinToString(", ")
+        }.filter { it.isPresent }.map { it.get().message }.joinToString(", ")
         if (errMsg.isNotBlank()) {
             throw RemoteServiceException(errMsg)
         }
@@ -166,7 +166,8 @@ class WeworkRobotServiceImpl @Autowired constructor(
                     throw RemoteServiceException(
                         httpStatus = it.code(),
                         responseContent = responseBody,
-                        errorMessage = "send wework robot message failed",
+                        errorMessage = "send wework robot message failed：errMsg = ${sendMessageResp.errMsg}" +
+                            "|chatid = ${weworkMessage.chatid} ;",
                         errorCode = sendMessageResp.errCode
                     )
                 }
