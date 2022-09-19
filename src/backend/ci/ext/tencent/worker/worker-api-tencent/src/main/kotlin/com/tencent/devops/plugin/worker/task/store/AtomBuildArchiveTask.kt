@@ -131,9 +131,9 @@ class AtomBuildArchiveTask : ITask() {
             null
         }
         val finalOsArch = if (validOsArchFlag == true) {
-            osName
-        } else {
             osArch
+        } else {
+            null
         }
         val atomEnv = atomEnv(
             projectId = buildVariables.projectId,
