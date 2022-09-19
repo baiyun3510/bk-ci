@@ -46,12 +46,17 @@ class UserAtomResourceImpl @Autowired constructor(
     private val atomService: AtomService
     ) : UserAtomResource {
 
-    override fun getPipelineAtom(projectCode: String, atomCode: String, version: String): Result<PipelineAtom?> {
+    override fun getPipelineAtom(
+        projectCode: String,
+        atomCode: String,
+        version: String,
+        queryOfflineFlag: Boolean
+    ): Result<PipelineAtom?> {
         return atomService.getPipelineAtom(
             projectCode = projectCode,
             atomCode = atomCode,
             version = version,
-            queryOfflineFlag = true
+            queryOfflineFlag = queryOfflineFlag
         )
     }
 
