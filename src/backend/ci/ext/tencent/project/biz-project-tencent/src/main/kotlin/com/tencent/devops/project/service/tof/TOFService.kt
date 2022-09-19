@@ -27,6 +27,7 @@
 
 package com.tencent.devops.project.service.tof
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.common.cache.CacheBuilder
@@ -34,7 +35,6 @@ import com.tencent.devops.common.api.constant.CommonMessageCode.SUCCESS
 import com.tencent.devops.common.api.exception.OperationException
 import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.OkhttpUtils
-import com.tencent.devops.common.auth.api.pojo.BkAuthResponse
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.monitoring.api.service.StatusReportResource
@@ -108,11 +108,13 @@ class TOFService @Autowired constructor(
             detail = getDeftFromCache(userId) ?: getDeptFromTof(operator, userId, bkTicket)
             if (detail == null) {
                 logger.info("user $userId is level office")
-                throw OperationException(MessageCodeUtil.getCodeLanMessage(
-                    messageCode = QUERY_USER_INFO_FAIL,
-                    defaultMessage = "用户$userId 已离职",
-                    params = arrayOf(userId)
-                ))
+                throw OperationException(
+                    MessageCodeUtil.getCodeLanMessage(
+                        messageCode = QUERY_USER_INFO_FAIL,
+                        defaultMessage = "用户$userId 已离职",
+                        params = arrayOf(userId)
+                    )
+                )
             }
             userDeptCache.put(userId, detail)
         }
@@ -350,9 +352,12 @@ class TOFService @Autowired constructor(
         OkhttpUtils.doHttp(request).use { response ->
             val responseContent = response.body()!!.string()
             logger.info("TOFService:$responseContent")
-            val responseObject = objectMapper.readValue<BkAuthResponse<String>>(responseContent)
+            val responseObject = objectMapper.readValue(
+                responseContent,
+                object : TypeReference<MutableMap<String, Any>>() {}
+            )
             logger.info("TOFService:$responseObject")
-            if (!response.isSuccessful || responseObject.code != 0) {
+            if (!response.isSuccessful || responseObject["code"] != "00") {
                 logger.warn(
                     "Fail to request $request with code ${response.code()}, " +
                         "message ${response.message()} and body $responseContent"
