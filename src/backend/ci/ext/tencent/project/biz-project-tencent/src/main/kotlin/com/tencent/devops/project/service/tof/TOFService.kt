@@ -349,7 +349,9 @@ class TOFService @Autowired constructor(
 //        httpClient.newCall(request).execute().use { response ->
         OkhttpUtils.doHttp(request).use { response ->
             val responseContent = response.body()!!.string()
+            logger.info("TOFService:$responseContent")
             val responseObject = objectMapper.readValue<BkAuthResponse<String>>(responseContent)
+            logger.info("TOFService:$responseObject")
             if (!response.isSuccessful || responseObject.code != 0) {
                 logger.warn(
                     "Fail to request $request with code ${response.code()}, " +
@@ -450,14 +452,14 @@ class TOFService @Autowired constructor(
             }
         }
         return UserDeptDetail(
-                bgName = bgName,
-                bgId = bgId,
-                deptName = deptName,
-                deptId = deptId,
-                centerName = centerName,
-                centerId = centerId,
-                groupId = groupId,
-                groupName = groupName
+            bgName = bgName,
+            bgId = bgId,
+            deptName = deptName,
+            deptId = deptId,
+            centerName = centerName,
+            centerId = centerId,
+            groupId = groupId,
+            groupName = groupName
         )
     }
 
