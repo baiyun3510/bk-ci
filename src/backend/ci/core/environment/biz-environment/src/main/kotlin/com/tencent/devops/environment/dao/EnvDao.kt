@@ -322,7 +322,7 @@ class EnvDao {
             dslContext.update(this)
                 .set(ENV_HASH_ID, hashId)
                 .where(ENV_ID.eq(id))
-                .and(ENV_HASH_ID.ne(hashId))
+                .and(ENV_HASH_ID.isNull)
                 .execute()
         }
     }
