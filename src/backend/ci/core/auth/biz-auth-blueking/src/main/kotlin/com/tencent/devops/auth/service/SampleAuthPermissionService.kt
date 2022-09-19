@@ -15,7 +15,6 @@ class SampleAuthPermissionService : PermissionService {
         projectCode: String,
         resourceType: String?
     ): Boolean {
-        logger.info("validateUserResourcePermission $userId $action $projectCode $resourceType")
         return true
     }
 
