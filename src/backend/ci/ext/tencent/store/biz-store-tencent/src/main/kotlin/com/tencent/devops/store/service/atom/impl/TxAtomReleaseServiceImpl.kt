@@ -779,7 +779,7 @@ class TxAtomReleaseServiceImpl : TxAtomReleaseService, AtomReleaseServiceImpl() 
             osNames.forEach { osName ->
                 osArchs.forEach { osArch ->
                     if (!validOsInfos.contains("$osName-$osArch")) {
-                        invalidOsInfos.add(mapOf(osName to osArch))
+                        invalidOsInfos.add(mapOf(KEY_OS_NAME to osName, KEY_OS_ARCH to osArch))
                     }
                 }
             }
