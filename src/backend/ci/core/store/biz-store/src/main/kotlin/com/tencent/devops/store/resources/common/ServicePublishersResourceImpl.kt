@@ -73,7 +73,6 @@ class ServicePublishersResourceImpl @Autowired constructor(
     }
 
     override fun synUpdatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String): Result<Boolean> {
-        publishersDataService.updatePlatformsLogoInfo(userId, platformCode, logoUrl)
-        return Result(true)
+        return Result(publishersDataService.updatePlatformsLogoInfo(userId, platformCode, logoUrl))
     }
 }
