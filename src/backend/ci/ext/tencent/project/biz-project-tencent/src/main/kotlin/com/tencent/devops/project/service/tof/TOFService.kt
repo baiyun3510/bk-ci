@@ -352,11 +352,9 @@ class TOFService @Autowired constructor(
         OkhttpUtils.doHttp(request).use { response ->
             val responseContent = response.body()!!.string()
             logger.info("TOFService:$responseContent")
-            val responseObject = objectMapper.readValue(
-                responseContent,
-                object : TypeReference<MutableMap<String, Any>>() {}
-            )
-            logger.info("TOFService:$responseObject")
+            val responseObject = objectMapper.readValue<Map<String, Any>>(responseContent)
+            logger.info("TOFService:responseObject = $responseObject")
+            logger.info("String : ${responseObject["code"] is String} + INT :${responseObject["code"] is Int}")
             if (!response.isSuccessful || responseObject["code"] != "00") {
                 logger.warn(
                     "Fail to request $request with code ${response.code()}, " +
