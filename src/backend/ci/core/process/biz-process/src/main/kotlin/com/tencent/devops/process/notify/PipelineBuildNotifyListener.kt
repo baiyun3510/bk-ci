@@ -49,6 +49,7 @@ class PipelineBuildNotifyListener @Autowired constructor(
 
     override fun run(event: PipelineBuildNotifyEvent) {
         val notifyTemplateEnumType = PipelineNotifyTemplateEnum.parse(event.notifyTemplateEnum)
+        logger.info("[${event.buildId}] send notify: $notifyTemplateEnumType")
         when (notifyTemplateEnumType) {
             PipelineNotifyTemplateEnum.PIPELINE_MANUAL_REVIEW_STAGE_NOTIFY_TEMPLATE,
             PipelineNotifyTemplateEnum.PIPELINE_MANUAL_REVIEW_ATOM_NOTIFY_TEMPLATE,
@@ -56,6 +57,7 @@ class PipelineBuildNotifyListener @Autowired constructor(
             PipelineNotifyTemplateEnum.PIPELINE_MANUAL_REVIEW_STAGE_NOTIFY_TO_TRIGGER_TEMPLATE,
             PipelineNotifyTemplateEnum.PIPELINE_MANUAL_REVIEW_STAGE_REJECT_TO_TRIGGER_TEMPLATE
             -> {
+                logger.info("[${event.buildId}] send review notify: \n$event")
                 if (event.notifyCompleteCheck) {
                     event.completeReviewNotify()
                 } else {
