@@ -73,5 +73,5 @@ interface PublishersDataService {
     /**
      * 更新平台logo信息
      */
-    fun updatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String)
+    fun updatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String): Boolean
 }

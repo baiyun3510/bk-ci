@@ -36,6 +36,7 @@ import com.tencent.devops.store.pojo.common.StoreDockingPlatformInfo
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import org.jooq.Condition
 import org.jooq.DSLContext
+import org.jooq.Record1
 import org.jooq.Result
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
@@ -216,11 +217,12 @@ class StoreDockingPlatformDao {
         }
     }
 
-    fun getStoreDockingPlatformByCode(dslContext: DSLContext, platformCode: String): TStoreDockingPlatformRecord? {
+    fun getStoreDockingPlatformByCode(dslContext: DSLContext, platformCode: String): String? {
         with(TStoreDockingPlatform.T_STORE_DOCKING_PLATFORM) {
-            return dslContext.selectFrom(this)
+            return dslContext.select(ID)
+                .from(this)
                 .where(PLATFORM_CODE.eq(platformCode))
-                .fetchOne()
+                .fetchOne(0, String::class.java)
         }
     }
 
