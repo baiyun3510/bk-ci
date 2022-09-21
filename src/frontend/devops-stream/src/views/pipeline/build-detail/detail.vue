@@ -1,19 +1,47 @@
 <template>
     <article class="detail-home" v-bkloading="{ isLoading }">
-        <section class="detail-header">
-            <i :class="[getIconClass(buildDetail.status), 'header-icon']"></i>
-            <p class="detail-info">
-                <span class="info-title">
-                    <span class="build-title text-ellipsis" v-bk-overflow-tips>{{ buildDetail.buildTitle }}</span>
-                    <span class="title-item">
-                        <icon
-                            :name="buildTypeIcon"
-                            size="14"
-                            v-bk-tooltips="{
-                                content: buildDetail.operationKind === 'delete' ? 'delete' : buildDetail.objectKind,
-                                placements: ['top']
-                            }"
-                        ></icon>
+        <section class="review-info" v-if="buildDetail.status === 'TRIGGER_REVIEWING'">
+            <div class="review-title">{{$t('pipeline.reviewInfo')}}</div>
+            <div class="review-content">
+                <div class="sub-title">
+                    <span>{{$t("pipeline.reviewTitle")}}</span>
+                    <span class="link-info primary" @click="goToLink(buildDetail.jumpUrl)">{{buildDetail.buildSource}}</span>
+                    <span class="branch-info"><icon name="source-branch" size="12"></icon>{{buildDetail.branch || '--'}}</span>
+                    <span><i class="bk-icon icon-arrows-right"></i></span>
+                    <span class="branch-info"><icon name="source-branch" size="12"></icon>{{buildDetail.targetBranch || '--'}}</span>
+                </div>
+                <div class="file-list">
+                    <p class="link-info" v-for="item in (buildDetail.changeYamlList || [])" :key="item.url" @click="goToLink(buildDetail.jumpUrl + item.url)">
+                        {{item.path}}
+                    </p>
+                    <p v-if="(buildDetail.changeYamlList || []).length === 0">{{$t('pipeline.noYmlFiles')}}</p>
+                </div>
+                <div class="help-tips">
+                    {{$t('pipeline.reviewTips')}}
+                    <!-- <span class="link-tips">{{$t('exception.learnMore')}}</span> -->
+                </div>
+                <div>
+                    <bk-button theme="primary" :disabled="!isTriggerReviewUser" @click="reviewTrigger(true)" style="margin-right: 10px">{{$t('pipeline.approveAndRun')}}</bk-button>
+                    <bk-button theme="danger" :disabled="!isTriggerReviewUser" @click="reviewTrigger(false)">{{$t('pipeline.refuse')}}</bk-button>
+                </div>
+            </div>
+        </section>
+        <section class="detail-content">
+            <section class="detail-header">
+                <i :class="[getIconClass(buildDetail.status), 'header-icon']"></i>
+                <p class="detail-info">
+                    <span class="info-title">
+                        <span class="build-title text-ellipsis" v-bk-overflow-tips>{{ buildDetail.buildTitle }}</span>
+                        <span class="title-item">
+                            <icon
+                                :name="buildTypeIcon"
+                                size="14"
+                                v-bk-tooltips="{
+                                    content: buildDetail.operationKind === 'delete' ? 'delete' : buildDetail.objectKind,
+                                    placements: ['top']
+                                }"
+                            ></icon>
+                        </span>
                     </span>
                     <span class="title-item">
                         <span v-if="buildDetail.objectKind === 'schedule'">{{$t('pipeline.system')}}</span>
@@ -241,6 +269,7 @@
 <style lang="postcss" scoped>
     .detail-home {
         background: #fff;
+        height: 100%;
     }
     .detail-header {
         padding: 10px 24px;

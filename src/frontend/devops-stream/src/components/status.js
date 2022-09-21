@@ -2,6 +2,8 @@ export function getPipelineStatusClass (status, isSkip = false) {
     const statusMap = {
         DEPENDENT_WAITING: 'waiting',
         WAITING: 'waiting',
+        TRIGGER_REVIEWING: 'running',
+        REVIEWING: 'running',
         CANCELED: 'canceled',
         REVIEW_ABORT: 'canceled',
         TRY_FINALLY: 'canceled',
@@ -22,8 +24,7 @@ export function getPipelineStatusClass (status, isSkip = false) {
         QUEUE: 'running',
         LOOP_WAITING: 'running',
         CALL_WAITING: 'running',
-        QUEUE_CACHE: 'running',
-        REVIEWING: 'running'
+        QUEUE_CACHE: 'running'
     }
     return isSkip ? 'skip' : statusMap[status]
 }
@@ -61,6 +62,7 @@ export function getPipelineStatusCircleIconCls (status) {
         WAITING: 'bk-icon icon-clock',
         CANCELED: 'bk-icon icon-exclamation',
         TERMINATE: 'bk-icon icon-exclamation',
+        TRIGGER_REVIEWING: 'stream-icon stream-reviewing-2',
         REVIEWING: 'stream-icon stream-reviewing-2',
         REVIEW_ABORT: 'bk-icon icon-exclamation-triangle',
         FAILED: 'bk-icon icon-close',
