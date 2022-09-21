@@ -64,11 +64,10 @@ class OPRepositoryService @Autowired constructor(
                     val repoRecords = repositoryDao.getAllRepo(dslContext, limit, offset)
                     val repoSize = repoRecords?.size
                     logger.info("repoSize:$repoSize")
-                    repoRecords?.parallelStream()?.map {
+                    repoRecords?.map {
                         val id = it.value1()
                         val hashId = HashUtil.encodeOtherLongId(it.value1())
                         repositoryDao.updateHashId(dslContext, id, hashId)
-                        logger.info("id:$id,hashid:$hashId")
                     }
                     offset += limit
                 } while (repoSize == 1000)
