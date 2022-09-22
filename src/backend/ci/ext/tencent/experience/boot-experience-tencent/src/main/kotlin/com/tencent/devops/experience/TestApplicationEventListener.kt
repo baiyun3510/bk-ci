@@ -11,6 +11,10 @@ class TestApplicationEventListener : ApplicationListener<ApplicationPreparedEven
         val applicationContext = event.applicationContext
         logger.info("######## env : ${applicationContext.environment.systemEnvironment}")
         logger.info("######## property : ${applicationContext.environment.systemProperties}")
+        logger.info(
+            "######## jdbc : " +
+                    "${applicationContext.beanFactory.resolveEmbeddedValue("\${spring.datasource.url}")}"
+        )
     }
 
     companion object {
