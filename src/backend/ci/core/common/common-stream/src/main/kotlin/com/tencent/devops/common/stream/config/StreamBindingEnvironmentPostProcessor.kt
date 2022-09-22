@@ -36,15 +36,14 @@ import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.SpringApplication
-import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor
+import org.springframework.boot.context.event.ApplicationPreparedEvent
 import org.springframework.boot.env.EnvironmentPostProcessor
-import org.springframework.core.Ordered
+import org.springframework.context.ApplicationListener
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.PropertiesPropertySource
 import java.util.Properties
 
-// TODO #7443
-class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered {
+class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, ApplicationListener<ApplicationPreparedEvent> {
 
     @Value("\${spring.cloud.stream.default-binder:#{null}}")
     private val defaultBinder: String? = null
@@ -77,8 +76,9 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered 
                         "with destination[${streamEvent.destination}]"
                 )
                 definition.add(clazz.simpleName)
-                setProperty("spring.cloud.stream.bindings.${clazz.simpleName}.destination", streamEvent.destination)
-                setProperty("spring.cloud.stream.bindings.${clazz.simpleName}.destination", binder)
+                val prefix = "spring.cloud.stream.bindings.${clazz.simpleName}"
+                setProperty("$prefix.destination", streamEvent.destination)
+                setProperty("$prefix.binder", binder)
             }
             val consumerBeans = Reflections(
                 ConfigurationBuilder()
@@ -98,26 +98,23 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered 
                 val subscriptionGroup = streamConsumer.group.ifBlank {
                     serviceName ?: "default"
                 }
-                setProperty(
-                    "spring.cloud.stream.bindings.${method.name}-in-0",
-                    streamConsumer.destination
-                )
-                setProperty(
-                    "spring.cloud.stream.bindings.bindings.${method.name}-in-0",
-                    subscriptionGroup
-                )
+                val prefix = "spring.cloud.stream.bindings.${method.name}-in-0"
+                setProperty("$prefix.destination", streamConsumer.destination)
+                setProperty("$prefix.group", subscriptionGroup)
+                setProperty("$prefix.binder", binder)
             }
             setProperty("spring.cloud.stream.function.definition", definition.joinToString(";"))
             return PropertiesPropertySource(STREAM_SOURCE_NAME, this)
         }
     }
 
-    override fun getOrder(): Int {
-        return ConfigDataEnvironmentPostProcessor.ORDER - 1
+    override fun onApplicationEvent(event: ApplicationPreparedEvent) {
+        logger.info("onApplicationEvent")
     }
 
     companion object {
         private val logger = LoggerFactory.getLogger(StreamBindingEnvironmentPostProcessor::class.java)
         private const val STREAM_SOURCE_NAME = "streamBindingProperties"
     }
+
 }
