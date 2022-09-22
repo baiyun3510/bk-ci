@@ -46,9 +46,16 @@ class OpenExperienceResourceImpl @Autowired constructor(
 
     override fun testOt(): Result<String> {
         logger.info("###### test ot")
-        fixThreadPool.submit { redisOperation.get("test1") }
-        threadPoolExecutor.submit { redisOperation.get("test2") }
-        redisOperation.get("test2")
+        fixThreadPool.submit {
+            logger.info("###### test ot , fixThreadPool")
+            redisOperation.get("test1")
+        }
+        threadPoolExecutor.submit {
+            logger.info("###### test ot , threadPoolExecutor")
+            redisOperation.get("test2")
+        }
+        logger.info("###### test ot , main")
+        redisOperation.get("test3")
         return Result("true")
     }
 
