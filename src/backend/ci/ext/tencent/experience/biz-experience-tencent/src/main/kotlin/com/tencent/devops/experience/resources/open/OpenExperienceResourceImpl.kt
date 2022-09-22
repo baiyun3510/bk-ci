@@ -54,10 +54,10 @@ class OpenExperienceResourceImpl @Autowired constructor(
             logger.info("###### test ot , threadPoolExecutor")
             redisOperation.get("test2")
         }
-        Thread().run {
+        Thread({
             logger.info("###### test ot , Thread")
-            redisOperation.get("test3")
-        }
+            redisOperation.get("test2")
+        }).start()
         logger.info("###### test ot , main")
         redisOperation.get("test4")
         return Result("true")
