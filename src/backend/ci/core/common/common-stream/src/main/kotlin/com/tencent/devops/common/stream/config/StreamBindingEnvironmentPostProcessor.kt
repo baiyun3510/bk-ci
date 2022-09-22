@@ -34,25 +34,15 @@ import org.reflections.scanners.Scanners
 import org.reflections.util.ClasspathHelper
 import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.SpringApplication
-import org.springframework.boot.context.event.ApplicationPreparedEvent
+import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor
 import org.springframework.boot.env.EnvironmentPostProcessor
-import org.springframework.context.ApplicationListener
+import org.springframework.core.Ordered
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.PropertiesPropertySource
 import java.util.Properties
 
-class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, ApplicationListener<ApplicationPreparedEvent> {
-
-    @Value("\${spring.cloud.stream.default-binder:#{null}}")
-    private val defaultBinder: String? = null
-
-    @Value("\${spring.cloud.stream.service-binder:#{null}}")
-    private val serviceBinder: String? = null
-
-    @Value("\${spring.application.name:#{null}}")
-    private val serviceName: String? = null
+class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered {
 
     override fun postProcessEnvironment(environment: ConfigurableEnvironment, application: SpringApplication) {
         environment.propertySources.addLast(createPropertySource())
@@ -62,7 +52,7 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Applicat
         with(Properties()) {
             // 如果未配置服务使用的binder类型，则使用全局默认binder类型
             // 如果均未配置则不进行注解的反射解析
-            val binder = serviceBinder ?: defaultBinder ?: return PropertiesPropertySource(STREAM_SOURCE_NAME, this)
+            val binder = "\${spring.cloud.stream.service-binder}"
             val definition = mutableListOf<String>()
             val eventClasses = Reflections(
                 ConfigurationBuilder()
@@ -95,9 +85,7 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Applicat
                 definition.add(method.name)
                 // 如果注解中指定了订阅组，则直接设置
                 // 如果未指定则取当前服务名作为订阅组，保证所有分布式服务再同一个组内
-                val subscriptionGroup = streamConsumer.group.ifBlank {
-                    serviceName ?: "default"
-                }
+                val subscriptionGroup = "\${spring.application.name}"
                 val prefix = "spring.cloud.stream.bindings.${method.name}-in-0"
                 setProperty("$prefix.destination", streamConsumer.destination)
                 setProperty("$prefix.group", subscriptionGroup)
@@ -108,8 +96,8 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Applicat
         }
     }
 
-    override fun onApplicationEvent(event: ApplicationPreparedEvent) {
-        logger.info("onApplicationEvent")
+    override fun getOrder(): Int {
+        return ConfigDataEnvironmentPostProcessor.ORDER + 1
     }
 
     companion object {
