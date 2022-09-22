@@ -46,7 +46,7 @@ import java.util.Properties
 class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered {
 
     override fun postProcessEnvironment(environment: ConfigurableEnvironment, application: SpringApplication) {
-        logger.info("postProcessEnvironment|$defaultBinder|$serviceBinder|$serviceName")
+        logger.info("postProcessEnvironment|propertySources=${environment.propertySources}")
         environment.propertySources.addLast(createPropertySource())
     }
 
