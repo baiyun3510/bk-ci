@@ -46,6 +46,8 @@ import com.tencent.devops.artifactory.util.PathUtils
 import com.tencent.devops.artifactory.util.RepoUtils
 import com.tencent.devops.artifactory.util.StringUtil
 import com.tencent.devops.artifactory.util.UrlUtil
+import com.tencent.devops.common.api.constant.CommonMessageCode
+import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.exception.OperationException
 import com.tencent.devops.common.api.exception.PermissionForbiddenException
 import com.tencent.devops.common.api.util.timestamp
@@ -101,8 +103,11 @@ class BkRepoService @Autowired constructor(
             ArtifactoryType.CUSTOM_DIR -> {
                 bkRepoCustomDirService.list(userId, projectId, path)
             }
-            // TODO #6302
-            else -> throw UnsupportedOperationException()
+            // 镜像不支持按路径查询列表
+            ArtifactoryType.IMAGE -> throw ErrorCodeException(
+                errorCode = CommonMessageCode.PARAMETER_IS_INVALID,
+                params = arrayOf(ArtifactoryType.IMAGE.name)
+            )
         }
     }
 
