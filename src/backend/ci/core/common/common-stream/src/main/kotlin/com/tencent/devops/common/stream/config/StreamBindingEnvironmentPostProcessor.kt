@@ -44,8 +44,6 @@ import org.springframework.core.env.PropertiesPropertySource
 import org.springframework.stereotype.Component
 import java.util.Properties
 
-// TODO #7443
-@Component
 class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, ApplicationListener<ApplicationPreparedEvent> {
 
     @Value("\${spring.cloud.stream.default-binder:#{null}}")
