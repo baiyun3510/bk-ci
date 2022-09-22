@@ -25,15 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.stream.constants
+package com.tencent.devops.common.stream.pojo
 
-object StreamBinding {
-    // 日志预处理事件
-    const val BINDING_LOG_ORIGIN_EVENT_DESTINATION = "e.build.log.origin.event"
-
-    // 日志预处理事件
-    const val BINDING_LOG_STORAGE_EVENT_DESTINATION = "e.build.log.storage.event"
-
-    // 日志构建状态事件
-    const val BINDING_LOG_STATUS_EVENT_DESTINATION = "e.build.log.status.event"
-}
+import com.tencent.devops.common.stream.annotation.StreamEvent
+@StreamEvent("a.b.c")
+data class SampleEvent(
+    val buildId: String,
+    var retryTime: Int = 2,
+    var delayMills: Int = 0
+)

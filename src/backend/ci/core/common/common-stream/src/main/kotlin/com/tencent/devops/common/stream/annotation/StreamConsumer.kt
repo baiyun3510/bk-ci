@@ -25,15 +25,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.stream.constants
+package com.tencent.devops.common.stream.annotation
 
-object StreamBinding {
-    // 日志预处理事件
-    const val BINDING_LOG_ORIGIN_EVENT_DESTINATION = "e.build.log.origin.event"
+import org.springframework.context.annotation.Bean
 
-    // 日志预处理事件
-    const val BINDING_LOG_STORAGE_EVENT_DESTINATION = "e.build.log.storage.event"
-
-    // 日志构建状态事件
-    const val BINDING_LOG_STATUS_EVENT_DESTINATION = "e.build.log.status.event"
-}
+/**
+ * Stream消费者注解
+ * @param destination 绑定要消费的topic
+ * @param group 指定订阅组，如果是广播事件则需要指定，否则为非广播默认订阅组
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@Bean
+annotation class StreamConsumer(
+    val destination: String,
+    val group: String = ""
+)
