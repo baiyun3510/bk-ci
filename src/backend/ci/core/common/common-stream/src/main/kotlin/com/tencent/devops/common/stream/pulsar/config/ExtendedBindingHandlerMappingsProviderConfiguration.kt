@@ -54,11 +54,6 @@ class ExtendedBindingHandlerMappingsProviderConfiguration {
         return PulsarConfigBeanPostProcessor()
     }
 
-    @Bean
-    fun streamBindingEnvironmentPostProcessor(): StreamBindingEnvironmentPostProcessor {
-        return StreamBindingEnvironmentPostProcessor()
-    }
-
     /**
      * if you want to customize a bean, please use this BeanName `PulsarMessageConverter.DEFAULT_NAME`.
      */
