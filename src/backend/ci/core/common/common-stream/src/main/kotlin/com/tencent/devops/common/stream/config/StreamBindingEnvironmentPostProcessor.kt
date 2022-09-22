@@ -58,6 +58,7 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Applicat
     private val serviceName: String? = null
 
     override fun postProcessEnvironment(environment: ConfigurableEnvironment, application: SpringApplication) {
+        logger.info("postProcessEnvironment|$defaultBinder|$serviceBinder|$serviceName")
         environment.propertySources.addLast(createPropertySource())
     }
 

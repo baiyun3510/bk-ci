@@ -1,4 +1,2 @@
-org.springframework.boot.env.EnvironmentPostProcessor=\
-com.tencent.devops.common.stream.config.StreamBindingEnvironmentPostProcessor
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.tencent.devops.common.stream.pulsar.config.ExtendedBindingHandlerMappingsProviderConfiguration
