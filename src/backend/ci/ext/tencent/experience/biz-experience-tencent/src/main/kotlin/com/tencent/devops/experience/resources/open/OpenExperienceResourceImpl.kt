@@ -8,6 +8,7 @@ import com.tencent.devops.experience.pojo.outer.OuterLoginParam
 import com.tencent.devops.experience.pojo.outer.OuterProfileVO
 import com.tencent.devops.experience.service.ExperienceAppService
 import com.tencent.devops.experience.service.ExperienceOuterService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -44,9 +45,14 @@ class OpenExperienceResourceImpl @Autowired constructor(
     }
 
     override fun testOt(): Result<String> {
+        logger.info("###### test ot")
         fixThreadPool.submit { redisOperation.get("test1") }
         threadPoolExecutor.submit { redisOperation.get("test2") }
         redisOperation.get("test2")
         return Result("true")
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(OpenExperienceResourceImpl::class.java)
     }
 }
