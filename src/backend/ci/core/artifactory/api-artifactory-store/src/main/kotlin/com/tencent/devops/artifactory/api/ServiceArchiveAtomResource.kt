@@ -27,16 +27,23 @@
 
 package com.tencent.devops.artifactory.api
 
+import com.tencent.devops.artifactory.pojo.ArchiveAtomResponse
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition
+import org.glassfish.jersey.media.multipart.FormDataParam
+import java.io.InputStream
 import javax.ws.rs.Consumes
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.HeaderParam
+import javax.ws.rs.POST
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
@@ -70,4 +77,37 @@ interface ServiceArchiveAtomResource {
         @QueryParam("atomCode")
         atomCode: String
     ): Result<Boolean>
+
+    @ApiOperation("归档插件包")
+    @POST
+    @Path("/projects/{projectCode}/ids/{atomId}/codes/{atomCode}/versions/{version}/types/{releaseType}/archive")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    fun archiveAtom(
+        @ApiParam("userId", required = true)
+        @HeaderParam(AUTH_HEADER_USER_ID)
+        userId: String,
+        @ApiParam("项目编码", required = true)
+        @PathParam("projectCode")
+        projectCode: String,
+        @ApiParam("插件ID", required = true)
+        @PathParam("atomId")
+        atomId: String,
+        @ApiParam("插件代码", required = true)
+        @PathParam("atomCode")
+        atomCode: String,
+        @ApiParam("插件版本号", required = true)
+        @PathParam("version")
+        version: String,
+        @ApiParam("发布类型", required = true)
+        @PathParam("releaseType")
+        releaseType: ReleaseTypeEnum,
+        @ApiParam("文件", required = true)
+        @FormDataParam("file")
+        inputStream: InputStream,
+        @FormDataParam("file")
+        disposition: FormDataContentDisposition,
+        @ApiParam("支持的操作系统", required = true)
+        @FormDataParam("os")
+        os: String
+    ): Result<ArchiveAtomResponse?>
 }
