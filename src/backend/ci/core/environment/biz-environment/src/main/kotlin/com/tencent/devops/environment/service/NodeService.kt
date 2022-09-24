@@ -291,7 +291,8 @@ class NodeService @Autowired constructor(
                 } else {
                     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(it.lastModifyTime)
                 },
-                lastModifyUser = it.lastModifyUser ?: ""
+                lastModifyUser = it.lastModifyUser ?: "",
+                agentHashId = HashUtil.encodeLongId(thirdPartyAgent?.id ?: 0L)
             )
         }
     }

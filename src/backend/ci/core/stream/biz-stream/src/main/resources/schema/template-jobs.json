@@ -226,6 +226,9 @@
                   "workspace" : {
                     "description" : "当self-hosted=true时生效，用于指定工作空间，系统指定的工作空间会带上流水线ID等信息，比较长，在 windows 下，有可能会报路径超长。",
                     "type" : "string"
+                  },
+                  "xcode" : {
+                    "type" : "string"
                   }
                 }
               } ]
