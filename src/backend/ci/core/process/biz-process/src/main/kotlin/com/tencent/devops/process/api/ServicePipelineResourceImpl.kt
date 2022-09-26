@@ -154,8 +154,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
                 userId = userId,
                 projectId = projectId,
                 pipelineId = pipelineId,
-                name = pipeline.name,
-                desc = pipeline.desc,
+                pipelineCopy = pipeline,
                 channelCode = ChannelCode.BS
             )
         )
