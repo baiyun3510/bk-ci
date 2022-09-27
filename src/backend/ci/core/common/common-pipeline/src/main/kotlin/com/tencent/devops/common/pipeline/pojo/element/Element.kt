@@ -42,6 +42,7 @@ import com.tencent.devops.common.pipeline.pojo.element.agent.WindowsScriptElemen
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildAtomElement
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildLessAtomElement
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketCheckImageElement
+import com.tencent.devops.common.pipeline.pojo.element.market.MarketTriggerAtomElement
 import com.tencent.devops.common.pipeline.pojo.element.matrix.MatrixStatusElement
 import com.tencent.devops.common.pipeline.pojo.element.quality.QualityGateInElement
 import com.tencent.devops.common.pipeline.pojo.element.quality.QualityGateOutElement
@@ -91,7 +92,8 @@ import io.swagger.annotations.ApiModelProperty
         value = CodeGitGenericWebHookTriggerElement::class,
         name = CodeGitGenericWebHookTriggerElement.classType
     ),
-    JsonSubTypes.Type(value = CodeP4WebHookTriggerElement::class, name = CodeP4WebHookTriggerElement.classType)
+    JsonSubTypes.Type(value = CodeP4WebHookTriggerElement::class, name = CodeP4WebHookTriggerElement.classType),
+    JsonSubTypes.Type(value = MarketTriggerAtomElement::class, name = MarketTriggerAtomElement.classType)
 )
 @Suppress("ALL")
 abstract class Element(
