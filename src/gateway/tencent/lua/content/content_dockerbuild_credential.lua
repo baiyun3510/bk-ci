@@ -54,7 +54,7 @@ local responseBody = res:read_body()
 --- 转换JSON的返回数据为TABLE
 local result = json.decode(responseBody)
 --- 判断JSON转换是否成功
-if result == nil then 
+if result == nil then
   ngx.log(ngx.STDERR, "failed to parse core response：", responseBody)
   ngx.exit(500)
   return
