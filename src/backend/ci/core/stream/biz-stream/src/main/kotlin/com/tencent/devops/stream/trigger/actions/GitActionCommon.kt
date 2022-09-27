@@ -57,12 +57,22 @@ object GitActionCommon {
         )
 
         val matcher = TriggerBuilder.buildGitWebHookMatcher(gitEvent)
-        val repository = if (action.data.context.repoTrigger != null) {
+        val repository = if (action.checkRepoHookTrigger()) {
             TriggerBuilder.buildCodeGitForRepoRepository(action)
         } else TriggerBuilder.buildCodeGitRepository(action.data.setting)
         try {
             EventCacheUtil.initEventCache()
-            EventCacheUtil.putIfAbsentEventCache(repository, EventRepositoryCache())
+            val eventRepoCache = with(action.data.context) {
+                EventRepositoryCache(
+                    gitMrReviewInfo = gitMrReviewInfo,
+                    gitMrInfo = gitMrInfo,
+                    gitMrChangeFiles = changeSet,
+                    gitDefaultBranchLatestCommitInfo = gitDefaultBranchLatestCommitInfo
+                )
+            }
+            EventCacheUtil.putIfAbsentEventCache(
+                repository, eventRepoCache
+            )
             val isMatch = if (needMatch) {
                 matcher.isMatch(
                     projectId = action.data.setting.projectCode ?: "",
@@ -91,7 +101,9 @@ object GitActionCommon {
             }
             return Pair(isMatch, startParam)
         } finally {
-            logger.info("git action event cache: ${JsonUtil.toJson(EventCacheUtil.getAll(), false)}")
+            if (logger.isDebugEnabled) {
+                logger.debug("git action event cache: ${JsonUtil.toJson(EventCacheUtil.getAll(), false)}")
+            }
             EventCacheUtil.remove()
         }
     }
