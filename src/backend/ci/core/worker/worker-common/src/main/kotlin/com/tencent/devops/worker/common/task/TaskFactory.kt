@@ -31,7 +31,9 @@ import com.tencent.devops.common.pipeline.pojo.element.agent.LinuxScriptElement
 import com.tencent.devops.common.pipeline.pojo.element.agent.WindowsScriptElement
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildAtomElement
 import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildLessAtomElement
+import com.tencent.devops.common.pipeline.pojo.element.market.MarketTriggerAtomElement
 import com.tencent.devops.worker.common.task.market.MarketAtomTask
+import com.tencent.devops.worker.common.task.market.MarketTriggerAtomTask
 import com.tencent.devops.worker.common.task.script.bat.WindowsScriptTask
 import com.tencent.devops.worker.common.task.script.shell.LinuxScriptTask
 import org.reflections.Reflections
@@ -51,6 +53,7 @@ object TaskFactory {
         register(WindowsScriptElement.classType, WindowsScriptTask::class)
         register(MarketBuildAtomElement.classType, MarketAtomTask::class)
         register(MarketBuildLessAtomElement.classType, MarketAtomTask::class)
+        register(MarketTriggerAtomElement.classType, MarketTriggerAtomTask::class)
 
         val reflections = Reflections("com.tencent.devops.plugin.worker.task")
         val taskClasses = reflections.getSubTypesOf(ITask::class.java)
