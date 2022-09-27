@@ -33,7 +33,6 @@ import com.tencent.devops.common.api.pojo.Pagination
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.HashUtil
 import com.tencent.devops.common.api.util.timestampmilli
-import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.utils.HomeHostUtil
 import com.tencent.devops.experience.constant.ExperiencePublicType
 import com.tencent.devops.experience.dao.ExperienceDao
@@ -100,7 +99,7 @@ class ExperienceIndexService @Autowired constructor(
                     type = it.type,
                     externalUrl = it.link
                 )
-            }?.toMutableList()?.map { banners.add(index++, it) }
+            }?.toMutableList()?.forEach { banners.add(index++, it) }
         }
         return Result(Pagination(hasNext, banners))
     }
@@ -275,7 +274,7 @@ class ExperienceIndexService @Autowired constructor(
         }
         val platformStr = PlatformEnum.of(platform)?.name
         val lastDownloadMap = experienceBaseService.getLastDownloadMap(userId)
-        val records = experiencePublicDao.listMiniGameExperience(
+        val records = experiencePublicDao.listExperienceByProjectId(
             dslContext = dslContext,
             platform = platformStr,
             projectId = minigameProjectId!!
@@ -333,7 +332,7 @@ class ExperienceIndexService @Autowired constructor(
         if (minigamePicture == null) {
             throw NotFoundException("MiniGame Picture not found")
         }
-        logger.info("minigame picture :${UrlUtil.toOuterPhotoAddr(minigamePicture!!)}")
+        logger.info("Minigame picture :${UrlUtil.toOuterPhotoAddr(minigamePicture!!)}")
         return Result(UrlUtil.toOuterPhotoAddr(minigamePicture!!))
     }
 
