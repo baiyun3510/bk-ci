@@ -33,7 +33,6 @@ import com.tencent.devops.model.auth.tables.records.TAuthManagerUserRecord
 import org.jooq.DSLContext
 import org.jooq.Result
 import org.jooq.impl.DSL.currentLocalDateTime
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Repository
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -94,8 +93,7 @@ class ManagerUserDao {
     fun listExpiringRecords(dslContext: DSLContext): Result<TAuthManagerUserRecord>? {
         with(TAuthManagerUser.T_AUTH_MANAGER_USER) {
             return dslContext.selectFrom(this).where(
-                END_TIME.sub(EXPIRE_TIME).also { logger.info("${END_TIME.sub(EXPIRE_TIME)}") }
-                    .le(currentLocalDateTime())
+                END_TIME.sub(EXPIRE_TIME).le(currentLocalDateTime())
             ).fetch()
         }
     }
@@ -138,6 +136,5 @@ class ManagerUserDao {
     companion object {
         const val HALF_A_YEAR = 182
         const val EXPIRE_TIME = 7
-        private val logger = LoggerFactory.getLogger(ManagerUserDao::class.java)
     }
 }
