@@ -25,22 +25,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.resources.common
+package com.tencent.devops.store.api
 
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.store.api.common.TxOpMigrateStoreLogoResource
-import com.tencent.devops.store.service.common.TxOpMigrateStoreFileService
-import com.tencent.devops.store.service.common.impl.TxOpMigrateStoreLogoServiceImpl
-import javax.annotation.Resource
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import javax.ws.rs.Consumes
+import javax.ws.rs.PUT
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
+import javax.ws.rs.core.MediaType
 
-@RestResource
-class TxOpMigrateStoreLogoResourceImpl constructor(
-    @Resource(type = TxOpMigrateStoreLogoServiceImpl::class)
-    private val txOpMigrateStoreFileService: TxOpMigrateStoreFileService
-) : TxOpMigrateStoreLogoResource {
+@Api(tags = ["OP_STORE_LOGO"], description = "OP-商店-描述信息")
+@Path("/op/store/description")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+interface TxOpMigrateStoreDescriptionResource {
 
-    override fun migrateStoreLogo(): Result<Boolean> {
-        return Result(txOpMigrateStoreFileService.migrateStoreResources())
-    }
+    @ApiOperation("迁移描述信息引用资源")
+    @PUT
+    @Path("/migrate")
+    fun migrateStoreDescription(): Result<Boolean>
 }
