@@ -1,5 +1,6 @@
 package com.tencent.devops.worker.common.task.market
 
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.pipeline.enums.BuildTaskStatus
 import com.tencent.devops.common.pipeline.pojo.element.agent.LinuxScriptElement
 import com.tencent.devops.process.pojo.BuildTask
@@ -18,16 +19,22 @@ class MarketTriggerAtomTask : ITask() {
                 vmSeqId = vmSeqId,
                 status = BuildTaskStatus.DO,
                 taskId = taskId,
-                type = "linuxScript",
+                type = "marketBuildLess",
                 params = mapOf(
-                    "id" to "e-02653654700a494680e1c21cfefb5d9d",
-                    "scriptType" to "SHELL",
-                    "script" to "echo hello"
+                    "id" to "e-9170c3938ea24055b0a41499092f1404",
+                    "name" to "git事件触发-插件",
+                    "atomCode" to "gitTrigger",
+                    "data" to JsonUtil.toJson(mapOf("desc" to "ddfdf"))
                 )
             )
         }
+        val triggerBuildVariables = buildVariables.copy(
+            variables = buildVariables.variables.plus(
+                "BK_CI_EVENT_ACTION" to "REGISTER"
+            )
+        )
         val task = TaskFactory.create(LinuxScriptElement.classType)
-        val taskDaemon = TaskDaemon(task, triggerBuildTask, buildVariables, workspace)
+        val taskDaemon = TaskDaemon(task, triggerBuildTask, triggerBuildVariables, workspace)
         taskDaemon.runWithTimeout()
     }
 }
