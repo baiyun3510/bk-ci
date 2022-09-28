@@ -13,6 +13,7 @@ import java.io.File
 class MarketTriggerAtomTask : ITask() {
 
     override fun execute(buildTask: BuildTask, buildVariables: BuildVariables, workspace: File) {
+        System.setProperty("BK_CI_ATOM_PRIVATE_CONFIG_WRITE_SWITCH", "false")
         val triggerBuildTask = with(buildTask) {
             BuildTask(
                 buildId = buildId,
