@@ -24,7 +24,8 @@ class MarketTriggerAtomTask : ITask() {
                     "id" to "e-9170c3938ea24055b0a41499092f1404",
                     "name" to "git事件触发-插件",
                     "atomCode" to "gitTrigger",
-                    "data" to JsonUtil.toJson(mapOf("desc" to "ddfdf"))
+                    "data" to JsonUtil.toJson(mapOf("desc" to "ddfdf")),
+                    "version" to "1.*"
                 )
             )
         }
