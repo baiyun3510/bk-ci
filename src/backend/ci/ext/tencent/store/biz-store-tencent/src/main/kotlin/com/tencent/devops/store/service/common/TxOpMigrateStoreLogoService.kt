@@ -27,10 +27,10 @@
 
 package com.tencent.devops.store.service.common
 
-interface TxOpMigrateStoreDescriptionService {
+interface TxOpMigrateStoreLogoService {
 
     /**
      * 迁移logo
      */
-    fun migrateStoreDescription(): Boolean
+    fun migrateStoreLogo(): Boolean
 }
