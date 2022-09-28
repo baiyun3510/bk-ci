@@ -2,7 +2,7 @@ package com.tencent.devops.worker.common.task.market
 
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.pipeline.enums.BuildTaskStatus
-import com.tencent.devops.common.pipeline.pojo.element.agent.LinuxScriptElement
+import com.tencent.devops.common.pipeline.pojo.element.market.MarketBuildLessAtomElement
 import com.tencent.devops.process.pojo.BuildTask
 import com.tencent.devops.process.pojo.BuildVariables
 import com.tencent.devops.worker.common.task.ITask
@@ -33,7 +33,7 @@ class MarketTriggerAtomTask : ITask() {
                 "BK_CI_EVENT_ACTION" to "REGISTER"
             )
         )
-        val task = TaskFactory.create(LinuxScriptElement.classType)
+        val task = TaskFactory.create(MarketBuildLessAtomElement.classType)
         val taskDaemon = TaskDaemon(task, triggerBuildTask, triggerBuildVariables, workspace)
         taskDaemon.runWithTimeout()
     }
