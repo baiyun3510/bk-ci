@@ -93,6 +93,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                     val description = atomDescriptionRecord[tAtom.DESCRIPTION]
                     val userId = atomDescriptionRecord[tAtom.CREATOR]
                     val pathList = checkLogoUrlCondition(description)
+                    logger.info("migrateAtomDescription: $pathList")
                     val pathMap = mutableMapOf<String, String>()
                     if (pathList.isNullOrEmpty()) {
                         return@forEach
