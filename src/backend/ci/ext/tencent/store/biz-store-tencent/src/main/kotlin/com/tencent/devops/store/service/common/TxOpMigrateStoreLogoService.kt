@@ -27,10 +27,10 @@
 
 package com.tencent.devops.store.service.common
 
-interface TxOpMigrateStoreFileService {
+interface TxOpMigrateStoreLogoService {
 
     /**
-     * 迁移商店组件资源
+     * 迁移logo
      */
-    fun migrateStoreResources(): Boolean
+    fun migrateStoreLogo(): Boolean
 }

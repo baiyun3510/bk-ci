@@ -30,7 +30,7 @@ package com.tencent.devops.store.service.common
 interface TxOpMigrateStoreDescriptionService {
 
     /**
-     * 迁移logo
+     * 迁移商店组件描述引用文件
      */
     fun migrateStoreDescription(): Boolean
 }
