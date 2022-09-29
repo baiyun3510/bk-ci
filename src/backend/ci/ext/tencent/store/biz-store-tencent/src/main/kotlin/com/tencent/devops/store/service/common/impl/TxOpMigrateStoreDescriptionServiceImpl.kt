@@ -107,7 +107,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                         logger.info("migrateAtomDescription atomCode:${tAtom.ATOM_CODE} pathMap:$pathMap")
                     }
-                    if (pathMap.isNotEmpty()) {
+                    if (pathMap.isEmpty()) {
                         return@forEach
                     }
                     val newDescription = replaceDescription(description, pathMap)
@@ -148,7 +148,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         }
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
-                    if (pathMap.isNotEmpty()) {
+                    if (pathMap.isEmpty()) {
                         return@forEach
                     }
                     val newDescription = replaceDescription(description, pathMap)
@@ -189,7 +189,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         }
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
-                    if (pathMap.isNotEmpty()) {
+                    if (pathMap.isEmpty()) {
                         return@forEach
                     }
                     val newDescription = replaceDescription(description, pathMap)
@@ -230,7 +230,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         }
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
-                    if (pathMap.isNotEmpty()) {
+                    if (pathMap.isEmpty()) {
                         return@forEach
                     }
                     val newDescription = replaceDescription(description, pathMap)
@@ -271,7 +271,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         }
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
-                    if (pathMap.isNotEmpty()) {
+                    if (pathMap.isEmpty()) {
                         return@forEach
                     }
                     val newDescription = replaceDescription(description, pathMap)
