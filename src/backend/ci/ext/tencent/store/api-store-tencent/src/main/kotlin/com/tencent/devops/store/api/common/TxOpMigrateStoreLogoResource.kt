@@ -36,14 +36,19 @@ import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["OP_STORE_LOGO"], description = "OP-商店-logo")
-@Path("/op/store/logo")
+@Api(tags = ["OP_STORE"], description = "OP-商店")
+@Path("/op/store/migrate")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 interface TxOpMigrateStoreLogoResource {
 
     @ApiOperation("迁移logo")
     @PUT
-    @Path("/migrate")
+    @Path("/logo")
     fun migrateStoreLogo(): Result<Boolean>
+
+    @ApiOperation("迁移组件描述引用文件")
+    @PUT
+    @Path("/Description")
+    fun migrateStoreDescription(): Result<Boolean>
 }
