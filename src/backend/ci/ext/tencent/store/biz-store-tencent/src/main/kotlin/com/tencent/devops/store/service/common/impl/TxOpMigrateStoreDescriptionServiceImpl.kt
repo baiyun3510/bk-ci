@@ -41,7 +41,6 @@ import com.tencent.devops.model.store.tables.TImage
 import com.tencent.devops.model.store.tables.TTemplate
 import com.tencent.devops.store.dao.TxOpMigrateStoreDescriptionDao
 import com.tencent.devops.store.service.common.TxOpMigrateStoreDescriptionService
-import org.apache.commons.text.StringEscapeUtils
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -294,6 +293,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         while (matcher.find()) {
             pathList.add(matcher.group(2))
         }
+        logger.info("checkLogoUrlCondition  pathList:$pathList")
         return pathList
     }
 
