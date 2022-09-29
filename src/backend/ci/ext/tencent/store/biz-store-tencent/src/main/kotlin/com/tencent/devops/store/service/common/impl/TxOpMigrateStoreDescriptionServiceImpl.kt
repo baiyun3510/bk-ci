@@ -44,11 +44,13 @@ import com.tencent.devops.store.service.common.TxOpMigrateStoreDescriptionServic
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+@Service
 class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val txOpMigrateStoreDescriptionDao: TxOpMigrateStoreDescriptionDao,
