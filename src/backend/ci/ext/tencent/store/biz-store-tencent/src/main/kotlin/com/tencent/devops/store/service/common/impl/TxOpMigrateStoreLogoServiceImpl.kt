@@ -27,6 +27,12 @@
 
 package com.tencent.devops.store.service.common.impl
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.tencent.devops.artifactory.api.service.ServiceBkRepoResource
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.JsonUtil
+import com.tencent.devops.common.api.util.OkhttpUtils
+import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.model.store.tables.TAtom
 import com.tencent.devops.model.store.tables.TCategory
@@ -37,25 +43,27 @@ import com.tencent.devops.model.store.tables.TLogo
 import com.tencent.devops.model.store.tables.TStoreMediaInfo
 import com.tencent.devops.model.store.tables.TTemplate
 import com.tencent.devops.store.dao.TxMigrateStoreLogoDao
+import com.tencent.devops.store.service.common.TxOpMigrateStoreLogoService
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.nio.file.Files
 import java.util.concurrent.Executors
 
 @Service
 class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
     private val txMigrateStoreLogoDao: TxMigrateStoreLogoDao,
-    client: Client
-) : TxOpMigrateStoreFileServiceImpl(client) {
+    private val client: Client
+) : TxOpMigrateStoreLogoService {
 
     companion object {
         private val logger = LoggerFactory.getLogger(TxOpMigrateStoreLogoServiceImpl::class.java)
         private const val DEFAULT_PAGE_SIZE = 100
     }
 
-    override fun migrateStoreResources(): Boolean {
+    override fun migrateStoreLogo(): Boolean {
         // 迁移插件logo
         migrateAtomLogo()
         // 迁移模板logo
@@ -93,7 +101,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = atomLogoRecord[tAtom.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -128,7 +136,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = templateLogoRecord[tTemplate.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -160,7 +168,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = atomLogoRecord[tAtom.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -192,7 +200,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = imageLogoRecord[tImage.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -224,7 +232,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = extServiceLogoRecord[tExtensionService.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -256,7 +264,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = categoryLogoRecord[tCategory.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -288,7 +296,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = storeLogoRecord[tLogo.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -320,7 +328,7 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     val userId = mediaLogoRecord[tStoreMediaInfo.CREATOR]
-                    val bkRepoLogoUrl = getBkRepoFileUrl(logoUrl, userId)
+                    val bkRepoLogoUrl = getBkRepoLogoUrl(logoUrl, userId)
                     if (bkRepoLogoUrl.isNullOrBlank()) {
                         return@forEach
                     }
@@ -332,5 +340,42 @@ class TxOpMigrateStoreLogoServiceImpl @Autowired constructor(
             } while (mediaLogoRecords?.size == DEFAULT_PAGE_SIZE)
             logger.info("end migrateMediaLogo!!")
         }
+    }
+
+    private fun getBkRepoLogoUrl(logoUrl: String, userId: String): String? {
+        val fileType = getFileType(logoUrl)
+        val tmpFile = Files.createTempFile(UUIDUtil.generate(), ".$fileType").toFile()
+        val fileName = tmpFile.name
+        try {
+            // 从s3下载logo
+            OkhttpUtils.downloadFile(logoUrl, tmpFile)
+            // 把logo上传至bkrepo
+            val serviceUrlPrefix = client.getServiceUrl(ServiceBkRepoResource::class)
+            val destPath = "file/$fileType/$fileName"
+            val serviceUrl =
+                "$serviceUrlPrefix/service/bkrepo/statics/file/upload?userId=$userId&destPath=$destPath"
+            OkhttpUtils.uploadFile(serviceUrl, tmpFile).use { response ->
+                val responseContent = response.body()!!.string()
+                if (!response.isSuccessful) {
+                    logger.warn("$userId upload file:$fileName fail,responseContent:$responseContent")
+                }
+                val result = JsonUtil.to(responseContent, object : TypeReference<Result<String?>>() {})
+                logger.info("requestUrl:$serviceUrl,result:$result")
+                return result.data
+            }
+        } catch (ignore: Throwable) {
+            logger.warn("$userId upload file:$fileName fail, error is:", ignore)
+        } finally {
+            // 删除临时文件
+            tmpFile.delete()
+        }
+        return null
+    }
+
+    private fun getFileType(logoUrl: String): String {
+        val paramIndex = logoUrl.lastIndexOf("?")
+        val url = if (paramIndex > 0) logoUrl.substring(0, paramIndex) else logoUrl
+        val index = url.lastIndexOf(".")
+        return url.substring(index + 1).toLowerCase()
     }
 }
