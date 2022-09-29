@@ -40,7 +40,7 @@ import javax.ws.rs.core.MediaType
 @Path("/op/store/migrate")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface TxOpMigrateStoreLogoResource {
+interface TxOpMigrateStoreResource {
 
     @ApiOperation("迁移logo")
     @PUT
@@ -49,6 +49,6 @@ interface TxOpMigrateStoreLogoResource {
 
     @ApiOperation("迁移组件描述引用文件")
     @PUT
-    @Path("/Description")
+    @Path("/description")
     fun migrateStoreDescription(): Result<Boolean>
 }
