@@ -311,7 +311,6 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
             val matcher: Matcher = pattern.matcher(description)
             newDescription = matcher.replaceAll("$1${it.value}$4")
         }
-        StringEscapeUtils.escapeCsv()
         return newDescription
     }
 
