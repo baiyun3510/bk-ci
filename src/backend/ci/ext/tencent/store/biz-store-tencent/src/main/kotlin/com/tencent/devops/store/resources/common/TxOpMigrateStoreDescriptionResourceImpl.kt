@@ -31,12 +31,12 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.store.api.common.TxOpMigrateStoreLogoResource
 import com.tencent.devops.store.service.common.TxOpMigrateStoreFileService
-import com.tencent.devops.store.service.common.impl.TxOpMigrateStoreLogoServiceImpl
+import com.tencent.devops.store.service.common.impl.TxOpMigrateStoreDescriptionServiceImpl
 import javax.annotation.Resource
 
 @RestResource
-class TxOpMigrateStoreLogoResourceImpl constructor(
-    @Resource(type = TxOpMigrateStoreLogoServiceImpl::class)
+class TxOpMigrateStoreDescriptionResourceImpl constructor(
+    @Resource(type = TxOpMigrateStoreDescriptionServiceImpl::class)
     private val txOpMigrateStoreFileService: TxOpMigrateStoreFileService
 ) : TxOpMigrateStoreLogoResource {
 
