@@ -41,6 +41,7 @@ import com.tencent.devops.model.store.tables.TImage
 import com.tencent.devops.model.store.tables.TTemplate
 import com.tencent.devops.store.dao.TxOpMigrateStoreDescriptionDao
 import com.tencent.devops.store.service.common.TxOpMigrateStoreDescriptionService
+import org.apache.commons.text.StringEscapeUtils
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -99,11 +100,11 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                     }
                     pathList.forEach path@{
                         val bkRepoFileUrl = getBkRepoFileUrl(it, userId)
-                        logger.info("migrateAtomDescription bkRepoFileUrl:$bkRepoFileUrl")
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
-                        pathMap[it] = bkRepoFileUrl
+                        pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
+                        logger.info("migrateAtomDescription bkRepoFileUrl:$pathMap")
                     }
                     if (pathMap.isNotEmpty()) {
                         return@forEach
@@ -144,7 +145,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
-                        pathMap[it] = bkRepoFileUrl
+                        pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
                     if (pathMap.isNotEmpty()) {
                         return@forEach
@@ -185,7 +186,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
-                        pathMap[it] = bkRepoFileUrl
+                        pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
                     if (pathMap.isNotEmpty()) {
                         return@forEach
@@ -226,7 +227,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
-                        pathMap[it] = bkRepoFileUrl
+                        pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
                     if (pathMap.isNotEmpty()) {
                         return@forEach
@@ -267,7 +268,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
-                        pathMap[it] = bkRepoFileUrl
+                        pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
                     }
                     if (pathMap.isNotEmpty()) {
                         return@forEach
@@ -306,11 +307,11 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
     private fun replaceDescription(description: String, pathMap: Map<String, String>): String {
         var newDescription = ""
         pathMap.forEach {
-            val bkCiPathRegex = "(!\\[.*]\\()(${it.key})(\\))"
-            val pattern: Pattern = Pattern.compile(bkCiPathRegex)
+            val pattern: Pattern = Pattern.compile("(!\\[(.*)]\\()(${it.key})(\\))")
             val matcher: Matcher = pattern.matcher(description)
-            newDescription = matcher.replaceAll("$1${it.value}$3")
+            newDescription = matcher.replaceAll("$1${it.value}$4")
         }
+        StringEscapeUtils.escapeCsv()
         return newDescription
     }
 
