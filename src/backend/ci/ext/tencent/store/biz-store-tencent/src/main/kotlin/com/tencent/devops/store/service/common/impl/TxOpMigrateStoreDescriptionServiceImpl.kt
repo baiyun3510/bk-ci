@@ -93,13 +93,13 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                     val description = atomDescriptionRecord[tAtom.DESCRIPTION]
                     val userId = atomDescriptionRecord[tAtom.CREATOR]
                     val pathList = checkLogoUrlCondition(description)
-                    logger.info("migrateAtomDescription: $pathList")
                     val pathMap = mutableMapOf<String, String>()
                     if (pathList.isNullOrEmpty()) {
                         return@forEach
                     }
                     pathList.forEach path@{
                         val bkRepoFileUrl = getBkRepoFileUrl(it, userId)
+                        logger.info("migrateAtomDescription bkRepoFileUrl:$bkRepoFileUrl")
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
@@ -291,7 +291,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         val matcher: Matcher = pattern.matcher(description)
         val pathList = mutableListOf<String>()
         while (matcher.find()) {
-            pathList.add(matcher.group(3))
+            pathList.add(matcher.group(2))
         }
         return pathList
     }
