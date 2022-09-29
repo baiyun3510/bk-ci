@@ -25,22 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.resources.common
+package com.tencent.devops.store.service.common
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.store.api.common.TxOpMigrateStoreLogoResource
-import com.tencent.devops.store.service.common.TxOpMigrateStoreFileService
-import com.tencent.devops.store.service.common.impl.TxOpMigrateStoreLogoServiceImpl
-import javax.annotation.Resource
+interface TxOpMigrateStoreFileService {
 
-@RestResource
-class TxOpMigrateStoreLogoResourceImpl constructor(
-    @Resource(type = TxOpMigrateStoreLogoServiceImpl::class)
-    private val txOpMigrateStoreFileService: TxOpMigrateStoreFileService
-) : TxOpMigrateStoreLogoResource {
-
-    override fun migrateStoreLogo(): Result<Boolean> {
-        return Result(txOpMigrateStoreFileService.migrateStoreResources())
-    }
+    /**
+     * 迁移商店组件资源
+     */
+    fun migrateStoreResources(): Boolean
 }
