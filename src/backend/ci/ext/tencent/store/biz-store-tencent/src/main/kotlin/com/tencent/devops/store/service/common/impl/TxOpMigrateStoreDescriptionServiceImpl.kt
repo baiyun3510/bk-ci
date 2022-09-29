@@ -98,12 +98,13 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     pathList.forEach path@{
+                        logger.info("migrateAtomDescription atomCode:${tAtom.ATOM_CODE} bkRepoFileUrl:$it")
                         val bkRepoFileUrl = getBkRepoFileUrl(it, userId)
                         if (bkRepoFileUrl.isNullOrBlank()) {
                             return@path
                         }
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
-                        logger.info("migrateAtomDescription bkRepoFileUrl:$pathMap")
+                        logger.info("migrateAtomDescription atomCode:${tAtom.ATOM_CODE} bkRepoFileUrl:$pathMap")
                     }
                     if (pathMap.isNotEmpty()) {
                         return@forEach
