@@ -24,13 +24,33 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-dependencies {
-    api(project(":core:common:common-webhook:api-common-webhook"))
-    api(project(":core:common:common-scm"))
-    api(project(":core:common:common-client"))
-    api(project(":core:repository:api-repository"))
-    api(project(":core:ticket:api-ticket"))
-    api(project(":core:process:api-process"))
-    api("io.github.resilience4j:resilience4j-circuitbreaker")
-    testImplementation(project(":core:common:common-test"))
+
+package com.tencent.devops.common.web.handler
+
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.service.Profile
+import com.tencent.devops.common.service.utils.SpringContextUtil
+import com.tencent.devops.common.web.annotation.BkExceptionMapper
+import org.slf4j.LoggerFactory
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
+import javax.ws.rs.ext.ExceptionMapper
+
+@BkExceptionMapper
+class FeignRetryExceptionMapper : ExceptionMapper<feign.RetryableException> {
+    companion object {
+        val logger = LoggerFactory.getLogger(FeignRetryExceptionMapper::class.java)!!
+    }
+
+    override fun toResponse(exception: feign.RetryableException): Response {
+        logger.warn("Failed with feign time out", exception)
+        val status = Response.Status.REQUEST_TIMEOUT
+        val message = if (SpringContextUtil.getBean(Profile::class.java).isDebug()) {
+            exception.message
+        } else {
+            "请求超时"
+        }
+        return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE)
+            .entity(Result(status = status.statusCode, message = message, data = message)).build()
+    }
 }

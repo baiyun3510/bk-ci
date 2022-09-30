@@ -42,7 +42,6 @@ import com.tencent.devops.common.service.utils.KubernetesUtils
 import com.tencent.devops.common.service.utils.SpringContextUtil
 import feign.Contract
 import feign.Feign
-import feign.Logger
 import feign.MethodMetadata
 import feign.Request
 import feign.RequestInterceptor
@@ -62,7 +61,6 @@ import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.stereotype.Component
 import java.lang.reflect.Method
 import java.security.cert.CertificateException
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
@@ -182,17 +180,7 @@ class Client @Autowired constructor(
 
     fun <T : Any> getWithoutRetry(clz: KClass<T>): T {
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
-        return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
-            override fun log(configKey: String, format: String, vararg args: Any) {
-                val value = args.map { it.toString() }
-                try {
-                    logger.info("FEIGN_DEBUG_FORMAT|$configKey|${Formatter().format(format, value)}")
-                } catch (e: Throwable) {
-                    logger.info("FEIGN_DEBUG|$configKey|$format|$value")
-                }
-                super.log(configKey, format, *args)
-            }
-        })
+        return Feign.builder()
             .client(longRunClient)
             .errorDecoder(clientErrorDecoder)
             .encoder(jacksonEncoder)
@@ -285,17 +273,7 @@ class Client @Autowired constructor(
             logger.info("[$clz]|try to proxy by feign: ${ignored.message}")
         }
         val requestInterceptor = SpringContextUtil.getBean(RequestInterceptor::class.java) // 获取为feign定义的拦截器
-        return Feign.builder().logLevel(Logger.Level.FULL).logger(object : Logger.JavaLogger() {
-            override fun log(configKey: String, format: String, vararg args: Any) {
-                val value = args.map { it.toString() }
-                try {
-                    logger.info("FEIGN_DEBUG_FORMAT|$configKey|${Formatter().format(format, value)}")
-                } catch (e: Throwable) {
-                    logger.info("FEIGN_DEBUG|$configKey|$format|$value")
-                }
-                super.log(configKey, format, *args)
-            }
-        })
+        return Feign.builder()
             .client(feignClient)
             .errorDecoder(clientErrorDecoder)
             .encoder(jacksonEncoder)
@@ -308,7 +286,6 @@ class Client @Autowired constructor(
                 }
 
                 override fun continueOrPropagate(e: RetryableException) {
-                    logger.info("FEIGN_DEBUG|continueOrPropagate|${e.method()}|${e.message}", e)
                     if (e.method() != Request.HttpMethod.GET) {
                         throw e
                     } else {
