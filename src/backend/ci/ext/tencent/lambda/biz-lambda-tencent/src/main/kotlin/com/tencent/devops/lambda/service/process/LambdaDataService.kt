@@ -72,7 +72,6 @@ import com.tencent.devops.model.process.tables.records.TPipelineBuildDetailRecor
 import com.tencent.devops.model.process.tables.records.TPipelineBuildHistoryRecord
 import com.tencent.devops.model.process.tables.records.TPipelineBuildTaskRecord
 import com.tencent.devops.process.engine.pojo.BuildInfo
-import com.tencent.devops.process.enums.VariableType
 import com.tencent.devops.project.api.service.ServiceProjectResource
 import com.tencent.devops.repository.api.ServiceRepositoryResource
 import com.tencent.devops.scm.utils.code.git.GitUtils
@@ -362,7 +361,7 @@ class LambdaDataService @Autowired constructor(
             }.associate { it.key to it.value.toString() }
             val invalidKeyList = mutableSetOf<String>()
             variables.forEach { (key, _) ->
-                if (pattern.matcher(key).find()) invalidKeyList.add(key)
+                if (!pattern.matcher(key).find()) invalidKeyList.add(key)
             }
             if (invalidKeyList.isEmpty()) {
                 variables.forEach { (key, _) ->
@@ -383,7 +382,7 @@ class LambdaDataService @Autowired constructor(
             if (invalidKeyList.isEmpty()) return
             logger.info(
                 "invalidVarBuild buildId=${historyRecord.buildId}" +
-                    "|${historyRecord.executeTime}|${historyRecord.buildNum}|$invalidKeyList"
+                    "|${historyRecord.startUser}|${historyRecord.buildNum}|$invalidKeyList"
             )
             val history = genBuildHistory(
                 projectInfo = projectInfo,
