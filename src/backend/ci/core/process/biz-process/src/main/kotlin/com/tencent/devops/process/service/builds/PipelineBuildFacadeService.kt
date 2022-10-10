@@ -82,6 +82,7 @@ import com.tencent.devops.process.engine.service.PipelineStageService
 import com.tencent.devops.process.engine.service.PipelineTaskService
 import com.tencent.devops.process.engine.service.WebhookBuildParameterService
 import com.tencent.devops.process.engine.utils.BuildUtils
+import com.tencent.devops.process.engine.utils.PipelineUtils
 import com.tencent.devops.process.jmx.api.ProcessJmxApi
 import com.tencent.devops.process.permission.PipelinePermissionService
 import com.tencent.devops.process.pojo.BuildBasicInfo
@@ -970,6 +971,8 @@ class PipelineBuildFacadeService(
                 params = arrayOf(stageId)
             )
         }
+        PipelineUtils.checkStageReviewParam(reviewRequest?.reviewParams)
+
         val setting = pipelineRepositoryService.getSetting(projectId, pipelineId)
         val runLock = PipelineBuildRunLock(redisOperation, pipelineId)
         try {

@@ -34,6 +34,7 @@ import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.pojo.Result
 import feign.Response
 import feign.codec.ErrorDecoder
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
@@ -45,10 +46,12 @@ import java.io.IOException
  */
 @Service
 class ClientErrorDecoder @Autowired constructor(val objectMapper: ObjectMapper) : ErrorDecoder {
+    private val logger = LoggerFactory.getLogger(ClientErrorDecoder::class.java)
 
     override fun decode(methodKey: String, response: Response): Exception {
         // 首先判断返回结果是否能被序列化
         val content = response.body().asReader(Charsets.UTF_8).buffered().use(BufferedReader::readText)
+        logger.info("ClientErrorDecoder|$content")
         val result: Result<*>
         try {
             result = objectMapper.readValue(content)

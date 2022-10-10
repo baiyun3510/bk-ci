@@ -24,30 +24,33 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.tencent.devops.lambda.storage
 
-class ESServiceTest {
+package com.tencent.devops.common.web.handler
 
-/*    private val client: TransportClient = mock()
-    private val esClient: ESClient = ESClient("esClient", client, false)
-    private val redisTemplate: RedisTemplate<String, String> = mock()
-    private val redisOperation: RedisOperation = RedisOperation(redisTemplate)
-    private val objectMapper: ObjectMapper = mock()
-    private val dslContext: DSLContext = mock()
-    private val lambdaBuildIndexDao: LambdaBuildIndexDao = mock()
-    private val indexService = IndexService(dslContext, lambdaBuildIndexDao, redisOperation)
-    private val esService: ESService = ESService(
-        esClient = esClient,
-        redisOperation = redisOperation,
-        indexService = indexService,
-        objectMapper = objectMapper
-    )
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.service.Profile
+import com.tencent.devops.common.service.utils.SpringContextUtil
+import com.tencent.devops.common.web.annotation.BkExceptionMapper
+import org.slf4j.LoggerFactory
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
+import javax.ws.rs.ext.ExceptionMapper
 
-    @Test
-    fun testDate() {
-        val begin = LocalDateTime.now().minusDays(10).timestamp()
-        val end = System.currentTimeMillis() / 1000
-        val index = esService.getIndex(begin, end)
-        assertEquals(11, index.size)
-    }*/
+@BkExceptionMapper
+class FeignRetryExceptionMapper : ExceptionMapper<feign.RetryableException> {
+    companion object {
+        val logger = LoggerFactory.getLogger(FeignRetryExceptionMapper::class.java)!!
+    }
+
+    override fun toResponse(exception: feign.RetryableException): Response {
+        logger.warn("Failed with feign time out", exception)
+        val status = Response.Status.REQUEST_TIMEOUT
+        val message = if (SpringContextUtil.getBean(Profile::class.java).isDebug()) {
+            exception.message
+        } else {
+            "请求超时"
+        }
+        return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE)
+            .entity(Result(status = status.statusCode, message = message, data = message)).build()
+    }
 }
