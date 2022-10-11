@@ -41,8 +41,8 @@ import org.springframework.context.annotation.Primary
 class StreamLocalConfiguration {
 
     @Bean
-    @Primary
     @ConditionalOnProperty(prefix = "auth", name = ["idProvider"], havingValue = "git")
+    @Primary
     fun tgitStreamPermissionService(
         client: Client,
         managerService: ManagerService,
