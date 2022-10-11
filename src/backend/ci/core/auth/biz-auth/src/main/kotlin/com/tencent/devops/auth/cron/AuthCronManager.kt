@@ -95,7 +95,7 @@ class AuthCronManager @Autowired constructor(
     /**
      * 每天凌晨1点检查即将失效的管理员权限
      */
-    @Scheduled(cron = "0 10 18 * * ?")
+    @Scheduled(cron = "0 23 18 * * ?")
     fun checkExpiringManager() {
         val redisLock = RedisLock(redisOperation, AUTH_EXPIRING_MANAGAER_APPROVAL, 60L)
         try {
