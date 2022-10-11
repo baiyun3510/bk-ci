@@ -34,7 +34,6 @@ import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.service.utils.MessageCodeUtil
-import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
 import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.project.api.service.ServiceUserResource
@@ -48,7 +47,6 @@ import com.tencent.devops.store.pojo.common.enums.PublisherType
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.PublishersDataService
 import com.tencent.devops.store.service.common.StoreDeptService
-import com.tencent.devops.store.service.common.StoreMemberService
 import com.tencent.devops.store.service.common.StoreUserService
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
@@ -66,7 +64,8 @@ class PublishersDataServiceImpl @Autowired constructor(
     private val storeUserService: StoreUserService,
     private val storeDeptService: StoreDeptService
 ) : PublishersDataService {
-    override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
+
+    override fun createPublisherData(userId: String, publishers: List<PublishersRequest>): Int {
         val storePublisherInfoRecords = mutableListOf<TStorePublisherInfoRecord>()
         val storePublisherMemberRelRecords = mutableListOf<TStorePublisherMemberRelRecord>()
         publishers.forEach {
@@ -101,9 +100,7 @@ class PublishersDataServiceImpl @Autowired constructor(
             if (it.publishersType == PublisherType.ORGANIZATION) {
                 //  生成可使用组织发布者进行发布的成员关联
                 logger.debug("CreatePublisherMemberRel publisherCode is ${it.publishersCode}, members is ${it.members}")
-                getStoreMemberService(it.storeType)
-                    .getMemberId(it.publishersCode, it.storeType, it.members)
-                    .data?.map { memberId ->
+                it.members.forEach { memberId ->
                     val storePublisherMemberRel = TStorePublisherMemberRelRecord()
                     storePublisherMemberRel.id = UUIDUtil.generate()
                     storePublisherMemberRel.publisherId = storePublisherInfoId
@@ -138,7 +135,7 @@ class PublishersDataServiceImpl @Autowired constructor(
         return publishersDao.batchDelete(dslContext, publishers)
     }
 
-    override fun updatePublisherData(userId: String, publishers: List<PublishersRequest>): Int  {
+    override fun updatePublisherData(userId: String, publishers: List<PublishersRequest>): Int {
         val storePublisherInfoRecords = mutableListOf<TStorePublisherInfoRecord>()
         publishers.forEach {
             val deptInfos = analysisDept(userId, it.organization)
@@ -179,7 +176,7 @@ class PublishersDataServiceImpl @Autowired constructor(
     override fun deletePlatformsData(
         userId: String,
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
-    ): Int  {
+    ): Int {
         return storeDockingPlatformDao.batchDelete(dslContext, userId, storeDockingPlatformRequests)
     }
 
@@ -204,14 +201,14 @@ class PublishersDataServiceImpl @Autowired constructor(
             )) {
             return MessageCodeUtil.generateResponseDataObject(CommonMessageCode.PERMISSION_DENIED)
         }
-        // 查看是否能使用组织发布者进行发布
-        val viewMemberInfo = getStoreMemberService(storeType).viewMemberInfo(userId, storeCode, storeType).data
-        val organizationPublisherId =
-            publishersDao.getPublisherMemberRelById(dslContext, storeCode, viewMemberInfo!!.id)
-        if (!organizationPublisherId.isNullOrBlank()) {
+        val organizationPublisherIds =
+            publishersDao.getPublisherMemberRelById(dslContext, storeCode, userId)
+        if (organizationPublisherIds.isNotEmpty()) {
             // 获取组织发布者信息
-            val organizationPublisherInfo = publishersDao.getPublisherInfoById(dslContext, organizationPublisherId)
-            publishersInfos.add(organizationPublisherInfo!!)
+            organizationPublisherIds.forEach {
+                val organizationPublisherInfo = publishersDao.getPublisherInfoById(dslContext, it)
+                publishersInfos.add(organizationPublisherInfo!!)
+            }
         }
         var personPublisherInfo = publishersDao.getPublisherInfoByCode(dslContext, userId)
         logger.debug("getPublishers personPublisherInfo is $personPublisherInfo")
@@ -263,17 +260,12 @@ class PublishersDataServiceImpl @Autowired constructor(
         //  根据解析组织名称获取组织ID
         val deptNames = organization.split("/")
         val deptInfos = mutableListOf<DeptInfo>()
-        deptNames.forEachIndexed(){ index, deptName ->
+        deptNames.forEachIndexed() { index, deptName ->
             val result = client.get(ServiceDeptResource::class).getDeptByName(userId, deptName).data
-            result?.let { it -> deptInfos.add(index, it.results[0] ) }
+            result?.let { it -> deptInfos.add(index, it.results[0]) }
         }
         storeDeptService.getDeptByName(userId, "技术运营部")
         return deptInfos
-    }
-
-    private fun getStoreMemberService(storeType: StoreTypeEnum): StoreMemberService {
-        return SpringContextUtil.getBean(StoreMemberService::class.java,
-            "${storeType.name.toLowerCase()}MemberService")
     }
     companion object {
         private val logger = LoggerFactory.getLogger(PublishersDataServiceImpl::class.java)

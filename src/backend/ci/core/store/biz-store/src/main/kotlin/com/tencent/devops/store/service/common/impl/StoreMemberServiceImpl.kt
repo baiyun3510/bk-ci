@@ -157,10 +157,6 @@ abstract class StoreMemberServiceImpl : StoreMemberService {
         }
     }
 
-    override fun getMemberId(storeCode: String, storeType: StoreTypeEnum, userName: List<String>): Result<List<String>> {
-        return Result(storeMemberDao.getMemberId(dslContext, storeCode, storeType.type.toByte(), userName))
-    }
-
     override fun batchListMember(
         storeCodeList: List<String?>,
         storeType: StoreTypeEnum
