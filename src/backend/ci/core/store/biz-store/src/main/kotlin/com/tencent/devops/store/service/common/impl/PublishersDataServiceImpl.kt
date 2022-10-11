@@ -202,7 +202,7 @@ class PublishersDataServiceImpl @Autowired constructor(
             return MessageCodeUtil.generateResponseDataObject(CommonMessageCode.PERMISSION_DENIED)
         }
         val organizationPublisherIds =
-            publishersDao.getPublisherMemberRelById(dslContext, storeCode, userId)
+            publishersDao.getPublisherMemberRelById(dslContext, userId)
         if (organizationPublisherIds.isNotEmpty()) {
             // 获取组织发布者信息
             organizationPublisherIds.forEach {
@@ -244,6 +244,7 @@ class PublishersDataServiceImpl @Autowired constructor(
             }
         }
         personPublisherInfo?.let { publishersInfos.add(it) }
+        val organizationPublisherInfos =
         logger.debug("getPublishers $publishersInfos")
         return Result(publishersInfos)
     }
