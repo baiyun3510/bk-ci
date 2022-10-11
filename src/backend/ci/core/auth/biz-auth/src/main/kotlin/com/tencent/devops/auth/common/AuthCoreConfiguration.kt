@@ -171,7 +171,7 @@ class AuthCoreConfiguration {
     fun permissionUrlService() = SamplePermissionUrlServiceImpl()
 
     @Bean
-    //@ConditionalOnMissingBean(PermissionProjectService::class)
+    @ConditionalOnMissingBean(PermissionProjectService::class)
     fun sampleAuthPermissionProjectService() = SampleAuthPermissionProjectService()
 
     @Bean
