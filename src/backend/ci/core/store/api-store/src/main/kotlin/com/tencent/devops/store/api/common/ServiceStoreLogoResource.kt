@@ -61,9 +61,6 @@ interface ServiceStoreLogoResource {
         @ApiParam("contentLength", required = true)
         @HeaderParam("content-length")
         contentLength: Long,
-        @ApiParam("是否压缩", required = false)
-        @QueryParam("compressFlag")
-        compressFlag: Boolean? = false,
         @ApiParam("logo", required = true)
         @FormDataParam("logo")
         inputStream: InputStream,
