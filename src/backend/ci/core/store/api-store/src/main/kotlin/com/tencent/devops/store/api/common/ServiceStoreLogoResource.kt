@@ -25,44 +25,46 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.dispatch.pojo.enums
+package com.tencent.devops.store.api.common
 
-import com.tencent.devops.common.pipeline.type.DispatchType
-import com.tencent.devops.common.pipeline.type.docker.DockerDispatchType
+import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.store.pojo.common.StoreLogoInfo
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition
+import org.glassfish.jersey.media.multipart.FormDataParam
+import java.io.InputStream
+import javax.ws.rs.Consumes
+import javax.ws.rs.HeaderParam
+import javax.ws.rs.POST
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
 
-enum class JobQuotaVmType(val displayName: String) {
-    DOCKER_VM("Docker on VM"),
-    KUBERNETES("kubernetes"),
-    DOCKER_DEVCLOUD("Docker on DevCloud"),
-    MACOS_DEVCLOUD("MacOS on DevCloud"),
-    WINDOWS_DEVCLOUD("Windows on DevCloud"),
-    OTHER("私有构建机或集群"),
-    AGENTLESS("无编译环境"),
-    DOCKER_GITCI("工蜂CI构建机"),
-    DOCKER_STREAM("STREAM构建机"),
-    DOCKER_BCS("Docker on Bcs"),
-    ALL("所有类型");
+@Api(tags = ["SERVICE_STORE_LOGO"], description = "STORE-LOGO")
+@Path("/service/store/logo")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+interface ServiceStoreLogoResource {
 
-    companion object {
-        fun parse(vmType: String): JobQuotaVmType? {
-            values().forEach {
-                if (it.name == vmType) {
-                    return it
-                }
-            }
-            return null
-        }
-
-        fun parse(dispatchType: DispatchType): JobQuotaVmType? {
-            when (dispatchType) {
-                is DockerDispatchType -> {
-                    return DOCKER_VM
-                }
-                // 其他类型暂时不限制
-                else -> {
-                    return null
-                }
-            }
-        }
-    }
+    @ApiOperation("上传logo")
+    @POST
+    @Path("/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    fun uploadStoreLogo(
+        @ApiParam("userId", required = true)
+        @HeaderParam(AUTH_HEADER_USER_ID)
+        userId: String,
+        @ApiParam("contentLength", required = true)
+        @HeaderParam("content-length")
+        contentLength: Long,
+        @ApiParam("logo", required = true)
+        @FormDataParam("logo")
+        inputStream: InputStream,
+        @FormDataParam("logo")
+        disposition: FormDataContentDisposition
+    ): Result<StoreLogoInfo?>
 }

@@ -25,44 +25,33 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.dispatch.pojo.enums
+package com.tencent.devops.store.resources.common
 
-import com.tencent.devops.common.pipeline.type.DispatchType
-import com.tencent.devops.common.pipeline.type.docker.DockerDispatchType
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.web.RestResource
+import com.tencent.devops.store.api.common.ServiceStoreLogoResource
+import com.tencent.devops.store.pojo.common.StoreLogoInfo
+import com.tencent.devops.store.service.common.StoreLogoService
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition
+import org.springframework.beans.factory.annotation.Autowired
+import java.io.InputStream
 
-enum class JobQuotaVmType(val displayName: String) {
-    DOCKER_VM("Docker on VM"),
-    KUBERNETES("kubernetes"),
-    DOCKER_DEVCLOUD("Docker on DevCloud"),
-    MACOS_DEVCLOUD("MacOS on DevCloud"),
-    WINDOWS_DEVCLOUD("Windows on DevCloud"),
-    OTHER("私有构建机或集群"),
-    AGENTLESS("无编译环境"),
-    DOCKER_GITCI("工蜂CI构建机"),
-    DOCKER_STREAM("STREAM构建机"),
-    DOCKER_BCS("Docker on Bcs"),
-    ALL("所有类型");
+@RestResource
+class ServiceStoreLogoResourceImpl @Autowired constructor(
+    private val storeLogoService: StoreLogoService
+) : ServiceStoreLogoResource {
 
-    companion object {
-        fun parse(vmType: String): JobQuotaVmType? {
-            values().forEach {
-                if (it.name == vmType) {
-                    return it
-                }
-            }
-            return null
-        }
-
-        fun parse(dispatchType: DispatchType): JobQuotaVmType? {
-            when (dispatchType) {
-                is DockerDispatchType -> {
-                    return DOCKER_VM
-                }
-                // 其他类型暂时不限制
-                else -> {
-                    return null
-                }
-            }
-        }
+    override fun uploadStoreLogo(
+        userId: String,
+        contentLength: Long,
+        inputStream: InputStream,
+        disposition: FormDataContentDisposition
+    ): Result<StoreLogoInfo?> {
+        return storeLogoService.uploadStoreLogo(
+            userId = userId,
+            contentLength = contentLength,
+            inputStream = inputStream,
+            disposition = disposition
+        )
     }
 }
