@@ -113,6 +113,7 @@ allprojects {
             dependencySet("io.github.resilience4j:${Versions.Resilience4j}") {
                 entry("resilience4j-circuitbreaker")
             }
+            dependency("io.mockk:mockk:${Versions.mockk}")
         }
     }
 
@@ -128,8 +129,8 @@ allprojects {
         it.exclude("com.flipkart.zjsonpatch", "zjsonpatch")
         it.exclude("com.zaxxer","HikariCP-java7")
     }
-    // 兼容dom4j 的 bug : https://github.com/gradle/gradle/issues/13656
     dependencies {
+        // 兼容dom4j 的 bug : https://github.com/gradle/gradle/issues/13656
         components {
             withModule("org.dom4j:dom4j") {
                 allVariants { withDependencies { clear() } }

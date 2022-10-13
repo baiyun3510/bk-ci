@@ -86,7 +86,7 @@ class PipelineViewGroupService @Autowired constructor(
         }
         val viewIds = pipelineViewGroups.map { it.viewId }.toSet()
         val views = pipelineViewDao.list(dslContext, projectId, viewIds)
-        if (viewIds.isEmpty()) {
+        if (views.isEmpty()) {
             return emptyMap()
         }
         val viewId2Name = views.filter { it.isProject }.associate { it.id to it.name }
@@ -595,7 +595,6 @@ class PipelineViewGroupService @Autowired constructor(
     }
 
     fun bulkRemove(userId: String, projectId: String, bulkRemove: PipelineViewBulkRemove): Boolean {
-        val isProjectManager = checkPermission(userId, projectId)
         val viewId = HashUtil.decodeIdToLong(bulkRemove.viewId)
         val view = pipelineViewDao.get(
             dslContext = dslContext,
@@ -606,6 +605,7 @@ class PipelineViewGroupService @Autowired constructor(
             logger.warn("bulkRemove , view:$viewId")
             return false
         }
+        val isProjectManager = checkPermission(userId, projectId)
         if (isProjectManager && !view.isProject && view.createUser != userId) {
             logger.warn("bulkRemove , $userId is ProjectManager , but can`t remove other view")
             return false

@@ -50,4 +50,5 @@ object Versions {
     const val pushGateway = "0.15.0"
     const val Resilience4j = "1.7.1"
     const val jjwt = "0.11.5"
+    const val mockk = "1.12.2"
 }
