@@ -25,11 +25,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.web.mq.alert
+package com.tencent.devops.common.stream.annotation
 
-data class Alert(
-    val module: String,
-    val level: AlertLevel,
-    val title: String,
-    val message: String
+import org.springframework.context.annotation.Bean
+
+/**
+ * Stream消费者注解
+ * @param destination 绑定要消费的topic
+ * @param group 指定订阅组，如果是广播事件则需要指定，否则为非广播默认订阅组
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@Bean
+annotation class StreamEventConsumer(
+    val destination: String,
+    val group: String,
+    val separately: Boolean = false
 )
