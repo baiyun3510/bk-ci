@@ -1,7 +1,7 @@
-#websocket Deployment
+#websocket StatefulSet
 {{ if .Values.websocket.enabled -}}
-apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
-kind: Deployment
+apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
+kind: StatefulSet
 metadata:
   name: {{ include "bkci.names.fullname" . }}-websocket
   labels: {{- include "bkci.labels.standard" . | nindent 4 }}
