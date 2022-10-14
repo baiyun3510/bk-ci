@@ -11,6 +11,7 @@ metadata:
     app.kubernetes.io/component: microservice
     app.kubernetes.io/name: websocket
 spec:
+  serviceName: websocket
   selector:
     matchLabels: {{- include "bkci.labels.matchLabels" . | nindent 6 }}
       app.kubernetes.io/component: microservice
@@ -27,7 +28,6 @@ spec:
         app.kubernetes.io/component: microservice
         app.kubernetes.io/name: websocket
     spec:
-      serviceName: websocket
       serviceAccountName: {{ .Values.rbac.serviceAccount }}
       {{- if .Values.websocket.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.websocket.hostAliases "context" $) | nindent 8 }}
