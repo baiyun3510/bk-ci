@@ -110,10 +110,10 @@ allprojects {
             }
             dependency("com.perforce:p4java:${Versions.p4}")
             dependency("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${Versions.JacksonDatatypeJsr}")
+            dependency("io.mockk:mockk:${Versions.mockk}")
             dependencySet("io.github.resilience4j:${Versions.Resilience4j}") {
                 entry("resilience4j-circuitbreaker")
             }
-            dependency("io.mockk:mockk:${Versions.mockk}")
         }
     }
 
