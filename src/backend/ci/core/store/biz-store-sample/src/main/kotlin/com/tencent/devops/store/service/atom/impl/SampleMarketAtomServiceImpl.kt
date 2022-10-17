@@ -27,6 +27,7 @@
 
 package com.tencent.devops.store.service.atom.impl
 
+import com.tencent.devops.artifactory.api.ServiceArchiveAtomResource
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.repository.pojo.Repository
 import com.tencent.devops.repository.pojo.enums.TokenTypeEnum
@@ -49,5 +50,23 @@ class SampleMarketAtomServiceImpl : SampleMarketAtomService, MarketAtomServiceIm
     ): Result<Boolean> {
         // 开源版暂不支持按代码库打成可执行包的方式
         return Result(true)
+    }
+
+    override fun updateAtomFileContent(
+        userId: String,
+        projectCode: String,
+        atomCode: String,
+        version: String?,
+        content: String,
+        fileName: String
+    ): Result<Boolean> {
+        return client.get(ServiceArchiveAtomResource::class)
+            .updateArchiveFile(
+                projectCode = projectCode,
+                atomCode = atomCode,
+                version = version!!,
+                fileName = fileName,
+                content = content
+            )
     }
 }
