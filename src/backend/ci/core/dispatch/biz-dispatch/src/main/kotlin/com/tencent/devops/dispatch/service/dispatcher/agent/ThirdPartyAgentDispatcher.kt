@@ -759,6 +759,9 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             return false
         }
         hasTryAgents.add(agent.agentId)
+
+        logger.info("DEBUG|RUOTIAN: ${dispatchType.dockerInfo}")
+
         if (buildByAgentId(event, agent, dispatchType.workspace, dispatchType.dockerInfo)) {
             return true
         }

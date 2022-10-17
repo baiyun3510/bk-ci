@@ -155,6 +155,8 @@ object TXStreamDispatchUtils {
                 envs = job.env
             )
 
+            logger.info("DEBUG|RUOTIAN: $dockerInfo")
+
             return ThirdPartyAgentEnvDispatchType(
                 envProjectId = null,
                 envName = poolName,
