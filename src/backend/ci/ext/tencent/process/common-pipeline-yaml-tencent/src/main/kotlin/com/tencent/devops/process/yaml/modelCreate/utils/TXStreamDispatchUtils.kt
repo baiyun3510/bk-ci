@@ -125,6 +125,9 @@ object TXStreamDispatchUtils {
 
         // 第三方构建机
         if (job.runsOn.selfHosted == true) {
+
+            logger.info("DEBUG|RUOTIAN: ${job.runsOn}")
+
             if (job.runsOn.container == null) {
                 return ThirdPartyAgentEnvDispatchType(
                     envProjectId = null,
