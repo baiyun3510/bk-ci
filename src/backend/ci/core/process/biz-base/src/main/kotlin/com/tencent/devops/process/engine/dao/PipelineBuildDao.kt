@@ -308,7 +308,7 @@ class PipelineBuildDao {
             val select = dslContext.selectFrom(this)
                 .where(PROJECT_ID.eq(projectId))
                 .and(PIPELINE_ID.eq(pipelineId))
-                .and(STATUS.eq(BuildStatus.QUEUE.ordinal))
+                .and(STATUS.`in`(setOf(BuildStatus.QUEUE.ordinal, BuildStatus.QUEUE_CACHE.ordinal)))
                 .orderBy(BUILD_NUM.asc()).limit(1)
             select.fetchAny()
         }
@@ -318,7 +318,7 @@ class PipelineBuildDao {
         dslContext: DSLContext,
         projectId: String,
         concurrencyGroup: String,
-        pipelineId: String? = null,
+        pipelineId: String? = null
     ): TPipelineBuildHistoryRecord? {
         return with(T_PIPELINE_BUILD_HISTORY) {
             val select = dslContext.selectFrom(this)
