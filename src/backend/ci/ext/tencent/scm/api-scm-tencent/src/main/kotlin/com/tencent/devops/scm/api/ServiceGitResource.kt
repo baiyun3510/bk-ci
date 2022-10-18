@@ -1040,7 +1040,7 @@ interface ServiceGitResource {
 
     @ApiOperation("工蜂更新文件")
     @POST
-    @Path("/gitcode/create/file")
+    @Path("/gitcode/update/file")
     fun tGitUpdateFile(
         @ApiParam(value = "repoUrl")
         @QueryParam("repoUrl")
@@ -1051,7 +1051,7 @@ interface ServiceGitResource {
         @ApiParam(value = "token")
         @QueryParam("token")
         token: String,
-        @ApiParam(value = "创建文件内容")
+        @ApiParam(value = "更新文件内容")
         gitOperationFile: GitOperationFile,
         @ApiParam(value = "token类型 0：oauth 1:privateKey", required = true)
         @QueryParam("tokenType")
