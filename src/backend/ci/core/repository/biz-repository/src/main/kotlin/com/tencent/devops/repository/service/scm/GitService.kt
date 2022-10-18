@@ -52,7 +52,7 @@ import com.tencent.devops.repository.pojo.enums.TokenTypeEnum
 import com.tencent.devops.repository.pojo.enums.VisibilityLevelEnum
 import com.tencent.devops.repository.pojo.git.GitCodeFileInfo
 import com.tencent.devops.repository.pojo.git.GitCodeProjectInfo
-import com.tencent.devops.repository.pojo.git.GitCreateFile
+import com.tencent.devops.repository.pojo.git.GitOperationFile
 import com.tencent.devops.repository.pojo.git.GitMrChangeInfo
 import com.tencent.devops.repository.pojo.git.GitProjectInfo
 import com.tencent.devops.repository.pojo.git.GitUserInfo
@@ -1754,7 +1754,7 @@ class GitService @Autowired constructor(
     override fun gitCreateFile(
         gitProjectId: String,
         token: String,
-        gitCreateFile: GitCreateFile,
+        gitOperationFile: GitOperationFile,
         tokenType: TokenTypeEnum
     ): Result<Boolean> {
         val url = StringBuilder("$gitCIUrl/api/v3/projects/$gitProjectId/repository/files")
@@ -1764,7 +1764,7 @@ class GitService @Autowired constructor(
             .post(
                 RequestBody.create(
                     MediaType.parse("application/json;charset=utf-8"),
-                    JsonUtil.toJson(gitCreateFile)
+                    JsonUtil.toJson(gitOperationFile)
                 )
             )
             .build()
@@ -1775,6 +1775,14 @@ class GitService @Autowired constructor(
             }
             return Result(true)
         }
+    }
+
+    override fun gitUpdateFile(
+        gitProjectId: String,
+        token: String,
+        gitOperationFile: GitOperationFile,
+        tokenType: TokenTypeEnum
+    ): Result<Boolean> = Unit
     }
 
     override fun getGitCodeProjectList(accessToken: String, page: Int?, pageSize: Int?, search: String?, orderBy: GitCodeProjectsOrder?, sort: GitCodeBranchesSort?, owned: Boolean?, minAccessLevel: GitAccessLevelEnum?): Result<List<GitCodeProjectInfo>> {

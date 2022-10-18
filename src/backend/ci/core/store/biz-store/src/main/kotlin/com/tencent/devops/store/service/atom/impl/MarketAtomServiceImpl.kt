@@ -77,6 +77,7 @@ import com.tencent.devops.store.dao.atom.MarketAtomEnvInfoDao
 import com.tencent.devops.store.dao.atom.MarketAtomFeatureDao
 import com.tencent.devops.store.dao.atom.MarketAtomVersionLogDao
 import com.tencent.devops.store.dao.common.StoreBuildInfoDao
+import com.tencent.devops.store.dao.common.StoreErrorCodeInfoDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
 import com.tencent.devops.store.dao.common.StoreProjectRelDao
 import com.tencent.devops.store.pojo.atom.AtomDevLanguage
@@ -99,12 +100,14 @@ import com.tencent.devops.store.pojo.atom.enums.AtomTypeEnum
 import com.tencent.devops.store.pojo.atom.enums.MarketAtomSortTypeEnum
 import com.tencent.devops.store.pojo.common.ATOM_OUTPUT
 import com.tencent.devops.store.pojo.common.ATOM_POST_NORMAL_PROJECT_FLAG_KEY_PREFIX
+import com.tencent.devops.store.pojo.common.ERROR_JSON_NAME
 import com.tencent.devops.store.pojo.common.HOTTEST
 import com.tencent.devops.store.pojo.common.KEY_CLASSIFY_CODE
 import com.tencent.devops.store.pojo.common.KEY_CLASSIFY_NAME
 import com.tencent.devops.store.pojo.common.LATEST
 import com.tencent.devops.store.pojo.common.MarketItem
 import com.tencent.devops.store.pojo.common.StoreDailyStatistic
+import com.tencent.devops.store.pojo.common.StoreErrorCodeInfo
 import com.tencent.devops.store.pojo.common.StoreShowVersionInfo
 import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
@@ -169,6 +172,9 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
 
     @Autowired
     lateinit var atomLabelRelDao: AtomLabelRelDao
+
+    @Autowired
+    lateinit var storeErrorCodeInfoDao: StoreErrorCodeInfoDao
 
     @Autowired
     lateinit var storeTotalStatisticService: StoreTotalStatisticService
@@ -619,6 +625,43 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
         }
         val showVersionInfo = storeCommonService.getStoreShowVersionInfo(cancelFlag, showReleaseType, showVersion)
         return Result(showVersionInfo)
+    }
+
+    override fun updateAtomErrorCodeInfo(
+        userId: String,
+        projectCode: String,
+        storeErrorCodeInfo: StoreErrorCodeInfo,
+    ): Result<Boolean> {
+        val atomCode = storeErrorCodeInfo.storeCode
+        // 插件管理员才可修改
+        val isStoreAdmin = storeMemberDao.isStoreAdmin(
+            dslContext = dslContext,
+            userId = userId,
+            storeCode = atomCode,
+            storeType = storeErrorCodeInfo.storeType.type.toByte()
+        )
+        if (!isStoreAdmin) {
+            return MessageCodeUtil.generateResponseDataObject(CommonMessageCode.PERMISSION_DENIED)
+        }
+        val errorJsonStr = JsonUtil.toJson(storeErrorCodeInfo.errorCodeInfos)
+        // 修改插件error.json文件内容
+        val updateAtomFileContentresult = updateAtomFileContent(
+            userId = userId,
+            projectCode = projectCode,
+            atomCode = atomCode,
+            content = errorJsonStr,
+            fileName = ERROR_JSON_NAME
+        )
+        if (updateAtomFileContentresult.isNotOk()) {
+            return updateAtomFileContentresult
+        }
+        // 文件内容修改成功，同步到数据库
+        storeErrorCodeInfoDao.batchUpdateErrorCodeInfo(
+            dslContext = dslContext,
+            userId = userId,
+            storeErrorCodeInfo = storeErrorCodeInfo
+        )
+        return Result(true)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -1294,6 +1337,14 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
         projectCode: String?,
         repositoryHashId: String,
         tokenType: TokenTypeEnum
+    ): Result<Boolean>
+
+    abstract fun updateAtomFileContent(
+        userId: String,
+        projectCode: String,
+        atomCode: String,
+        content: String,
+        fileName: String
     ): Result<Boolean>
 
     @Suppress("UNCHECKED_CAST")
