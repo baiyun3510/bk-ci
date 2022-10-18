@@ -130,6 +130,8 @@ class NotifyMessageTemplateServiceImpl @Autowired constructor(
             )
         }
 
+        getOtherNotifyMessageTemplate(subTemplateList, templateId)
+
         return Result(
             // 最多三条内容
             Page(
@@ -140,6 +142,12 @@ class NotifyMessageTemplateServiceImpl @Autowired constructor(
                 records = subTemplateList
             )
         )
+    }
+
+    fun getOtherNotifyMessageTemplate(
+        subTemplateList: MutableList<SubNotifyMessageTemplate>,
+        templateId: String
+    ) {
     }
 
     /**
@@ -610,7 +618,6 @@ class NotifyMessageTemplateServiceImpl @Autowired constructor(
                         "|type=${NotifyType.WEWORK}|template=${request.templateCode}"
                 )
             } else {
-                logger.info("send wework msg: ${commonNotifyMessageTemplateRecord.id}")
                 val weworkTplRecord = notifyMessageTemplateDao.getWeworkNotifyMessageTemplate(
                     dslContext = dslContext,
                     commonTemplateId = commonNotifyMessageTemplateRecord.id
@@ -618,7 +625,6 @@ class NotifyMessageTemplateServiceImpl @Autowired constructor(
                 // 替换内容里的动态参数
                 val title = replaceContentParams(request.titleParams, weworkTplRecord.title)
                 val body = replaceContentParams(request.bodyParams, weworkTplRecord.body)
-                logger.info("send wework msg: $body ${weworkTplRecord.sender}")
                 sendWeworkNotifyMessage(
                     commonNotifyMessageTemplate = commonNotifyMessageTemplateRecord,
                     sendNotifyMessageTemplateRequest = request,
