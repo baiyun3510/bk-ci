@@ -77,4 +77,22 @@ class ServiceArchiveAtomResourceImpl @Autowired constructor(
             )
         )
     }
+
+    override fun updateArchiveFile(
+        projectCode: String,
+        atomCode: String,
+        version: String,
+        fileName: String,
+        content: String
+    ): Result<Boolean> {
+        return Result(
+            archiveAtomService.updateArchiveFile(
+                projectCode = projectCode,
+                atomCode = atomCode,
+                version = version,
+                fileName = fileName,
+                content = content
+            )
+        )
+    }
 }
