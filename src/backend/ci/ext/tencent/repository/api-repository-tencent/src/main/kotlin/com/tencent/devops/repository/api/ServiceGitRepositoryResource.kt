@@ -221,7 +221,7 @@ interface ServiceGitRepositoryResource {
 
     @ApiOperation("更新代码仓库单个文件内容")
     @PUT
-    @Path("/{repoId}/getFileContent")
+    @Path("/{repoId}/updateFileContent")
     fun updateTGitFileContent(
         @ApiParam(value = "用户ID", required = true, defaultValue = AUTH_HEADER_USER_ID_DEFAULT_VALUE)
         @HeaderParam(AUTH_HEADER_USER_ID)
