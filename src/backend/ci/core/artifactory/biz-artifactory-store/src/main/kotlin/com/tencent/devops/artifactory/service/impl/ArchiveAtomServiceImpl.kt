@@ -314,6 +314,7 @@ abstract class ArchiveAtomServiceImpl : ArchiveAtomService {
                 it.write(content)
             }
             val path = file.path.removePrefix("${getAtomArchiveBasePath()}/$BK_CI_ATOM_DIR")
+            logger.info("updateArchiveFile path:$path")
             bkRepoClient.uploadLocalFile(
                 userId = BkRepoUtils.BKREPO_DEFAULT_USER,
                 projectId = BkRepoUtils.BKREPO_STORE_PROJECT_ID,

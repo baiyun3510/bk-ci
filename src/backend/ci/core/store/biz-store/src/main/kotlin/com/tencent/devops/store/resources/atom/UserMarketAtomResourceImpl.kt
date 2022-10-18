@@ -165,10 +165,6 @@ class UserMarketAtomResourceImpl @Autowired constructor(
         projectCode: String,
         storeErrorCodeInfo: StoreErrorCodeInfo
     ): Result<Boolean> {
-        return marketAtomService.updateAtomErrorCodeInfo(
-            userId,
-            projectCode,
-            storeErrorCodeInfo
-        )
+        return marketAtomService.updateAtomErrorCodeInfo(userId, projectCode, storeErrorCodeInfo)
     }
 }
