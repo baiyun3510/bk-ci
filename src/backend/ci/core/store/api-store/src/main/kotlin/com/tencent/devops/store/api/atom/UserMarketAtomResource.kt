@@ -45,7 +45,6 @@ import com.tencent.devops.store.pojo.atom.MyAtomResp
 import com.tencent.devops.store.pojo.atom.enums.AtomTypeEnum
 import com.tencent.devops.store.pojo.atom.enums.MarketAtomSortTypeEnum
 import com.tencent.devops.store.pojo.common.InstalledProjRespItem
-import com.tencent.devops.store.pojo.common.StoreErrorCodeInfo
 import com.tencent.devops.store.pojo.common.StoreShowVersionInfo
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -55,7 +54,6 @@ import javax.ws.rs.DELETE
 import javax.ws.rs.GET
 import javax.ws.rs.HeaderParam
 import javax.ws.rs.POST
-import javax.ws.rs.PUT
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
@@ -293,18 +291,4 @@ interface UserMarketAtomResource {
         @PathParam("atomCode")
         atomCode: String
     ): Result<List<AtomOutput>>
-
-    @ApiOperation("更新插件自定义错误码信息")
-    @PUT
-    @Path("/{projectCode}/atom/errorCodeInfo")
-    fun updateAtomErrorCodeInfo(
-        @ApiParam("userId", required = true)
-        @HeaderParam(AUTH_HEADER_USER_ID)
-        userId: String,
-        @ApiParam("projectCode", required = true)
-        @PathParam("projectCode")
-        projectCode: String,
-        @ApiParam("插件自定义错误码信息", required = true)
-        storeErrorCodeInfo: StoreErrorCodeInfo
-    ): Result<Boolean>
 }
