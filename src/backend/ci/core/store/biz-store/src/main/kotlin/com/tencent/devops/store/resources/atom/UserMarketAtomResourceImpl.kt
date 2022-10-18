@@ -43,7 +43,6 @@ import com.tencent.devops.store.pojo.atom.MyAtomResp
 import com.tencent.devops.store.pojo.atom.enums.AtomTypeEnum
 import com.tencent.devops.store.pojo.atom.enums.MarketAtomSortTypeEnum
 import com.tencent.devops.store.pojo.common.InstalledProjRespItem
-import com.tencent.devops.store.pojo.common.StoreErrorCodeInfo
 import com.tencent.devops.store.pojo.common.StoreShowVersionInfo
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.atom.MarketAtomService
@@ -158,13 +157,5 @@ class UserMarketAtomResourceImpl @Autowired constructor(
 
     override fun getAtomOutput(userId: String, atomCode: String): Result<List<AtomOutput>> {
         return Result(marketAtomService.getAtomOutput(atomCode))
-    }
-
-    override fun updateAtomErrorCodeInfo(
-        userId: String,
-        projectCode: String,
-        storeErrorCodeInfo: StoreErrorCodeInfo
-    ): Result<Boolean> {
-        return marketAtomService.updateAtomErrorCodeInfo(userId, projectCode, storeErrorCodeInfo)
     }
 }
