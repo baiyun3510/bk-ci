@@ -1777,13 +1777,13 @@ class GitService @Autowired constructor(
         }
     }
 
-    override fun gitUpdateFile(
-        gitProjectId: String,
+    override fun tGitUpdateFile(
+        repoUrl: String?,
+        repoName: String,
         token: String,
         gitOperationFile: GitOperationFile,
         tokenType: TokenTypeEnum
-    ): Result<Boolean> = Unit
-    }
+    ): Result<Boolean> = Result(false)
 
     override fun getGitCodeProjectList(accessToken: String, page: Int?, pageSize: Int?, search: String?, orderBy: GitCodeProjectsOrder?, sort: GitCodeBranchesSort?, owned: Boolean?, minAccessLevel: GitAccessLevelEnum?): Result<List<GitCodeProjectInfo>> {
         val pageNotNull = page ?: 1
