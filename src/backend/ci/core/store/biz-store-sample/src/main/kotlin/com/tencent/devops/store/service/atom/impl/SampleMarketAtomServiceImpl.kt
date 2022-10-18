@@ -56,15 +56,15 @@ class SampleMarketAtomServiceImpl : SampleMarketAtomService, MarketAtomServiceIm
         userId: String,
         projectCode: String,
         atomCode: String,
-        version: String?,
         content: String,
         fileName: String
     ): Result<Boolean> {
+        val atomRecord = atomDao.getMaxVersionAtomByCode(dslContext, atomCode)!!
         return client.get(ServiceArchiveAtomResource::class)
             .updateArchiveFile(
                 projectCode = projectCode,
                 atomCode = atomCode,
-                version = version!!,
+                version = atomRecord.version,
                 fileName = fileName,
                 content = content
             )

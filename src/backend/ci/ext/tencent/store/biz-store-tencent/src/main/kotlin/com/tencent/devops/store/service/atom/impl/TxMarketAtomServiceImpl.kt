@@ -90,7 +90,6 @@ class TxMarketAtomServiceImpl : TxMarketAtomService, MarketAtomServiceImpl() {
         userId: String,
         projectCode: String,
         atomCode: String,
-        version: String?,
         content: String,
         fileName: String
     ): Result<Boolean> {
