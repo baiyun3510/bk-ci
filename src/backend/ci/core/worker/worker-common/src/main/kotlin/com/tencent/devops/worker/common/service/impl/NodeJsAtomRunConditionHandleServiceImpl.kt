@@ -74,7 +74,7 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
         }
         val storePkgRunEnvInfo = storePkgRunEnvInfoResult.data
         val envDir = WorkspaceUtils.getCommonEnvDir() ?: workspace
-        logger.info("prepareRunEnv param:[$osType,$language,$runtimeVersion,$envDir,$storePkgRunEnvInfo]")
+        logger.info("prepareRunEnvDev param:[$osType,$language,$runtimeVersion,$envDir,$storePkgRunEnvInfo]")
         storePkgRunEnvInfo?.let {
             // 判断nodejs安装包是否已经存在构建机上
             val pkgName = storePkgRunEnvInfo.pkgName
@@ -88,6 +88,12 @@ class NodeJsAtomRunConditionHandleServiceImpl : AtomRunConditionHandleService {
                 // 空文件夹需要删除
                 pkgFileDir.delete()
             }
+            logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir,pkgName:$pkgName")
+            if (pkgFileDir.exists() && pkgName.contains("node-v11.15.0-linux-x64")) {
+                logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir delete")
+                pkgFileDir.deleteRecursively()
+            }
+            logger.info("prepareRunEnvDev pkgFileDir:$pkgFileDir,size:${pkgFileDir.listFiles()?.size},existFlag:${pkgFileDir.exists()}")
             if (!pkgFileDir.exists()) {
                 // 把指定的nodejs安装包下载到构建机上
                 val pkgFile = File(envDir, "$NODEJS/$pkgName")

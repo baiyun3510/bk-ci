@@ -17,7 +17,7 @@
             <key>metadata</key>
             <dict>
                 <key>bundle-identifier</key>
-                <string>com.tencent.devops</string>
+                <string>com.tencent.bk</string>
                 <key>bundle-version</key>
                 <string>1.0.9</string>
                 <key>title</key>

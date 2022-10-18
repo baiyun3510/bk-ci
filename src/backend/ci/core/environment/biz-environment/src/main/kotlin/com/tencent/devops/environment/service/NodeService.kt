@@ -52,6 +52,7 @@ import com.tencent.devops.environment.pojo.enums.NodeType
 import com.tencent.devops.environment.service.node.NodeActionFactory
 import com.tencent.devops.environment.service.slave.SlaveGatewayService
 import com.tencent.devops.environment.utils.AgentStatusUtils.getAgentStatus
+import com.tencent.devops.environment.utils.LabelRedisUtils
 import com.tencent.devops.environment.utils.NodeStringIdUtils
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
@@ -63,6 +64,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.streams.toList
 
 @Service
 @Suppress("ALL")
@@ -76,7 +78,8 @@ class NodeService @Autowired constructor(
     private val environmentPermissionService: EnvironmentPermissionService,
     private val nodeWebsocketService: NodeWebsocketService,
     private val webSocketDispatcher: WebSocketDispatcher,
-    private val slaveGatewayDao: SlaveGatewayDao
+    private val slaveGatewayDao: SlaveGatewayDao,
+    private val labelRedisUtils: LabelRedisUtils
 ) {
 
     companion object {
@@ -111,6 +114,10 @@ class NodeService @Autowired constructor(
             existNodeIdList.forEach {
                 environmentPermissionService.deleteNode(projectId, it)
             }
+
+            // 节点删除成功，删除项目下的节点缓存信息
+            labelRedisUtils.deleteProjectNodes(projectId)
+
             webSocketDispatcher.dispatch(
                 nodeWebsocketService.buildDetailMessage(projectId, userId)
             )
@@ -121,8 +128,18 @@ class NodeService @Autowired constructor(
         return environmentPermissionService.checkNodePermission(userId, projectId, AuthPermission.CREATE)
     }
 
-    fun list(userId: String, projectId: String): List<NodeWithPermission> {
-        val nodeRecordList = nodeDao.listNodes(dslContext, projectId)
+    fun list(userId: String, projectId: String, nodeIds: String?): List<NodeWithPermission> {
+        val nodeRecordList = if (nodeIds == null) {
+            nodeDao.listNodes(dslContext, projectId)
+        } else {
+            nodeDao.listByIds(
+                dslContext,
+                projectId,
+                nodeIds.split(",").stream().map { it.toLong() }.toList()
+            )
+            emptyList()
+        }
+
         if (nodeRecordList.isEmpty()) {
             return emptyList()
         }

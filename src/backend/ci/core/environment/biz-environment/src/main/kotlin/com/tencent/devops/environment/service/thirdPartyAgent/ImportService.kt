@@ -50,6 +50,7 @@ import com.tencent.devops.environment.pojo.enums.NodeStatus
 import com.tencent.devops.environment.pojo.enums.NodeType
 import com.tencent.devops.environment.service.NodeWebsocketService
 import com.tencent.devops.environment.service.slave.SlaveGatewayService
+import com.tencent.devops.environment.utils.LabelRedisUtils
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
@@ -68,7 +69,8 @@ class ImportService @Autowired constructor(
     private val environmentPermissionService: EnvironmentPermissionService,
     private val webSocketDispatcher: WebSocketDispatcher,
     private val websocketService: NodeWebsocketService,
-    private val simpleRateLimiter: SimpleRateLimiter
+    private val simpleRateLimiter: SimpleRateLimiter,
+    private val labelRedisUtils: LabelRedisUtils
 ) {
 
     companion object {
@@ -194,6 +196,9 @@ class ImportService @Autowired constructor(
                 nodeId = nodeId,
                 nodeName = "$nodeStringId(${agentRecord.ip})"
             )
+
+            // 新节点入库成功，删除项目下的节点缓存信息
+            labelRedisUtils.deleteProjectNodes(projectId)
         }
         webSocketDispatcher.dispatch(websocketService.buildDetailMessage(projectId = projectId, userId = userId))
     }

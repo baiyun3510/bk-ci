@@ -105,12 +105,11 @@ import com.tencent.devops.store.pojo.common.KEY_OUTPUT
 import com.tencent.devops.store.pojo.common.KEY_RUNTIME_VERSION
 import com.tencent.devops.store.pojo.common.KEY_STORE_CODE
 import com.tencent.devops.store.pojo.common.ReleaseProcessItem
-import com.tencent.devops.store.pojo.common.STORE_REPO_CODECC_BUILD_KEY_PREFIX
-import com.tencent.devops.store.pojo.common.STORE_REPO_COMMIT_KEY_PREFIX
 import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.atom.TxAtomReleaseService
 import com.tencent.devops.store.service.common.TxStoreCodeccService
+import com.tencent.devops.store.utils.TxStoreUtils
 import org.apache.commons.lang3.StringEscapeUtils
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
@@ -121,6 +120,7 @@ import org.springframework.cloud.context.config.annotation.RefreshScope
 import org.springframework.stereotype.Service
 import java.util.Date
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Service
 @RefreshScope
@@ -410,7 +410,7 @@ class TxAtomReleaseServiceImpl : TxAtomReleaseService, AtomReleaseServiceImpl() 
         val codeccFlag = txStoreCodeccService.getCodeccFlag(StoreTypeEnum.ATOM.name)
         return if (codeccFlag != null && codeccFlag) {
             // 判断插件构建时启动扫描任务是否成功，buildId为空则说明启动扫描任务失败
-            val buildId = redisOperation.get("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$atomCode:$atomId")
+            val buildId = redisOperation.get(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, atomCode, atomId))
             if (buildId == null) {
                 AtomStatusEnum.CODECC_FAIL.status.toByte()
             } else {
@@ -520,9 +520,9 @@ class TxAtomReleaseServiceImpl : TxAtomReleaseService, AtomReleaseServiceImpl() 
         propsMap[KEY_CONFIG] = taskDataMap[KEY_CONFIG]
 
         // 清空redis中保存的发布过程保存的buildId和commitId
-        val suffixKeyName = "${StoreTypeEnum.ATOM.name}:$atomCode:$atomId"
-        redisOperation.delete("$STORE_REPO_COMMIT_KEY_PREFIX:$suffixKeyName")
-        redisOperation.delete("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$suffixKeyName")
+        val storeType = StoreTypeEnum.ATOM.name
+        redisOperation.delete(TxStoreUtils.getStoreRepoCommitKey(storeType, atomCode, atomId))
+        redisOperation.delete(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, atomCode, atomId))
         dslContext.transaction { t ->
             val context = DSL.using(t)
             val props = JsonUtil.toJson(propsMap)
@@ -793,11 +793,12 @@ class TxAtomReleaseServiceImpl : TxAtomReleaseService, AtomReleaseServiceImpl() 
         atomId: String,
         commitId: String
     ) {
+        val storeType = StoreTypeEnum.ATOM.name
         // 把代码提交ID存入redis
         redisOperation.set(
-            key = "$STORE_REPO_COMMIT_KEY_PREFIX:${StoreTypeEnum.ATOM.name}:$atomCode:$atomId",
+            key = TxStoreUtils.getStoreRepoCommitKey(storeType, atomCode, atomId),
             value = commitId,
-            expired = false
+            expiredInSecond = TimeUnit.DAYS.toSeconds(60)
         )
         executorService.submit<Unit> {
             val repoId = "$pluginNameSpaceName/$atomCode"
@@ -816,9 +817,9 @@ class TxAtomReleaseServiceImpl : TxAtomReleaseService, AtomReleaseServiceImpl() 
             }
             // 把代码扫描构建ID存入redis
             redisOperation.set(
-                key = "$STORE_REPO_CODECC_BUILD_KEY_PREFIX:${StoreTypeEnum.ATOM.name}:$atomCode:$atomId",
+                key = TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, atomCode, atomId),
                 value = buildId,
-                expired = false
+                expiredInSecond = TimeUnit.DAYS.toSeconds(60)
             )
         }
     }

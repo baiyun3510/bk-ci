@@ -849,6 +849,7 @@ abstract class AtomReleaseServiceImpl @Autowired constructor() : AtomReleaseServ
         )
         val atomPackageSourceType = getAtomPackageSourceType()
         if (atomPackageSourceType != AtomPackageSourceTypeEnum.UPLOAD) {
+            logger.info("atom[$atomId] addMarketAtomEnvInfo!")
             marketAtomEnvInfoDao.addMarketAtomEnvInfo(context, atomId, atomEnvRequests)
         }
         marketAtomVersionLogDao.addMarketAtomVersion(

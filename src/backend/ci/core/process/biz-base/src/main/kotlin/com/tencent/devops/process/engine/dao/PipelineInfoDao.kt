@@ -33,6 +33,8 @@ import com.tencent.devops.common.util.PinyinUtil
 import com.tencent.devops.model.process.Tables.T_PIPELINE_INFO
 import com.tencent.devops.model.process.tables.records.TPipelineInfoRecord
 import com.tencent.devops.process.engine.pojo.PipelineInfo
+import com.tencent.devops.process.pojo.PipelineCollation
+import com.tencent.devops.process.pojo.PipelineSortType
 import org.jooq.Condition
 import org.jooq.DSLContext
 import org.jooq.Record1
@@ -166,7 +168,7 @@ class PipelineInfoDao {
         }
         logger.info(
             "Update the pipeline $pipelineId add new version($version) old version($latestVersion) " +
-                "and result=${count == 1}"
+                    "and result=${count == 1}"
         )
         return version
     }
@@ -244,7 +246,7 @@ class PipelineInfoDao {
         projectId: String? = null,
         limit: Int,
         offset: Int,
-        deleteFlag: Boolean = false,
+        deleteFlag: Boolean? = false,
         timeDescFlag: Boolean = true
     ): Result<TPipelineInfoRecord>? {
         return with(T_PIPELINE_INFO) {
@@ -252,7 +254,9 @@ class PipelineInfoDao {
             if (projectId != null) {
                 conditions.add(PROJECT_ID.eq(projectId))
             }
-            conditions.add(DELETE.eq(deleteFlag))
+            if (null != deleteFlag) {
+                conditions.add(DELETE.eq(deleteFlag))
+            }
             val baseQuery = dslContext.selectFrom(this).where(conditions)
             if (timeDescFlag) {
                 baseQuery.orderBy(CREATE_TIME.desc(), PIPELINE_ID)
@@ -313,7 +317,11 @@ class PipelineInfoDao {
     fun listDeletePipelineIdByProject(
         dslContext: DSLContext,
         projectId: String,
-        days: Long?
+        days: Long?,
+        offset: Int? = null,
+        limit: Int? = null,
+        sortType: PipelineSortType,
+        collation: PipelineCollation
     ): Result<TPipelineInfoRecord>? {
         with(T_PIPELINE_INFO) {
             val conditions = mutableListOf<Condition>()
@@ -322,8 +330,43 @@ class PipelineInfoDao {
             if (days != null) {
                 conditions.add(UPDATE_TIME.greaterOrEqual(LocalDateTime.now().minusDays(days)))
             }
-            return dslContext.selectFrom(this)
-                .where(conditions).fetch()
+            return dslContext
+                .selectFrom(this)
+                .where(conditions)
+                .let {
+                    val st = if (sortType == PipelineSortType.CREATE_TIME) {
+                        CREATE_TIME
+                    } else {
+                        UPDATE_TIME
+                    }
+                    val c = if (collation == PipelineCollation.DEFAULT || collation == PipelineCollation.DESC) {
+                        st.desc()
+                    } else {
+                        st.asc()
+                    }
+                    it.orderBy(c)
+                }
+                .let { if (offset != null && limit != null) it.limit(offset, limit) else it }
+                .fetch()
+        }
+    }
+
+    fun countDeletePipeline(
+        dslContext: DSLContext,
+        projectId: String,
+        days: Long?,
+    ): Int {
+        with(T_PIPELINE_INFO) {
+            val conditions = mutableListOf<Condition>()
+            conditions.add(PROJECT_ID.eq(projectId))
+            conditions.add(DELETE.eq(true))
+            if (days != null) {
+                conditions.add(UPDATE_TIME.greaterOrEqual(LocalDateTime.now().minusDays(days)))
+            }
+            return dslContext
+                .selectCount().from(this)
+                .where(conditions)
+                .fetchOne()?.value1() ?: 0
         }
     }
 
@@ -474,6 +517,32 @@ class PipelineInfoDao {
         }
     }
 
+    fun searchInfoByPipelineIds(
+        dslContext: DSLContext,
+        channelCode: ChannelCode,
+        projectId: String? = null,
+        pipelineIds: Set<String>,
+        filterDelete: Boolean = true,
+        offset: Int,
+        limit: Int,
+        pipelineName: String?
+    ): Result<TPipelineInfoRecord> {
+        return with(T_PIPELINE_INFO) {
+            val query =
+                if (projectId.isNullOrBlank()) {
+                    dslContext.selectFrom(this).where(PIPELINE_ID.`in`(pipelineIds))
+                } else {
+                    dslContext.selectFrom(this).where(PROJECT_ID.eq(projectId)).and(PIPELINE_ID.`in`(pipelineIds))
+                }
+            query.and(T_PIPELINE_INFO.CHANNEL.eq(channelCode.name))
+            if (filterDelete) query.and(DELETE.eq(false))
+            if (!pipelineName.isNullOrBlank()) {
+                query.and(PIPELINE_NAME.like("%$pipelineName%"))
+            }
+            query.offset(offset).limit(limit).fetch()
+        }
+    }
+
     fun getPipelineInfo(
         dslContext: DSLContext,
         projectId: String,
@@ -606,10 +675,10 @@ class PipelineInfoDao {
         }
     }
 
-    fun listByProject(dslContext: DSLContext, projectCode: String): Result<Record2<String, Long>> {
+    fun listByProject(dslContext: DSLContext, projectId: String): Result<Record2<String, Long>> {
         return with(T_PIPELINE_INFO) {
             dslContext.select(PIPELINE_ID.`as`("pipelineId"), ID.`as`("id")).from(this)
-                .where(PROJECT_ID.eq(projectCode).and(DELETE.eq(false))).fetch()
+                .where(PROJECT_ID.eq(projectId).and(DELETE.eq(false))).fetch()
         }
     }
 
@@ -622,6 +691,20 @@ class PipelineInfoDao {
             dslContext.selectFrom(this)
                 .where(PIPELINE_ID.eq(pipelineId).and(PROJECT_ID.eq(projectId)))
                 .fetchAny()
+        }
+    }
+
+    fun countExcludePipelineIds(
+        dslContext: DSLContext,
+        projectId: String,
+        excludePipelineIds: List<String>
+    ): Int {
+        with(T_PIPELINE_INFO) {
+            return dslContext.selectCount()
+                .from(this)
+                .where(PROJECT_ID.eq(projectId))
+                .and(PIPELINE_ID.notIn(excludePipelineIds))
+                .fetchOne()?.value1() ?: 0
         }
     }
 

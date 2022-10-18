@@ -30,6 +30,7 @@ package com.tencent.devops.process.engine.service
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
 import com.tencent.devops.common.api.constant.BUILD_QUEUE
 import com.tencent.devops.common.api.enums.BuildReviewType
 import com.tencent.devops.common.api.pojo.ErrorInfo
@@ -186,7 +187,6 @@ import java.util.Date
 class PipelineRuntimeService @Autowired constructor(
     private val pipelineEventDispatcher: PipelineEventDispatcher,
     private val stageTagService: StageTagService,
-    private val buildIdGenerator: BuildIdGenerator,
     private val dslContext: DSLContext,
     private val pipelineInfoDao: PipelineInfoDao,
     private val pipelineBuildDao: PipelineBuildDao,
@@ -683,6 +683,7 @@ class PipelineRuntimeService @Autowired constructor(
         originStartParams: MutableList<BuildParameters>,
         pipelineParamMap: MutableMap<String, BuildParameters>,
         setting: PipelineSetting?,
+        buildId: String,
         buildNo: Int? = null,
         buildNumRule: String? = null,
         acquire: Boolean? = false,
@@ -693,7 +694,6 @@ class PipelineRuntimeService @Autowired constructor(
         // 2019-12-16 产品 rerun 需求
         val projectId = pipelineInfo.projectId
         val pipelineId = pipelineInfo.pipelineId
-        val buildId = startParamMap[PIPELINE_RETRY_BUILD_ID] ?: buildIdGenerator.getNextId()
         val startBuildStatus: BuildStatus = if (triggerReviewers.isNullOrEmpty()) {
             // 默认都是排队状态
             BuildStatus.QUEUE
@@ -1736,15 +1736,46 @@ class PipelineRuntimeService @Autowired constructor(
         )
     }
 
+    fun getArtifactList(projectId: String, pipelineId: String, buildId: String): List<FileInfo> {
+        val artifactInfo = pipelineBuildDao.getArtifactInfo(
+            dslContext = dslContext,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        )
+        val fileInfos = mutableListOf<FileInfo>()
+            JsonUtil.to(artifactInfo, Array<FileInfo>::class.java).map {
+            if (it.artifactoryType == ArtifactoryType.CUSTOM_DIR && it.fileType.equals("image")) {
+                fileInfos.add(it)
+            }
+        }
+        return fileInfos
+    }
+
     fun updateArtifactList(
         projectId: String,
         pipelineId: String,
         buildId: String,
-        artifactListJsonString: String
+        artifactoryFileList: List<FileInfo>
     ): Boolean {
+        val artifactInfo = pipelineBuildDao.getArtifactInfo(
+            dslContext = dslContext,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        )
+        val fileInfoArray = JsonUtil.to(artifactInfo, Array<FileInfo>::class.java)
+        val fileInfoList = if (fileInfoArray.isEmpty()) {
+            artifactoryFileList
+        } else {
+            val fileInfos = mutableListOf<FileInfo>()
+            fileInfos.addAll(artifactoryFileList)
+            fileInfos.addAll(fileInfoArray)
+            fileInfos
+        }
         return pipelineBuildDao.updateArtifactList(
             dslContext = dslContext,
-            artifactList = artifactListJsonString,
+            artifactList = JsonUtil.toJson(fileInfoList, formatted = false),
             projectId = projectId,
             pipelineId = pipelineId,
             buildId = buildId

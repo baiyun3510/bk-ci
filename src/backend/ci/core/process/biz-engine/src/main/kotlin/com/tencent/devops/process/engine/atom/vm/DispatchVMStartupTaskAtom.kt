@@ -242,7 +242,9 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
                 containerHashId = task.containerHashId,
                 queueTimeoutMinutes = param.jobControlOption?.prepareTimeout,
                 containerType = task.containerType,
-                customBuildEnv = param.customBuildEnv
+                customBuildEnv = param.customBuildEnv,
+                maxParallelInSingle = param.jobControlOption?.maxParallelInSingle,
+                maxParallelInAll = param.jobControlOption?.maxParallelInAll
             )
         )
     }
@@ -262,13 +264,19 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
             val envId = param.thirdPartyAgentEnvId ?: ""
             val workspace = param.thirdPartyWorkspace ?: ""
             dispatchType = if (agentId.isNotBlank()) {
-                ThirdPartyAgentIDDispatchType(displayName = agentId, workspace = workspace, agentType = AgentType.ID)
+                ThirdPartyAgentIDDispatchType(
+                    displayName = agentId,
+                    workspace = workspace,
+                    agentType = AgentType.ID,
+                    dockerInfo = null
+                )
             } else if (envId.isNotBlank()) {
                 ThirdPartyAgentEnvDispatchType(
                     envName = envId,
                     envProjectId = null,
                     workspace = workspace,
-                    agentType = AgentType.ID
+                    agentType = AgentType.ID,
+                    dockerInfo = null
                 )
             } // docker建机指定版本(旧)
             else if (!param.dockerBuildVersion.isNullOrBlank()) {

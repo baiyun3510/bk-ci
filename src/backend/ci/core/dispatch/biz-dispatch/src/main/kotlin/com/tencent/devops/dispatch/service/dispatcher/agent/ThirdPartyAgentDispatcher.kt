@@ -27,14 +27,18 @@
 
 package com.tencent.devops.dispatch.service.dispatcher.agent
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.tencent.devops.common.api.enums.AgentStatus
 import com.tencent.devops.common.api.exception.InvalidParamException
 import com.tencent.devops.common.api.exception.RemoteServiceException
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.pipeline.enums.VMBaseOS
 import com.tencent.devops.common.pipeline.type.agent.AgentType
+import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentDockerInfo
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentEnvDispatchType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentIDDispatchType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyDevCloudDispatchType
@@ -49,6 +53,8 @@ import com.tencent.devops.dispatch.utils.ThirdPartyAgentLock
 import com.tencent.devops.dispatch.utils.redis.ThirdPartyAgentBuildRedisUtils
 import com.tencent.devops.dispatch.utils.redis.ThirdPartyRedisBuild
 import com.tencent.devops.environment.api.thirdPartyAgent.ServiceThirdPartyAgentResource
+import com.tencent.devops.environment.pojo.label.LabelExpression
+import com.tencent.devops.environment.pojo.label.LabelQuery
 import com.tencent.devops.environment.pojo.thirdPartyAgent.ThirdPartyAgent
 import com.tencent.devops.process.api.service.ServiceBuildResource
 import com.tencent.devops.process.engine.common.VMUtils
@@ -81,6 +87,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 val dispatchType = event.dispatchType as ThirdPartyAgentIDDispatchType
                 buildByAgentId(event, dispatchType)
             }
+
             is ThirdPartyDevCloudDispatchType -> {
                 val originDispatchType = event.dispatchType as ThirdPartyDevCloudDispatchType
                 buildByAgentId(
@@ -88,14 +95,17 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     dispatchType = ThirdPartyAgentIDDispatchType(
                         displayName = originDispatchType.displayName,
                         workspace = originDispatchType.workspace,
-                        agentType = originDispatchType.agentType
+                        agentType = originDispatchType.agentType,
+                        dockerInfo = null
                     )
                 )
             }
+
             is ThirdPartyAgentEnvDispatchType -> {
                 val dispatchType = event.dispatchType as ThirdPartyAgentEnvDispatchType
                 buildByEnvId(event, dispatchType)
             }
+
             else -> {
                 throw InvalidParamException("Unknown agent type - ${event.dispatchType}")
             }
@@ -179,7 +189,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             return
         }
 
-        if (!buildByAgentId(event, agentResult.data!!, dispatchType.workspace)) {
+        if (!buildByAgentId(event, agentResult.data!!, dispatchType.workspace, dispatchType.dockerInfo)) {
             retry(
                 client = client,
                 buildLogPrinter = buildLogPrinter,
@@ -212,7 +222,12 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         }
     }
 
-    private fun buildByAgentId(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent, workspace: String?): Boolean {
+    private fun buildByAgentId(
+        event: PipelineAgentStartupEvent,
+        agent: ThirdPartyAgent,
+        workspace: String?,
+        dockerInfo: ThirdPartyAgentDockerInfo?
+    ): Boolean {
         val redisLock = ThirdPartyAgentLock(redisOperation, event.projectId, agent.agentId)
         try {
             if (redisLock.tryLock()) {
@@ -222,8 +237,25 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     return false
                 }
 
+                // 检验单Job在agent内的并发限制
+                if (exceedAgentRunningJobs(event, agent)) {
+                    logger.warn("The agent(${agent.agentId}) of project(${event.projectId}) " +
+                                    "running job(${event.containerHashId}) exceeds the limit " +
+                                    "maxParallelInSingle: ${event.maxParallelInSingle} or " +
+                                    "maxParallelInAll: ${event.maxParallelInAll}")
+                    log(event, "当前JOB达到了单节点最大并发数，重新调度- ${agent.hostname}/${agent.ip}")
+                    return false
+                }
+
                 // #5806 入库失败就不再写Redis
-                inQueue(agent = agent, event = event, agentId = agent.agentId, workspace = workspace)
+                inQueue(
+                    agent = agent,
+                    event = event,
+                    agentId = agent.agentId,
+                    workspace = workspace,
+                    dockerInfo = dockerInfo
+                )
+
                 // 保存构建详情
                 saveAgentInfoToBuildDetail(event = event, agent = agent)
 
@@ -239,6 +271,28 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         }
     }
 
+    private fun exceedAgentRunningJobs(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent): Boolean {
+        if (event.maxParallelInSingle!! > 0) {
+            val singleAgentRunningCount = thirdPartyAgentBuildRedisUtils.getRunningJobWithSingleAgent(
+                event.containerHashId!!, agent.agentId)
+
+            if (singleAgentRunningCount >= event.maxParallelInSingle!!) {
+                return true
+            }
+        }
+
+        if (event.maxParallelInAll!! > 0) {
+            val allAgentRunningCount = thirdPartyAgentBuildRedisUtils.getRunningJobWithAllAgent(
+                event.containerHashId!!)
+
+            if (allAgentRunningCount >= event.maxParallelInAll!!) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     private fun log(event: PipelineAgentStartupEvent, logMessage: String) {
         buildLogPrinter.addLine(
             buildId = event.buildId,
@@ -249,12 +303,19 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         )
     }
 
-    private fun inQueue(agent: ThirdPartyAgent, event: PipelineAgentStartupEvent, agentId: String, workspace: String?) {
-
+    private fun inQueue(
+        agent: ThirdPartyAgent,
+        event: PipelineAgentStartupEvent,
+        agentId: String,
+        workspace: String?,
+        dockerInfo: ThirdPartyAgentDockerInfo?
+    ) {
         thirdPartyAgentBuildService.queueBuild(
             agent = agent,
             thirdPartyAgentWorkspace = workspace ?: "",
-            event = event
+            event = event,
+            retryCount = 0,
+            dockerInfo = dockerInfo
         )
 
         thirdPartyAgentBuildRedisUtils.setThirdPartyBuild(
@@ -270,6 +331,9 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 atoms = event.atoms
             )
         )
+
+        // 只要入队成功，则Job运行统计 +1
+        thirdPartyAgentBuildRedisUtils.increRunningJobWithAgentId(event.containerHashId!!, agentId, 1)
     }
 
     private fun saveAgentInfoToBuildDetail(event: PipelineAgentStartupEvent, agent: ThirdPartyAgent) {
@@ -284,100 +348,8 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
 
     @Suppress("ComplexMethod", "LongMethod")
     private fun buildByEnvId(event: PipelineAgentStartupEvent, dispatchType: ThirdPartyAgentEnvDispatchType) {
-        val agentsResult = try {
-            when (dispatchType.agentType) {
-                AgentType.ID -> {
-                    client.get(ServiceThirdPartyAgentResource::class)
-                        .getAgentsByEnvId(
-                            event.projectId,
-                            dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
-                                ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
-                }
-
-                AgentType.NAME -> {
-                    client.get(ServiceThirdPartyAgentResource::class)
-                        .getAgentsByEnvName(
-                            event.projectId,
-                            dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
-                                ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
-                }
-            }
-        } catch (e: Exception) {
-            onFailBuild(
-                client = client,
-                buildLogPrinter = buildLogPrinter,
-                event = event,
-                errorType = ErrorCodeEnum.GET_VM_ERROR.errorType,
-                errorCode = ErrorCodeEnum.GET_VM_ERROR.errorCode,
-                errorMsg = if (e is RemoteServiceException) {
-                    e.errorMessage
-                } else {
-                    e.message ?: "${ErrorCodeEnum.GET_VM_ERROR.formatErrorMessage}(${dispatchType.envName})"
-                }
-            )
-            return
-        }
-
-        if (agentsResult.status == Response.Status.FORBIDDEN.statusCode) {
-            logger.warn(
-                "${event.buildId}|START_AGENT_FAILED_FORBIDDEN|" +
-                        "j(${event.vmSeqId})|dispatchType=$dispatchType|err=${agentsResult.message}"
-            )
-            onFailBuild(
-                client = client,
-                buildLogPrinter = buildLogPrinter,
-                event = event,
-                errorType = ErrorCodeEnum.GET_VM_ERROR.errorType,
-                errorCode = ErrorCodeEnum.GET_VM_ERROR.errorCode,
-                errorMsg = agentsResult.message ?: ""
-            )
-            return
-        }
-
-        if (agentsResult.isNotOk()) {
-            logger.warn(
-                "${event.buildId}|START_AGENT_FAILED|" +
-                    "j(${event.vmSeqId})|dispatchType=$dispatchType|err=${agentsResult.message}"
-            )
-            retry(
-                client = client,
-                buildLogPrinter = buildLogPrinter,
-                pipelineEventDispatcher = pipelineEventDispatcher,
-                event = event,
-                errorCodeEnum = ErrorCodeEnum.FOUND_AGENT_ERROR,
-                errorMessage = "获取第三方构建机信息失败(System Error) - ${dispatchType.envName}: ${agentsResult.message}"
-            )
-            return
-        }
-
-        if (agentsResult.data == null) {
-            logger.warn(
-                "${event.buildId}|START_AGENT_FAILED|j(${event.vmSeqId})|dispatchType=$dispatchType|err=null agents"
-            )
-            retry(
-                client = client,
-                buildLogPrinter = buildLogPrinter,
-                pipelineEventDispatcher = pipelineEventDispatcher,
-                event = event,
-                errorCodeEnum = ErrorCodeEnum.FOUND_AGENT_ERROR,
-                errorMessage = "获取第三方构建机信息失败(System Error) - ${dispatchType.envName}: agent is null"
-            )
-            return
-        }
-
-        if (agentsResult.data!!.isEmpty()) {
-            logger.warn(
-                "${event.buildId}|START_AGENT_FAILED|j(${event.vmSeqId})|dispatchType=$dispatchType|err=empty agents"
-            )
-            retry(
-                client = client,
-                buildLogPrinter = buildLogPrinter,
-                pipelineEventDispatcher = pipelineEventDispatcher,
-                event = event,
-                errorCodeEnum = ErrorCodeEnum.VM_NODE_NULL,
-                errorMessage = "构建机环境（${dispatchType.envName}）的节点为空，请检查环境管理配置，" +
-                        "构建集群： ${dispatchType.envName} (env(${dispatchType.envName}) is empty)"
-            )
+        val agentsResult = getAvailableAgentResult(event, dispatchType)
+        if (agentsResult == null || agentsResult.isEmpty()) {
             return
         }
 
@@ -391,7 +363,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                  * 3. 优先调用可用的agent执行任务
                  * 4. 如果启动可用的agent失败再调用有任务的agent
                  */
-                val activeAgents = agentsResult.data!!.filter {
+                val activeAgents = agentsResult.filter {
                     it.status == AgentStatus.IMPORT_OK &&
                             (event.os == it.os || event.os == VMBaseOS.ALL.name)
                 }.toHashSet()
@@ -404,7 +376,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     vmSeqId = event.vmSeqId
                 ).forEach {
                     val agent = agentMaps[it.agentId]
-                    if (agent != null) {
+                    if (agent != null && exceedAgentRunningJobs(event, agent)) {
                         preBuildAgents.add(agent)
                     }
                 }
@@ -545,6 +517,130 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         }
     }
 
+    private fun getAvailableAgentResult(event: PipelineAgentStartupEvent, dispatchType: ThirdPartyAgentEnvDispatchType): List<ThirdPartyAgent>? {
+        val agentsResult = when (dispatchType.agentType) {
+            AgentType.ID, AgentType.LABEL -> {
+                if (!dispatchType.labelExpressions.isNullOrBlank()) {
+                    client.get(ServiceThirdPartyAgentResource::class)
+                        .getAgentsByLabels(
+                            projectId = event.projectId,
+                            labelQuery = LabelQuery(
+                                labelExpressions = formatLabelExpressions(event, dispatchType.labelExpressions),
+                                envHashId = dispatchType.envName,
+                                envProjectId = dispatchType.envProjectId
+                            )
+                        )
+                } else {
+                    client.get(ServiceThirdPartyAgentResource::class)
+                        .getAgentsByEnvId(
+                            event.projectId,
+                            dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
+                                ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                }
+            }
+            AgentType.NAME -> {
+                try {
+                    if (!dispatchType.labelExpressions.isNullOrBlank()) {
+                        client.get(ServiceThirdPartyAgentResource::class)
+                            .getAgentsByLabels(
+                                projectId = event.projectId,
+                                labelQuery = LabelQuery(
+                                    labelExpressions = formatLabelExpressions(event, dispatchType.labelExpressions),
+                                    envName = dispatchType.envName,
+                                    envProjectId = dispatchType.envProjectId
+                                )
+                            )
+                    } else {
+                        client.get(ServiceThirdPartyAgentResource::class)
+                            .getAgentsByEnvName(
+                                event.projectId,
+                                dispatchType.envProjectId.takeIf { !it.isNullOrBlank() }
+                                    ?.let { "$it@${dispatchType.envName}" } ?: dispatchType.envName)
+                    }
+                } catch (e: Exception) {
+                    onFailBuild(
+                        client = client,
+                        buildLogPrinter = buildLogPrinter,
+                        event = event,
+                        errorType = ErrorCodeEnum.GET_VM_ERROR.errorType,
+                        errorCode = ErrorCodeEnum.GET_VM_ERROR.errorCode,
+                        errorMsg = if (e is RemoteServiceException) {
+                            e.errorMessage
+                        } else {
+                            e.message ?: "${ErrorCodeEnum.GET_VM_ERROR.formatErrorMessage}(${dispatchType.envName})"
+                        }
+                    )
+                    Result(data = null)
+                }
+            }
+        }
+
+        if (agentsResult.status == Response.Status.FORBIDDEN.statusCode) {
+            logger.warn(
+                "${event.buildId}|START_AGENT_FAILED_FORBIDDEN|" +
+                    "j(${event.vmSeqId})|dispatchType=$dispatchType|err=${agentsResult.message}"
+            )
+            onFailBuild(
+                client = client,
+                buildLogPrinter = buildLogPrinter,
+                event = event,
+                errorType = ErrorCodeEnum.GET_VM_ERROR.errorType,
+                errorCode = ErrorCodeEnum.GET_VM_ERROR.errorCode,
+                errorMsg = agentsResult.message ?: ""
+            )
+            return emptyList()
+        }
+
+        if (agentsResult.isNotOk()) {
+            logger.warn(
+                "${event.buildId}|START_AGENT_FAILED|" +
+                    "j(${event.vmSeqId})|dispatchType=$dispatchType|err=${agentsResult.message}"
+            )
+            retry(
+                client = client,
+                buildLogPrinter = buildLogPrinter,
+                pipelineEventDispatcher = pipelineEventDispatcher,
+                event = event,
+                errorCodeEnum = ErrorCodeEnum.FOUND_AGENT_ERROR,
+                errorMessage = "获取第三方构建机信息失败(System Error) - ${dispatchType.envName}: ${agentsResult.message}"
+            )
+            return emptyList()
+        }
+
+        if (agentsResult.data == null) {
+            logger.warn(
+                "${event.buildId}|START_AGENT_FAILED|j(${event.vmSeqId})|dispatchType=$dispatchType|err=null agents"
+            )
+            retry(
+                client = client,
+                buildLogPrinter = buildLogPrinter,
+                pipelineEventDispatcher = pipelineEventDispatcher,
+                event = event,
+                errorCodeEnum = ErrorCodeEnum.FOUND_AGENT_ERROR,
+                errorMessage = "获取第三方构建机信息失败(System Error) - ${dispatchType.envName}: agent is null"
+            )
+            return emptyList()
+        }
+
+        if (agentsResult.data!!.isEmpty()) {
+            logger.warn(
+                "${event.buildId}|START_AGENT_FAILED|j(${event.vmSeqId})|dispatchType=$dispatchType|err=empty agents"
+            )
+            retry(
+                client = client,
+                buildLogPrinter = buildLogPrinter,
+                pipelineEventDispatcher = pipelineEventDispatcher,
+                event = event,
+                errorCodeEnum = ErrorCodeEnum.VM_NODE_NULL,
+                errorMessage = "构建机环境（${dispatchType.envName}）的节点为空，请检查环境管理配置，" +
+                    "构建集群： ${dispatchType.envName} (env(${dispatchType.envName}) is empty)"
+            )
+            return emptyList()
+        }
+
+        return agentsResult.data
+    }
+
     override fun retry(
         client: Client,
         buildLogPrinter: BuildLogPrinter,
@@ -663,7 +759,10 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             return false
         }
         hasTryAgents.add(agent.agentId)
-        if (buildByAgentId(event, agent, dispatchType.workspace)) {
+
+        logger.info("DEBUG|RUOTIAN: ${dispatchType.dockerInfo}")
+
+        if (buildByAgentId(event, agent, dispatchType.workspace, dispatchType.dockerInfo)) {
             return true
         }
         return false
@@ -676,6 +775,28 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             runningBuildsMapper[agentId] = runningCnt
         }
         return runningCnt
+    }
+
+    private fun formatLabelExpressions(
+        event: PipelineAgentStartupEvent,
+        labelExpressions: String?
+    ): List<LabelExpression>{
+        if (labelExpressions.isNullOrBlank()) {
+            return emptyList()
+        }
+
+        return try {
+            val labelExpressionList = JsonUtil.to(
+                labelExpressions,
+                object : TypeReference<List<LabelExpression>>() {}
+            )
+
+            labelExpressionList
+        } catch (e: Exception) {
+            logger.warn("[${event.buildId}|${event.vmSeqId}] Failed to format label expressions.", e)
+            logDebug(buildLogPrinter, event, "Failed to format label expressions")
+            emptyList()
+        }
     }
 
     interface AgentMatcher {

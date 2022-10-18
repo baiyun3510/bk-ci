@@ -1,6 +1,7 @@
 package com.tencent.devops.openapi.service.apigw
 
 import com.google.common.cache.CacheBuilder
+import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.openapi.service.op.OpAppUserService
 import com.tencent.devops.project.api.service.service.ServiceTxUserResource
@@ -13,10 +14,9 @@ import java.util.concurrent.TimeUnit
 class TxOpUserService @Autowired constructor(
     val client: Client
 ) : OpAppUserService {
-
     private val errorUserId = CacheBuilder.newBuilder()
         .maximumSize(1000)
-        .expireAfterAccess(2, TimeUnit.HOURS)
+        .expireAfterWrite(2, TimeUnit.HOURS)
         .build<String, Boolean>()
 
     override fun checkUser(userId: String): Boolean {
@@ -25,10 +25,13 @@ class TxOpUserService @Autowired constructor(
             return false
         }
         return try {
-            client.get(ServiceTxUserResource::class).get(userId!!)
+            client.get(ServiceTxUserResource::class).get(userId)
             true
+        } catch (e: RemoteServiceException) {
+            logger.warn("Fail to request tof : userId = $userId")
+            false
         } catch (e: Exception) {
-            logger.warn("checkUser $userId is not rtx user")
+            logger.warn("checkUser $userId failed : $e")
             errorUserId.put(userId, true)
             false
         }

@@ -28,6 +28,7 @@
 package com.tencent.devops.environment.service
 
 import com.tencent.devops.common.api.util.HashUtil
+import com.tencent.devops.environment.dao.EnvDao
 import com.tencent.devops.environment.dao.NodeDao
 import com.tencent.devops.environment.pojo.NodeDevCloudInfo
 import com.tencent.devops.environment.utils.NodeStringIdUtils
@@ -39,7 +40,8 @@ import org.springframework.stereotype.Service
 @Service
 class OpNodeService @Autowired constructor(
     private val dslContext: DSLContext,
-    private val nodeDao: NodeDao
+    private val nodeDao: NodeDao,
+    private val envDao: EnvDao
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(OpNodeService::class.java)

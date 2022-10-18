@@ -40,13 +40,12 @@ import com.tencent.devops.store.constant.StoreMessageCode
 import com.tencent.devops.store.dao.common.AbstractStoreCommonDao
 import com.tencent.devops.store.dao.common.BusinessConfigDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
-import com.tencent.devops.store.pojo.common.STORE_REPO_CODECC_BUILD_KEY_PREFIX
-import com.tencent.devops.store.pojo.common.STORE_REPO_COMMIT_KEY_PREFIX
 import com.tencent.devops.store.pojo.common.enums.BusinessEnum
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.service.common.TxStoreCodeccCommonService
 import com.tencent.devops.store.service.common.TxStoreCodeccService
 import com.tencent.devops.store.service.common.TxStoreRepoService
+import com.tencent.devops.store.utils.TxStoreUtils
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -78,9 +77,9 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
         var codeccBuildId: String? = buildId
         if (codeccBuildId == null && storeId != null) {
             // 如果组件ID不为空则会去redis中获取启动codecc任务存的buildId
-            codeccBuildId = redisOperation.get("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode:$storeId")
+            codeccBuildId = redisOperation.get(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, storeCode, storeId))
             if (codeccBuildId == null) {
-                // storeId和buildI沒有建立关联关系则说明启动codecc任务失败
+                // storeId和buildId沒有建立关联关系则说明启动codecc任务失败
                 return Result(
                     CodeccMeasureInfo(
                         status = 1,
@@ -90,7 +89,7 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
             }
         } else if (codeccBuildId == null && storeId == null) {
             // 适配质量管理页面启动任务后刷新页面还能看到启动任务那次的代码扫描任务详情
-            codeccBuildId = redisOperation.get("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode")
+            codeccBuildId = redisOperation.get(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, storeCode))
         }
         logger.info("getCodeccMeasureInfo codeccBuildId:$codeccBuildId")
         val mameSpaceName = txStoreRepoService.getStoreRepoNameSpaceName(StoreTypeEnum.valueOf(storeType))
@@ -125,10 +124,7 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
                         userId = userId
                     )
                 } else if (buildId == null) {
-                    val atomBuildId = redisOperation.get("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode")
-                    if (atomBuildId != null) {
-                        redisOperation.delete("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode")
-                    }
+                    redisOperation.delete(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, storeCode))
                 }
             }
         }
@@ -147,14 +143,17 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
         var qualifiedFlag = false
         if (codeStyleScore != null && codeSecurityScore != null && codeMeasureScore != null) {
             // 判断插件代码库的扫描分数是否合格
-            qualifiedFlag =
-                codeStyleScore >= codeStyleQualifiedScore && codeSecurityScore >= codeSecurityQualifiedScore && codeMeasureScore >= codeMeasureQualifiedScore
+            qualifiedFlag = codeStyleScore >= codeStyleQualifiedScore &&
+                codeSecurityScore >= codeSecurityQualifiedScore && codeMeasureScore >= codeMeasureQualifiedScore
         }
         return qualifiedFlag
     }
 
     private fun getStoreCodeccCommonService(storeType: String): TxStoreCodeccCommonService {
-        return SpringContextUtil.getBean(TxStoreCodeccCommonService::class.java, "${storeType}_CODECC_COMMON_SERVICE")
+        return SpringContextUtil.getBean(
+            clazz = TxStoreCodeccCommonService::class.java,
+            beanName = "${storeType}_CODECC_COMMON_SERVICE"
+        )
     }
 
     override fun startCodeccTask(
@@ -168,7 +167,7 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
         var commitId: String? = null
         if (storeId != null) {
             // 如果组件ID不为空则会去redis中获取当时构建时存的commitId
-            commitId = redisOperation.get("$STORE_REPO_COMMIT_KEY_PREFIX:$storeType:$storeCode:$storeId")
+            commitId = redisOperation.get(TxStoreUtils.getStoreRepoCommitKey(storeType, storeCode, storeId))
         }
         logger.info("startCodeccTask commitId:$commitId")
         val mameSpaceName = txStoreRepoService.getStoreRepoNameSpaceName(StoreTypeEnum.valueOf(storeType))
@@ -180,13 +179,17 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
         logger.info("startCodeccTask commitId:$commitId,startCodeccTaskResult:$startCodeccTaskResult")
         if (startCodeccTaskResult.status == 2300020) {
             // 如果没有创建扫描流水线则再补偿创建
-            val storeCommonDao = SpringContextUtil.getBean(AbstractStoreCommonDao::class.java, "${storeType}_COMMON_DAO")
+            val storeCommonDao = SpringContextUtil.getBean(
+                clazz = AbstractStoreCommonDao::class.java,
+                beanName = "${storeType}_COMMON_DAO"
+            )
             val codeccLanguages = mutableListOf<String>()
             val devLanguages = storeCommonDao.getStoreDevLanguages(dslContext, storeCode)
             devLanguages?.forEach {
                 codeccLanguages.add(getCodeccLanguage(it))
             }
-            val createCodeccPipelineResult = client.get(ServiceCodeccResource::class).createCodeccPipeline(repoId, codeccLanguages)
+            val createCodeccPipelineResult = client.get(ServiceCodeccResource::class)
+                .createCodeccPipeline(repoId, codeccLanguages)
             logger.info("createCodeccPipelineResult is :$createCodeccPipelineResult")
             val createFlag = createCodeccPipelineResult.data
             if (createCodeccPipelineResult.isNotOk() || createFlag != true) {
@@ -211,15 +214,15 @@ class TxStoreCodeccServiceImpl @Autowired constructor(
             // 把代码扫描构建ID存入redis
             if (storeId != null) {
                 redisOperation.set(
-                    key = "$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode:$storeId",
+                    key = TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, storeCode, storeId),
                     value = startCodeccTaskResult.data!!,
-                    expired = false
+                    expiredInSecond = TimeUnit.DAYS.toSeconds(60)
                 )
             } else {
                 redisOperation.set(
-                    key = "$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode",
+                    key = TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, storeCode),
                     value = startCodeccTaskResult.data!!,
-                    expiredInSecond = TimeUnit.DAYS.toSeconds(3)
+                    expiredInSecond = TimeUnit.DAYS.toSeconds(60)
                 )
             }
         }

@@ -1,6 +1,5 @@
 package com.tencent.devops.common.webhook.service.code.filter
 
-import com.tencent.devops.common.webhook.enums.code.tgit.TGitPushActionType
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -12,92 +11,117 @@ class PushKindFilterTest {
     fun includeBranches() {
         var pushKindFilter = PushKindFilter(
             pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = emptyList(),
-            checkCreateAndUpdate = null
+            operationKind = "create",
+            actionKind = "createbranch",
+            included = emptyList()
         )
+        // 空 默认两个都监听
+        // 远程仓库新增分支
         Assertions.assertTrue(pushKindFilter.doFilter(response))
 
         pushKindFilter = PushKindFilter(
             pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.PUSH_FILE.value, TGitPushActionType.NEW_BRANCH.value),
-            checkCreateAndUpdate = null
+            operationKind = "create",
+            actionKind = "createbranch",
+            included = listOf("createBranch")
         )
+        // 只监听创建分支
+        // 远程仓库新增分支
         Assertions.assertTrue(pushKindFilter.doFilter(response))
 
         pushKindFilter = PushKindFilter(
             pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.PUSH_FILE.value),
-            checkCreateAndUpdate = null
+            operationKind = "create",
+            actionKind = "createbranch",
+            included = listOf("updateFile")
         )
-
-        Assertions.assertTrue(pushKindFilter.doFilter(response))
-
-        pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.NEW_BRANCH.value),
-            checkCreateAndUpdate = null
-        )
-
+        // 只监听新增文件
+        // 远程仓库新增分支
         Assertions.assertFalse(pushKindFilter.doFilter(response))
 
         pushKindFilter = PushKindFilter(
             pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = emptyList(),
-            checkCreateAndUpdate = true
+            operationKind = "create",
+            actionKind = "createbranch",
+            included = listOf("updateFile","createBranch")
         )
+        // 两个都监听
+        // 远程仓库新增分支
+        Assertions.assertTrue(pushKindFilter.doFilter(response))
+
+        // 本地提交
+        pushKindFilter = PushKindFilter(
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "update",
+            actionKind = "clientpush",
+            included = emptyList()
+        )
+        // 空 默认两个都监听
         Assertions.assertTrue(pushKindFilter.doFilter(response))
 
         pushKindFilter = PushKindFilter(
             pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.PUSH_FILE.value, TGitPushActionType.NEW_BRANCH.value),
-            checkCreateAndUpdate = true
+            operationKind = "update",
+            actionKind = "clientpush",
+            included = listOf("createBranch")
         )
-        Assertions.assertTrue(pushKindFilter.doFilter(response))
-
-        pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.PUSH_FILE.value),
-            checkCreateAndUpdate = true
-        )
-
-        Assertions.assertTrue(pushKindFilter.doFilter(response))
-
-        pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.NEW_BRANCH.value),
-            checkCreateAndUpdate = true
-        )
-
-        Assertions.assertTrue(pushKindFilter.doFilter(response))
-
-        pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = emptyList(),
-            checkCreateAndUpdate = false
-        )
-        Assertions.assertTrue(pushKindFilter.doFilter(response))
-
-        pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.PUSH_FILE.value, TGitPushActionType.NEW_BRANCH.value),
-            checkCreateAndUpdate = false
-        )
-        Assertions.assertTrue(pushKindFilter.doFilter(response))
-
-        pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
-            actionList = listOf(TGitPushActionType.PUSH_FILE.value),
-            checkCreateAndUpdate = false
-        )
-
+        // 只监听创建分支
         Assertions.assertFalse(pushKindFilter.doFilter(response))
 
         pushKindFilter = PushKindFilter(
-            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedee",
-            actionList = listOf(TGitPushActionType.NEW_BRANCH.value),
-            checkCreateAndUpdate = false
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "update",
+            actionKind = "clientpush",
+            included = listOf("updateFile")
         )
+        // 只监听新增文件
+        Assertions.assertTrue(pushKindFilter.doFilter(response))
 
+        pushKindFilter = PushKindFilter(
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "update",
+            actionKind = "clientpush",
+            included = listOf("updateFile","createBranch")
+        )
+        // 两个都监听
+        Assertions.assertTrue(pushKindFilter.doFilter(response))
+
+        // 本地新建分支 Filter结果应与本地提交相同
+        pushKindFilter = PushKindFilter(
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "create",
+            actionKind = "clientpush",
+            included = emptyList()
+        )
+        // 空 默认两个都监听
+        Assertions.assertTrue(pushKindFilter.doFilter(response))
+
+        pushKindFilter = PushKindFilter(
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "create",
+            actionKind = "clientpush",
+            included = listOf("createBranch")
+        )
+        // 只监听创建分支
+        Assertions.assertFalse(pushKindFilter.doFilter(response))
+
+        pushKindFilter = PushKindFilter(
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "create",
+            actionKind = "clientpush",
+            included = listOf("updateFile")
+        )
+        // 只监听新增文件
+        Assertions.assertTrue(pushKindFilter.doFilter(response))
+
+        pushKindFilter = PushKindFilter(
+            pipelineId = "p-8a49b34bfd834adda6e8dbaad01eedea",
+            operationKind = "create",
+            actionKind = "clientpush",
+            included = listOf("updateFile","createBranch")
+        )
+        // 两个都监听
         Assertions.assertTrue(pushKindFilter.doFilter(response))
     }
+
 }

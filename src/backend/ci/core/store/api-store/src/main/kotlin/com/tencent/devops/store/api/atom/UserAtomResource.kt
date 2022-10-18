@@ -128,9 +128,9 @@ interface UserAtomResource {
         @ApiParam("版本号", required = true)
         @PathParam("version")
         version: String,
-        @ApiParam("是否查询已下架版本", required = false)
+        @ApiParam("是否查询已下架版本", required = true)
         @QueryParam("queryOfflineFlag")
-        queryOfflineFlag: Boolean? = true
+        queryOfflineFlag: Boolean
     ): Result<PipelineAtom?>
 
     @ApiOperation("根据插件插件代码获取对应的版本列表信息")

@@ -68,6 +68,7 @@ class JerseySwaggerConfig : JerseyConfig() {
                     resourcePackage = packageName
                     scan = true
                     basePath = "/$service/api"
+                    isUsePathBasedConfig = true
                 }
             } else {
                 BeanConfig().apply {
@@ -76,6 +77,7 @@ class JerseySwaggerConfig : JerseyConfig() {
                     resourcePackage = packageName
                     scan = true
                     basePath = "/api"
+                    isUsePathBasedConfig = true
                 }
             }
         }
