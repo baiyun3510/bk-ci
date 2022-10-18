@@ -29,9 +29,7 @@ package com.tencent.devops.dockerhost.api
 
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.common.web.mq.alert.AlertLevel
 import com.tencent.devops.dispatch.docker.pojo.DockerHostBuildInfo
-import com.tencent.devops.dockerhost.dispatch.AlertApi
 import com.tencent.devops.dockerhost.exception.ContainerException
 import com.tencent.devops.dockerhost.exception.NoSuchImageException
 import com.tencent.devops.dockerhost.services.DockerHostBuildService
@@ -42,8 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class ServiceIdcDockerHostResourceImpl @Autowired constructor(
-    private val dockerHostBuildService: DockerHostBuildService,
-    private val alertApi: AlertApi
+    private val dockerHostBuildService: DockerHostBuildService
 ) : ServiceIdcDockerHostResource {
 
     override fun startBuild(dockerHostBuildInfo: DockerHostBuildInfo): Result<String> {
@@ -51,8 +48,6 @@ class ServiceIdcDockerHostResourceImpl @Autowired constructor(
             val containerNum = dockerHostBuildService.getContainerNum()
             if (containerNum >= MAX_CONTAINER_NUM) {
                 logger.warn("Too many containers in this host, break to start build.")
-                alertApi.alert(AlertLevel.HIGH.name, "Docker构建机运行的容器太多", "Docker构建机运行的容器太多, " +
-                        "母机IP:${CommonUtils.getInnerIP()}， 容器数量: $containerNum")
                 return Result(1, "Docker构建机运行的容器太多，母机IP:${CommonUtils.getInnerIP()}，容器数量: $containerNum")
             }
             logger.warn("Create container, dockerStartBuildInfo: $dockerHostBuildInfo")
