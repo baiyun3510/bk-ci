@@ -661,6 +661,19 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
             userId = userId,
             storeErrorCodeInfo = storeErrorCodeInfo
         )
+        val errorCodeInfos = storeErrorCodeInfoDao.getStoreErrorCodeInfo(
+            dslContext, storeErrorCodeInfo.storeCode, storeErrorCodeInfo.storeType
+        ).toMutableList()
+        val newErrorCodeInfos = storeErrorCodeInfo.errorCodeInfos
+        errorCodeInfos.removeAll(newErrorCodeInfos)
+        if (errorCodeInfos.isNotEmpty()) {
+            storeErrorCodeInfoDao.batchDeleteErrorCodeInfo(
+                dslContext = dslContext,
+                storeCode = storeErrorCodeInfo.storeCode,
+                storeType = storeErrorCodeInfo.storeType,
+                errorCodes = errorCodeInfos.map { it.errorCode }
+            )
+        }
         return Result(true)
     }
 

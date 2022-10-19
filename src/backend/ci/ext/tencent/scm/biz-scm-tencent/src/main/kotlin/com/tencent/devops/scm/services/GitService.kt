@@ -2290,7 +2290,6 @@ class GitService @Autowired constructor(
         }
         val encode = URLEncoder.encode(repoName, "utf-8")
         val url = StringBuilder("$apiUrl/projects/$encode/repository/files")
-        logger.debug("tGitUpdateFile repoUrl:$repoUrl|repoName:$repoName")
         setToken(tokenType, url, token)
         val request = Request.Builder()
             .url(url.toString())
