@@ -91,7 +91,7 @@ class TxMarketAtomServiceImpl : TxMarketAtomService, MarketAtomServiceImpl() {
         projectCode: String,
         atomCode: String,
         content: String,
-        fileName: String
+        filePath: String
     ): Result<Boolean> {
         val atomRecord = atomDao.getMaxVersionAtomByCode(dslContext, atomCode)!!
         return client.get(ServiceGitRepositoryResource::class)
@@ -100,11 +100,11 @@ class TxMarketAtomServiceImpl : TxMarketAtomService, MarketAtomServiceImpl() {
                 repoId = atomRecord.repositoryHashId,
                 repositoryType = RepositoryType.ID,
                 gitOperationFile = GitOperationFile(
-                    filePath = "$projectCode/$atomCode/${atomRecord.version}/$fileName",
+                    filePath = filePath,
                     branch = MASTER,
                     encoding = GitCodeFileEncoding.TEXT,
                     content = content,
-                    commitMessage = "updateAtomRepositoryFile: $fileName"
+                    commitMessage = "updateAtomRepositoryFile: $filePath"
                 )
         )
     }
