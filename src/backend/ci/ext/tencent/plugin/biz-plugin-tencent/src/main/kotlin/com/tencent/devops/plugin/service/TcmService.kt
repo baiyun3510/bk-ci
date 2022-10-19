@@ -27,8 +27,7 @@
 
 package com.tencent.devops.plugin.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.gson.JsonParser
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.plugin.pojo.ParametersInfo
 import com.tencent.devops.plugin.pojo.tcm.TcmApp
@@ -38,14 +37,11 @@ import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
-class TcmService @Autowired constructor(
-    private val objectMapper: ObjectMapper
-) {
+class TcmService {
 
     @Value("\${esb.appCode}")
     private val appCode = ""
@@ -67,97 +63,96 @@ class TcmService @Autowired constructor(
     }
 
     fun getApps(userId: String): List<TcmApp> {
-        val params = mapOf("app_code" to appCode,
-                "app_secret" to appSecret,
-                "username" to userId,
-                "operator" to userId)
-        val requestBody = objectMapper.writeValueAsString(params)
+        val params = mapOf(
+            "app_code" to appCode,
+            "app_secret" to appSecret,
+            "username" to userId,
+            "operator" to userId
+        )
+        val requestBody = JsonUtil.toJson(params)
         logger.info("tcm get apps request body for userId($userId): $requestBody")
         val request = Request.Builder()
-                .url(getAppsUrl)
-                .post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestBody))
-                .build()
+            .url(getAppsUrl)
+            .post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestBody))
+            .build()
         OkhttpUtils.doHttp(request).use { response ->
             val body = response.body()!!.string()
             logger.info("tcm get apps response body for userId($userId): $body")
-            val json = JsonParser.parseString(body).asJsonObject
+            val json = JsonUtil.toMap(body)
             if (!response.isSuccessful) {
                 throw RuntimeException("fail to get apps info:$body")
             }
-            val data = json["data"]
-            if (data == null || data.toString() == "null") return listOf()
-            return data.asJsonArray.map {
-                val obj = it.asJsonObject
-                TcmApp(
-                        obj["buid"].asString,
-                        obj["buname"].asString
-                )
+            @Suppress("UNCHECKED_CAST")
+            val data = json["data"] as Map<String, Map<String, Any>>? ?: return listOf()
+            return data.values.map { obj ->
+                TcmApp(buid = obj["buid"]?.toString() ?: "", buname = obj["buname"]?.toString() ?: "")
             }
         }
     }
 
     fun getTemplates(userId: String, ccid: String, tcmAppId: String): List<TcmTemplate> {
-        val params = mapOf("app_code" to appCode,
-                "app_secret" to appSecret,
-                "username" to userId,
-                "operator" to userId,
-                "app_id" to ccid,
-                "tcm_app_id" to tcmAppId)
-        val requestBody = objectMapper.writeValueAsString(params)
+        val params = mapOf(
+            "app_code" to appCode,
+            "app_secret" to appSecret,
+            "username" to userId,
+            "operator" to userId,
+            "app_id" to ccid,
+            "tcm_app_id" to tcmAppId
+        )
+        val requestBody = JsonUtil.toJson(params)
         logger.info("tcm get apps templates request body for userId($userId): $requestBody")
         val request = Request.Builder()
-                .url(getTemplatesUrl)
-                .post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestBody))
-                .build()
+            .url(getTemplatesUrl)
+            .post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestBody))
+            .build()
         OkhttpUtils.doHttp(request).use { response ->
             val body = response.body()!!.string()
             logger.info("tcm get apps templates response body for userId($userId): $body")
-            val json = JsonParser.parseString(body).asJsonObject
+            val json = JsonUtil.toMap(body)
             if (!response.isSuccessful) {
                 throw RuntimeException("fail to get templates info:$body")
             }
-            val data = json["data"]
-            if (data == null || data.toString() == "null") return listOf()
-            return data.asJsonArray.map {
-                val obj = it.asJsonObject
+
+            @Suppress("UNCHECKED_CAST")
+            val data = json["data"] as Map<String, Map<String, Any>>? ?: return listOf()
+            return data.values.map { obj ->
                 TcmTemplate(
-                        obj["template_category"].asString,
-                        obj["template_name"].asString,
-                        obj["template_id"].asString
+                    templateCategory = obj["template_category"]?.toString() ?: "",
+                    templateName = obj["template_name"]?.toString() ?: "",
+                    templateId = obj["template_id"]?.toString() ?: ""
                 )
             }
         }
     }
 
     fun getTemplateInfo(userId: String, ccid: String, tcmAppId: String, templateId: String): List<TcmTemplateParam> {
-        val params = mapOf("app_code" to appCode,
-                "app_secret" to appSecret,
-                "username" to userId,
-                "operator" to userId,
-                "app_id" to ccid,
-                "tcm_app_id" to tcmAppId,
-                "template_id" to templateId)
-        val requestBody = objectMapper.writeValueAsString(params)
+        val params = mapOf(
+            "app_code" to appCode,
+            "app_secret" to appSecret,
+            "username" to userId,
+            "operator" to userId,
+            "app_id" to ccid,
+            "tcm_app_id" to tcmAppId,
+            "template_id" to templateId
+        )
+        val requestBody = JsonUtil.toJson(params)
         logger.info("tcm get apps template info request body for userId($userId): $requestBody")
         val request = Request.Builder()
-                .url(getTemplateInfoUrl)
-                .post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestBody))
-                .build()
+            .url(getTemplateInfoUrl)
+            .post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestBody))
+            .build()
         OkhttpUtils.doHttp(request).use { response ->
             val body = response.body()!!.string()
             logger.info("tcm get apps template info response body for userId($userId): $body")
-            val json = JsonParser.parseString(body).asJsonObject
+            val json = JsonUtil.toMap(body)
             if (!response.isSuccessful) {
                 throw RuntimeException("fail to get templates info:$body")
             }
-            val data = json["data"]
-            if (data == null || data.toString() == "null") return listOf()
-            return data.asJsonArray.map {
-                val obj = it.asJsonObject
-                TcmTemplateParam(
-                        obj["seq"].asString,
-                        obj["ft_rename"].asString
-                )
+
+            @Suppress("UNCHECKED_CAST")
+            val data = json["data"] as Map<String, Map<String, Any>>? ?: return listOf()
+            return data.values.map { obj ->
+                TcmTemplateParam(seq = obj["seq"]?.toString() ?: "", paramName = obj["ft_rename"]?.toString() ?: "")
             }
         }
     }
