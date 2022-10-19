@@ -88,7 +88,7 @@ class StoreErrorCodeInfoDao {
         dslContext: DSLContext,
         storeCode: String,
         storeType: StoreTypeEnum,
-        errorCodes: List<String>
+        errorCodes: List<Int>
     ) {
         with(TStoreErrorCodeInfo.T_STORE_ERROR_CODE_INFO) {
             dslContext.deleteFrom(this)
