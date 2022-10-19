@@ -34,11 +34,13 @@ import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.dispatch.sdk.service.DispatchService
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.pipeline.enums.VMBaseOS
 import com.tencent.devops.common.pipeline.type.agent.AgentType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentDockerInfo
+import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentDockerInfoDispatch
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentEnvDispatchType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentIDDispatchType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyDevCloudDispatchType
@@ -72,7 +74,8 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
     private val buildLogPrinter: BuildLogPrinter,
     private val thirdPartyAgentBuildRedisUtils: ThirdPartyAgentBuildRedisUtils,
     private val pipelineEventDispatcher: PipelineEventDispatcher,
-    private val thirdPartyAgentBuildService: ThirdPartyAgentService
+    private val thirdPartyAgentBuildService: ThirdPartyAgentService,
+    private val dispatchService: DispatchService
 ) : Dispatcher {
     override fun canDispatch(event: PipelineAgentStartupEvent) =
         event.dispatchType is ThirdPartyAgentIDDispatchType ||
@@ -245,13 +248,28 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                     return false
                 }
 
+                // 生成docker构建机类型的id和secretKey
+                val message = if (dockerInfo == null) {
+                    null
+                } else {
+                    dispatchService.buildDispatchMessage(event)
+                }
+
                 // #5806 入库失败就不再写Redis
                 inQueue(
                     agent = agent,
                     event = event,
                     agentId = agent.agentId,
                     workspace = workspace,
-                    dockerInfo = dockerInfo
+                    dockerInfo = if (dockerInfo == null) {
+                        null
+                    } else {
+                        ThirdPartyAgentDockerInfoDispatch(
+                            agentId = message!!.id,
+                            secretKey = message.secretKey,
+                            info = dockerInfo
+                        )
+                    }
                 )
 
                 // 保存构建详情
@@ -306,7 +324,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
         event: PipelineAgentStartupEvent,
         agentId: String,
         workspace: String?,
-        dockerInfo: ThirdPartyAgentDockerInfo?
+        dockerInfo: ThirdPartyAgentDockerInfoDispatch?
     ) {
         thirdPartyAgentBuildService.queueBuild(
             agent = agent,
@@ -752,9 +770,6 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
             return false
         }
         hasTryAgents.add(agent.agentId)
-
-        logger.info("DEBUG|RUOTIAN: ${dispatchType.dockerInfo}")
-
         if (buildByAgentId(event, agent, dispatchType.workspace, dispatchType.dockerInfo)) {
             return true
         }
