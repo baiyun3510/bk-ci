@@ -2289,6 +2289,7 @@ class GitService @Autowired constructor(
             GitUtils.getGitApiUrl(gitConfig.gitApiUrl, repoUrl)
         }
         val url = StringBuilder("$apiUrl/api/v3/projects/$repoName/repository/files")
+        logger.debug("tGitUpdateFile repoUrl:$repoUrl|repoName:$repoName")
         setToken(tokenType, url, token)
         val request = Request.Builder()
             .url(url.toString())
