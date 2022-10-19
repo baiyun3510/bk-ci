@@ -650,7 +650,7 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
             projectCode = projectCode,
             atomCode = atomCode,
             content = errorJsonStr,
-            fileName = ERROR_JSON_NAME
+            filePath = ERROR_JSON_NAME
         )
         if (updateAtomFileContentresult.isNotOk()) {
             return updateAtomFileContentresult
@@ -1344,7 +1344,7 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
         projectCode: String,
         atomCode: String,
         content: String,
-        fileName: String
+        filePath: String
     ): Result<Boolean>
 
     @Suppress("UNCHECKED_CAST")
