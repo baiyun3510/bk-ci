@@ -27,18 +27,11 @@
 
 package com.tencent.devops.plugin.service
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.gson.JsonParser
-import com.tencent.devops.common.api.util.UnicodeUtil
-import com.tencent.devops.common.web.mq.alert.AlertLevel
-import com.tencent.devops.common.web.mq.alert.AlertUtils
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.plugin.pojo.ParametersInfo
 import com.tencent.devops.plugin.pojo.tcm.TcmApp
-import com.tencent.devops.plugin.pojo.tcm.TcmException
-import com.tencent.devops.plugin.pojo.tcm.TcmReqParam
 import com.tencent.devops.plugin.pojo.tcm.TcmTemplate
 import com.tencent.devops.plugin.pojo.tcm.TcmTemplateParam
 import okhttp3.MediaType
@@ -69,12 +62,8 @@ class TcmService @Autowired constructor(
     @Value("\${tcm.templateInfo.url}")
     private val getTemplateInfoUrl = ""
 
-    @Value("\${tcm.startTask.url}")
-    private val startTaskUrl = ""
-
     companion object {
         private val logger = LoggerFactory.getLogger(TcmService::class.java)
-        private val parser = JsonParser()
     }
 
     fun getApps(userId: String): List<TcmApp> {
@@ -91,9 +80,8 @@ class TcmService @Autowired constructor(
         OkhttpUtils.doHttp(request).use { response ->
             val body = response.body()!!.string()
             logger.info("tcm get apps response body for userId($userId): $body")
-            val json = parser.parse(body).asJsonObject
+            val json = JsonParser.parseString(body).asJsonObject
             if (!response.isSuccessful) {
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "fail to get apps info for userId($userId)", body)
                 throw RuntimeException("fail to get apps info:$body")
             }
             val data = json["data"]
@@ -124,9 +112,8 @@ class TcmService @Autowired constructor(
         OkhttpUtils.doHttp(request).use { response ->
             val body = response.body()!!.string()
             logger.info("tcm get apps templates response body for userId($userId): $body")
-            val json = parser.parse(body).asJsonObject
+            val json = JsonParser.parseString(body).asJsonObject
             if (!response.isSuccessful) {
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "fail to get templates for userId($userId), ccid($ccid)", body)
                 throw RuntimeException("fail to get templates info:$body")
             }
             val data = json["data"]
@@ -159,9 +146,8 @@ class TcmService @Autowired constructor(
         OkhttpUtils.doHttp(request).use { response ->
             val body = response.body()!!.string()
             logger.info("tcm get apps template info response body for userId($userId): $body")
-            val json = parser.parse(body).asJsonObject
+            val json = JsonParser.parseString(body).asJsonObject
             if (!response.isSuccessful) {
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "fail to get template info for userId($userId), ccid($ccid)", body)
                 throw RuntimeException("fail to get templates info:$body")
             }
             val data = json["data"]
@@ -172,41 +158,6 @@ class TcmService @Autowired constructor(
                         obj["seq"].asString,
                         obj["ft_rename"].asString
                 )
-            }
-        }
-    }
-
-    fun startTask(tcmReqParam: TcmReqParam, buildId: String, userId: String): String {
-        val params = TcmRequestParam(
-                tcmReqParam.operator,
-                tcmReqParam.appId,
-                tcmReqParam.tcmAppId,
-                tcmReqParam.templateId,
-                tcmReqParam.name,
-                tcmReqParam.workJson,
-                appCode,
-                appSecret,
-                userId
-        )
-
-        val json = objectMapper.writeValueAsString(params)
-        logger.info("tcm exec request for buildId($buildId): $json")
-
-        val request = Request.Builder()
-                .url(startTaskUrl)
-                .post(RequestBody.create(MediaType.parse("application/json;charset=utf-8"), json))
-                .build()
-        OkhttpUtils.doHttp(request).use { response ->
-            val body = UnicodeUtil.unicodeToString(response.body()!!.string())
-            logger.info("tcm exec response for app(${tcmReqParam.appId}): $body")
-            try {
-                val resultMap = objectMapper.readValue<Map<String, Any>>(body)
-                if (resultMap["result"] == true) return body
-                throw RuntimeException(resultMap["message"] as? String ?: "")
-            } catch (e: Exception) {
-                // 失败，告警
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "tcm operation fail for build($buildId)", e.message ?: "")
-                throw TcmException(e.message ?: "")
             }
         }
     }
@@ -237,22 +188,4 @@ class TcmService @Autowired constructor(
         }
         return params
     }
-
-    data class TcmRequestParam(
-        val operator: String,
-        @field:JsonProperty("app_id")
-        val appId: String,
-        @field:JsonProperty("tcm_app_id")
-        val tcmAppId: String,
-        @field:JsonProperty("template_id")
-        val templateId: String,
-        val name: String,
-        @field:JsonProperty("workjson")
-        val workJson: List<Map<String, String>>,
-        @field:JsonProperty("app_code")
-        val appCode: String,
-        @field:JsonProperty("app_secret")
-        val appSecert: String,
-        val username: String
-    )
 }
