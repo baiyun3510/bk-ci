@@ -86,6 +86,7 @@ open class BaseBuildDetailService constructor(
     ): Model {
         val watcher = Watcher(id = "updateDetail#$buildId#$operation")
         var message = "nothing"
+        var record :TPipelineBuildDetailRecord? = null
         val lock = RedisLock(redisOperation, "process.build.detail.lock.$buildId", ExpiredTimeInSeconds)
 
         try {
@@ -93,7 +94,7 @@ open class BaseBuildDetailService constructor(
             lock.lock()
 
             watcher.start("getDetail")
-            val record = buildDetailDao.get(dslContext, projectId, buildId)
+            record = buildDetailDao.get(dslContext, projectId, buildId)
             Preconditions.checkArgument(record != null, "The build detail is not exist")
 
             watcher.start("model")
@@ -127,22 +128,22 @@ open class BaseBuildDetailService constructor(
                     ?: if (buildStatus.isCancel() && record.cancelUser.isNullOrBlank()) "System" else null
             )
 
-            watcher.start("dispatchEvent")
-            pipelineDetailChangeEvent(projectId, buildId)
             message = "update done"
             return model
         } catch (ignored: Throwable) {
             message = ignored.message ?: ""
             logger.warn("[$buildId]| Fail to update the build detail: ${ignored.message}", ignored)
             watcher.start("getDetail")
-            val record = buildDetailDao.get(dslContext, projectId, buildId)
             Preconditions.checkArgument(record != null, "The build detail is not exist")
             watcher.start("model")
             return JsonUtil.to(record!!.model, Model::class.java)
         } finally {
             lock.unlock()
-            watcher.stop()
             logger.info("[$buildId|$buildStatus]|$operation|update_detail_model| $message")
+            if (message == "update done") {
+                watcher.start("dispatchEvent")
+                pipelineDetailChangeEvent(projectId, buildId)
+            }
             LogUtils.printCostTimeWE(watcher)
         }
     }
