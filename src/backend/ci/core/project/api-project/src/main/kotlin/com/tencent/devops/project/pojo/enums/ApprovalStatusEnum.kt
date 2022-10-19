@@ -45,4 +45,13 @@ enum class ApprovalStatusEnum(val index: Int) {
     };
 
     abstract fun getPerson(ordinal: Int): String
+
+    companion object {
+        fun get(name: String): ApprovalStatusEnum {
+            values().forEach {
+                if (name == it.name) return it
+            }
+            throw IllegalArgumentException("No enum for constant $name")
+        }
+    }
 }

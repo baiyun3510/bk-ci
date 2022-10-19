@@ -30,6 +30,7 @@ package com.tencent.devops.store.dao.common
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.model.store.tables.TStoreDeptRel
 import com.tencent.devops.model.store.tables.records.TStoreDeptRelRecord
+import com.tencent.devops.project.pojo.enums.ApprovalStatusEnum
 import com.tencent.devops.store.pojo.common.DeptInfo
 import com.tencent.devops.store.pojo.common.enums.DeptStatusEnum
 import org.jooq.Condition
@@ -108,17 +109,16 @@ class StoreDeptRelDao {
         }
     }
 
-    fun batchAdd(
+    fun batchAddStoreDeptRel(
         dslContext: DSLContext,
         userId: String,
         storeCode: String,
         deptInfoList: List<DeptInfo>,
-        status: Byte,
-        comment: String,
         storeType: Byte
     ): IntArray? {
         with(TStoreDeptRel.T_STORE_DEPT_REL) {
             val addStep = deptInfoList.map {
+                val status = ApprovalStatusEnum.get(it.status).index.toByte()
                 dslContext.insertInto(this,
                     ID,
                     STORE_CODE,
@@ -140,12 +140,12 @@ class StoreDeptRelDao {
                         userId,
                         userId,
                         status,
-                        comment,
+                        it.comment,
                         LocalDateTime.now()
                     )
                     .onDuplicateKeyUpdate()
                     .set(STATUS, status)
-                    .set(COMMENT, comment)
+                    .set(COMMENT, it.comment)
                     .set(MODIFIER, userId)
                     .set(UPDATE_TIME, LocalDateTime.now())
             }

@@ -32,6 +32,8 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.project.api.service.ServiceProjectOrganizationResource
+import com.tencent.devops.project.pojo.enums.ApprovalStatusEnum
+import com.tencent.devops.project.pojo.enums.OrganizationType
 import com.tencent.devops.store.dao.common.StoreDeptRelDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
 import com.tencent.devops.store.pojo.common.DeptInfo
@@ -144,6 +146,12 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
             )
         }
         val deptIdApprovedList = mutableListOf<DeptInfo>()
+        val bgIdList = client.get(ServiceProjectOrganizationResource::class)
+            .getOrganizations(
+                userId = userId,
+                type = OrganizationType.bg,
+                id = 0
+            ).data!!.map { it.id }
         deptInfos.forEach forEach@{
             val count = storeDeptRelDao.countByCodeAndDeptId(
                 dslContext = dslContext,
@@ -154,18 +162,24 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
             if (count>0) {
                 return@forEach
             }
+            // 可见范围大于或等于BG则进入审核
+            if (it.deptId == 0 || bgIdList.contains("${it.deptId}")) {
+                it.status = ApprovalStatusEnum.PENDING.name
+            }
             deptIdApprovedList.add(it)
         }
-        // 可见范围默认审核通过
-        storeDeptRelDao.batchAdd(
+        storeDeptRelDao.batchAddStoreDeptRel(
             dslContext = dslContext,
             userId = userId,
             storeCode = storeCode,
             deptInfoList = deptIdApprovedList,
-            status = DeptStatusEnum.APPROVED.status.toByte(),
-            comment = "AUTO APPROVE",
             storeType = storeType.type.toByte()
         )
+        // 知会接口人审核
+        val userBg =
+        deptIdApprovedList.forEach {
+
+        }
         return Result(true)
     }
 

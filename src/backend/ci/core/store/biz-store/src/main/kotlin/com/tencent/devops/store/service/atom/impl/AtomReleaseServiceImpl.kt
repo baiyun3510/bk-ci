@@ -570,7 +570,8 @@ abstract class AtomReleaseServiceImpl @Autowired constructor() : AtomReleaseServ
                         )
                     }
                     errorCodes.forEach {
-                        if (it.length != 6 && (!it.startsWith("8"))) {
+                        val errorCode = "$it"
+                        if (errorCode.length != 6 && (!errorCode.startsWith("8"))) {
                             throw ErrorCodeException(
                                 errorCode = USER_REPOSITORY_ERROR_JSON_FIELD_IS_INVALID
                             )
