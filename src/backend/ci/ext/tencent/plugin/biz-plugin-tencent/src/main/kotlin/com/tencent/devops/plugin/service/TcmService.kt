@@ -83,8 +83,8 @@ class TcmService {
                 throw RuntimeException("fail to get apps info:$body")
             }
             @Suppress("UNCHECKED_CAST")
-            val data = json["data"] as Map<String, Map<String, Any>>? ?: return listOf()
-            return data.values.map { obj ->
+            val data = json["data"] as List<Map<String, Any>>? ?: return listOf()
+            return data.map { obj ->
                 TcmApp(buid = obj["buid"]?.toString() ?: "", buname = obj["buname"]?.toString() ?: "")
             }
         }
@@ -114,8 +114,8 @@ class TcmService {
             }
 
             @Suppress("UNCHECKED_CAST")
-            val data = json["data"] as Map<String, Map<String, Any>>? ?: return listOf()
-            return data.values.map { obj ->
+            val data = json["data"] as List<Map<String, Any>>? ?: return listOf()
+            return data.map { obj ->
                 TcmTemplate(
                     templateCategory = obj["template_category"]?.toString() ?: "",
                     templateName = obj["template_name"]?.toString() ?: "",
@@ -150,8 +150,8 @@ class TcmService {
             }
 
             @Suppress("UNCHECKED_CAST")
-            val data = json["data"] as Map<String, Map<String, Any>>? ?: return listOf()
-            return data.values.map { obj ->
+            val data = json["data"] as List<Map<String, Any>>? ?: return listOf()
+            return data.map { obj ->
                 TcmTemplateParam(seq = obj["seq"]?.toString() ?: "", paramName = obj["ft_rename"]?.toString() ?: "")
             }
         }
