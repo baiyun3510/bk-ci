@@ -35,6 +35,7 @@ import com.tencent.devops.common.auth.api.MockAuthPermissionApi
 import com.tencent.devops.common.auth.api.MockAuthProjectApi
 import com.tencent.devops.common.auth.api.MockAuthResourceApi
 import com.tencent.devops.common.auth.api.MockAuthTokenApi
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -47,6 +48,9 @@ import org.springframework.core.Ordered
 @ConditionalOnWebApplication
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 class MockAuthAutoConfiguration {
+    companion object {
+        private val logger = LoggerFactory.getLogger(MockAuthAutoConfiguration::class.java)
+    }
 
     @Bean
 //    @Primary
@@ -61,7 +65,7 @@ class MockAuthAutoConfiguration {
     @Bean
 //    @Primary
     @ConditionalOnMissingBean(AuthResourceApi::class)
-    fun authResourceApi(authTokenApi: MockAuthTokenApi) = MockAuthResourceApi()
+    fun cAuthResourceApi(authTokenApi: MockAuthTokenApi) = MockAuthResourceApi().also { logger.info("### fuck cAuthResourceApi ") }
 
     @Bean
 //    @Primary
