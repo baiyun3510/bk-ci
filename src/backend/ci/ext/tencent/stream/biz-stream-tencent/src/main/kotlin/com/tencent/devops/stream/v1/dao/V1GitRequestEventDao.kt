@@ -32,7 +32,6 @@ import com.tencent.devops.common.service.utils.CommonUtils
 import com.tencent.devops.common.webhook.enums.code.StreamGitObjectKind
 import com.tencent.devops.common.webhook.pojo.code.git.GitEvent
 import com.tencent.devops.model.stream.tables.TGitRequestEvent
-import com.tencent.devops.stream.pojo.GitRequestEvent
 import com.tencent.devops.stream.v1.pojo.V1GitRequestEvent
 import org.jooq.DSLContext
 import org.springframework.stereotype.Repository
@@ -331,7 +330,11 @@ class V1GitRequestEventDao {
                             it.description
                         },
                         mrTitle = it.mrTitle,
-                        gitEvent = null,
+                        gitEvent = try {
+                            JsonUtil.to(it.event, GitEvent::class.java)
+                        } catch (e: Exception) {
+                            null
+                        },
                         commitAuthorName = null,
                         gitProjectName = null
                     )
