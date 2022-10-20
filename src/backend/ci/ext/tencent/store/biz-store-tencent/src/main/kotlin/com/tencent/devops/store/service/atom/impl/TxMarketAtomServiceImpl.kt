@@ -106,6 +106,6 @@ class TxMarketAtomServiceImpl : TxMarketAtomService, MarketAtomServiceImpl() {
                     content = content,
                     commitMessage = "updateAtomRepositoryFile: $filePath"
                 )
-        )
+            )
     }
 }
