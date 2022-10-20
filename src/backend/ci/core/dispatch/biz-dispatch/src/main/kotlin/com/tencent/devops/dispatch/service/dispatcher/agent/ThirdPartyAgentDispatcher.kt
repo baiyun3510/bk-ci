@@ -34,7 +34,6 @@ import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
-import com.tencent.devops.common.dispatch.sdk.service.DispatchService
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.pipeline.enums.VMBaseOS
@@ -120,6 +119,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 vmSeqId = event.vmSeqId,
                 success = event.buildResult
             )
+            dispatchService.shutdown(event)
         } finally {
             try {
                 sendDispatchMonitoring(
@@ -252,7 +252,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 val message = if (dockerInfo == null) {
                     null
                 } else {
-                    dispatchService.buildDispatchMessage(event)
+                    dispatchService.setRedisAuth(event)
                 }
 
                 // #5806 入库失败就不再写Redis
@@ -265,7 +265,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                         null
                     } else {
                         ThirdPartyAgentDockerInfoDispatch(
-                            agentId = message!!.id,
+                            agentId = message!!.hashId,
                             secretKey = message.secretKey,
                             info = dockerInfo
                         )
