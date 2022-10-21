@@ -27,25 +27,11 @@
 
 package com.tencent.devops.auth.service.iam
 
-import com.tencent.devops.auth.pojo.action.ActionInfo
 import com.tencent.devops.auth.pojo.action.CreateActionDTO
-import com.tencent.devops.auth.pojo.action.UpdateActionDTO
+import com.tencent.devops.auth.pojo.action.DeteleActionDTO
 
 interface ActionService {
     fun createAction(userId: String, action: CreateActionDTO): Boolean
 
-    fun updateAction(userId: String, actionId: String, action: UpdateActionDTO): Boolean
-
-    fun getAction(actionId: String): ActionInfo?
-
-    fun getActions(actionIds: List<String>): List<ActionInfo>?
-
-    fun actionList(): List<ActionInfo>?
-
-    /**
-     * 返回以resouce为key的actionMap
-     */
-    fun actionMap(): Map<String, List<ActionInfo>>?
-
-    fun checkSystemAction(actions: List<String>): Boolean
+    fun deleteAction(userId: String, action: DeteleActionDTO): Boolean
 }
