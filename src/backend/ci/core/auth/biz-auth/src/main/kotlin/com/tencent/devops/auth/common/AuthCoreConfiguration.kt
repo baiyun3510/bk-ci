@@ -27,54 +27,15 @@
 
 package com.tencent.devops.auth.common
 
-import IamBkActionServiceImpl
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.tencent.bk.sdk.iam.config.IamConfiguration
-import com.tencent.bk.sdk.iam.service.IamActionService
-import com.tencent.bk.sdk.iam.service.IamResourceService
-import com.tencent.bk.sdk.iam.service.SystemService
-import com.tencent.bk.sdk.iam.service.impl.ActionServiceImpl
-import com.tencent.bk.sdk.iam.service.impl.ApigwHttpClientServiceImpl
-import com.tencent.bk.sdk.iam.service.impl.GrantServiceImpl
-import com.tencent.bk.sdk.iam.service.impl.ResourceServiceImpl
-import com.tencent.bk.sdk.iam.service.impl.SystemServiceImpl
-import com.tencent.devops.auth.dao.ActionDao
-import com.tencent.devops.auth.dao.ResourceDao
 import com.tencent.devops.auth.filter.BlackListAspect
 import com.tencent.devops.auth.filter.TokenCheckFilter
 import com.tencent.devops.auth.refresh.dispatch.AuthRefreshDispatch
 import com.tencent.devops.auth.refresh.listener.AuthRefreshEventListener
 import com.tencent.devops.auth.service.AuthUserBlackListService
-import com.tencent.devops.auth.service.DefaultDeptServiceImpl
-import com.tencent.devops.auth.service.DeptService
-import com.tencent.devops.auth.service.LocalManagerService
-import com.tencent.devops.auth.service.OrganizationService
-import com.tencent.devops.auth.service.iam.ActionService
-import com.tencent.devops.auth.service.iam.BkResourceService
-import com.tencent.devops.auth.service.iam.PermissionExtService
-import com.tencent.devops.auth.service.iam.PermissionGradeService
-import com.tencent.devops.auth.service.iam.PermissionGrantService
-import com.tencent.devops.auth.service.iam.PermissionProjectService
-import com.tencent.devops.auth.service.iam.PermissionRoleMemberService
-import com.tencent.devops.auth.service.iam.PermissionRoleService
-import com.tencent.devops.auth.service.iam.PermissionService
-import com.tencent.devops.auth.service.iam.PermissionUrlService
-import com.tencent.devops.auth.service.iam.impl.IamBkResourceServiceImpl
-import com.tencent.devops.auth.service.sample.SampleAuthPermissionProjectService
-import com.tencent.devops.auth.service.sample.SampleAuthPermissionService
-import com.tencent.devops.auth.service.sample.SampleGrantPermissionServiceImpl
-import com.tencent.devops.auth.service.sample.SampleLocalManagerServiceImpl
-import com.tencent.devops.auth.service.sample.SampleOrganizationService
-import com.tencent.devops.auth.service.sample.SamplePermissionExtService
-import com.tencent.devops.auth.service.sample.SamplePermissionGradeService
-import com.tencent.devops.auth.service.sample.SamplePermissionRoleMemberService
-import com.tencent.devops.auth.service.sample.SamplePermissionRoleService
-import com.tencent.devops.auth.service.sample.SamplePermissionUrlServiceImpl
 import com.tencent.devops.auth.utils.HostUtils
-import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.client.ClientTokenService
 import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQ
-import org.jooq.DSLContext
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.BindingBuilder
 import org.springframework.amqp.core.DirectExchange
@@ -87,7 +48,6 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -167,112 +127,8 @@ class AuthCoreConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(DeptService::class)
-    fun defaultDeptServiceImpl() = DefaultDeptServiceImpl()
-
-    @Bean
     fun tokenFilter(clientTokenService: ClientTokenService) = TokenCheckFilter(clientTokenService)
 
     @Bean
     fun blackListAspect(authUserBlackListService: AuthUserBlackListService) = BlackListAspect(authUserBlackListService)
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionExtService::class)
-    fun permissionExtService() = SamplePermissionExtService()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionUrlService::class)
-    fun permissionUrlService() = SamplePermissionUrlServiceImpl()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionProjectService::class)
-    fun sampleAuthPermissionProjectService() = SampleAuthPermissionProjectService()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionService::class)
-    fun sampleAuthPermissionService() = SampleAuthPermissionService()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionGrantService::class)
-    fun sampleGrantPermissionServiceImpl(
-        grantServiceImpl: GrantServiceImpl,
-        iamConfiguration: IamConfiguration,
-        client: Client
-    ) = SampleGrantPermissionServiceImpl(grantServiceImpl, iamConfiguration, client)
-
-    @Bean
-    @ConditionalOnMissingBean(LocalManagerService::class)
-    fun sampleLocalManagerServiceImpl() = SampleLocalManagerServiceImpl()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionGradeService::class)
-    fun samplePermissionGradeService() = SamplePermissionGradeService()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionRoleMemberService::class)
-    fun samplePermissionRoleMemberService() = SamplePermissionRoleMemberService()
-
-    @Bean
-    @ConditionalOnMissingBean(PermissionRoleService::class)
-    fun samplePermissionRoleService() = SamplePermissionRoleService()
-
-    @Bean
-    @ConditionalOnMissingBean(OrganizationService::class)
-    fun sampleOrganizationService() = SampleOrganizationService()
-
-    @Bean
-    fun iamSystemService(
-        apigwHttpClientServiceImpl: ApigwHttpClientServiceImpl,
-        iamConfiguration: IamConfiguration
-    ) = SystemServiceImpl(apigwHttpClientServiceImpl, iamConfiguration)
-
-    @Bean
-    fun iamActionService(
-        iamConfiguration: IamConfiguration,
-        apigwHttpClientServiceImpl: ApigwHttpClientServiceImpl,
-        systemService: SystemService
-    ) = ActionServiceImpl(iamConfiguration, apigwHttpClientServiceImpl, systemService)
-
-    @Bean
-    fun iamResourceService(
-        iamConfiguration: IamConfiguration,
-        apigwHttpClientServiceImpl: ApigwHttpClientServiceImpl,
-        systemService: SystemService
-    ) = ResourceServiceImpl(iamConfiguration, apigwHttpClientServiceImpl, systemService)
-
-    @Bean
-    @ConditionalOnMissingBean(ActionService::class)
-    fun ciIamActionService(
-        dslContext: DSLContext,
-        actionDao: ActionDao,
-        resourceService: BkResourceService,
-        iamConfiguration: IamConfiguration,
-        systemService: SystemService,
-        iamActionService: IamActionService,
-        iamResourceService: IamResourceService
-    ) = IamBkActionServiceImpl(
-        dslContext = dslContext,
-        actionDao = actionDao,
-        resourceService = resourceService,
-        iamConfiguration = iamConfiguration,
-        systemService = systemService,
-        iamActionService = iamActionService,
-        iamResourceService = iamResourceService
-    )
-
-    @Bean
-    @ConditionalOnMissingBean(BkResourceService::class)
-    fun ciIamResourceService(
-        dslContext: DSLContext,
-        resourceDao: ResourceDao,
-        iamConfiguration: IamConfiguration,
-        iamResourceService: IamResourceService,
-        iamSystemService: SystemService
-    ) = IamBkResourceServiceImpl(
-        dslContext = dslContext,
-        resourceDao = resourceDao,
-        iamConfiguration = iamConfiguration,
-        iamResourceService = iamResourceService,
-        iamSystemService = iamSystemService
-    )
 }
