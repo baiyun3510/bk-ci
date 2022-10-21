@@ -55,9 +55,9 @@ import org.springframework.core.Ordered
 @ConditionalOnWebApplication
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 @ConditionalOnProperty(prefix = "auth", name = ["idProvider"], havingValue = "new_v3")
-class AuthTxV3AutoConfiguration {
+class TxV3AuthAutoConfiguration {
     companion object{
-        private val logger = LoggerFactory.getLogger(AuthTxV3AutoConfiguration::class.java)
+        private val logger = LoggerFactory.getLogger(TxV3AuthAutoConfiguration::class.java)
     }
 
     @Bean
