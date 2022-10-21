@@ -35,7 +35,7 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import org.springframework.beans.factory.annotation.Autowired
 
-@RestResource
+// @RestResource
 class OpResourceResourceImpl @Autowired constructor(
     val resourceService: BkResourceService
 ) : OpResourceResource {
