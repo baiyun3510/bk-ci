@@ -104,10 +104,7 @@ class TxV3AuthAutoConfiguration {
         bkAuthProperties: BkAuthProperties,
         objectMapper: ObjectMapper,
         bsAuthTokenApi: BSAuthTokenApi
-    ): BSAuthResourceApi {
-        logger.info("### fuck bsAuthResourceApi")
-        return BSAuthResourceApi(bkAuthProperties, objectMapper, bsAuthTokenApi)
-    }
+    ) = BSAuthResourceApi(bkAuthProperties, objectMapper, bsAuthTokenApi)
 
     @Bean
     @Primary

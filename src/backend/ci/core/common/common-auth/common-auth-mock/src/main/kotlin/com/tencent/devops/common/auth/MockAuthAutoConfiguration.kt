@@ -55,22 +55,20 @@ class MockAuthAutoConfiguration {
     @Bean
 //    @Primary
     @ConditionalOnMissingBean(AuthTokenApi::class)
-    fun authTokenApi() = MockAuthTokenApi()
+    fun mockAuthTokenApi() = MockAuthTokenApi()
 
     @Bean
 //    @Primary
     @ConditionalOnMissingBean(AuthPermissionApi::class)
-    fun authPermissionApi() = MockAuthPermissionApi()
+    fun mockAuthPermissionApi() = MockAuthPermissionApi()
 
     @Bean
 //    @Primary
-    @ConditionalOnMissingBean(AuthResourceApi::class, name = ["bsAuthResourceApi", "authResourceApi"])
-    fun authResourceApi(authTokenApi: MockAuthTokenApi) = MockAuthResourceApi().also {
-        logger.info("### fuck cAuthResourceApi ")
-    }
+    @ConditionalOnMissingBean(AuthResourceApi::class)
+    fun authResourceApi(mockAuthTokenApi: MockAuthTokenApi) = MockAuthResourceApi()
 
     @Bean
 //    @Primary
     @ConditionalOnMissingBean(AuthProjectApi::class)
-    fun authProjectApi(bkAuthPermissionApi: MockAuthPermissionApi) = MockAuthProjectApi(bkAuthPermissionApi)
+    fun authProjectApi(mockAuthPermissionApi: MockAuthPermissionApi) = MockAuthProjectApi(mockAuthPermissionApi)
 }
