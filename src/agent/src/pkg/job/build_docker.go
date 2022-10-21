@@ -9,6 +9,7 @@ import (
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/config"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/logs"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util"
+	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/httputil"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/systemutil"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -47,7 +48,7 @@ func init() {
 const (
 	entryPointCmd               = "/data/init.sh"
 	localDockerBuildTmpDirName  = "docker_build_tmp"
-	localDockerWorkSpaceDirName = "docker_workspace"
+	LocalDockerWorkSpaceDirName = "docker_workspace"
 	dockerDataDir               = "/data/landun/workspace"
 	dockerLogDir                = "/data/logs"
 )
@@ -70,8 +71,6 @@ func DoDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 
 	imageName := dockerBuildInfo.Image
 
-	taskId := "startVM-" + buildInfo.VmSeqId
-
 	// 判断本地是否已经有镜像了
 	images, err := cli.ImageList(ctx, types.ImageListOptions{})
 	if err != nil {
@@ -91,7 +90,7 @@ func DoDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 
 	// 本地没有镜像的需要拉取新的镜像
 	if !localExist {
-		postLog(buildInfo.BuildId, false, "开始拉取镜像，镜像名称："+imageName, taskId, buildInfo.ContainerHashId, buildInfo.ExecuteCount)
+		postLog(false, "开始拉取镜像，镜像名称："+imageName, buildInfo)
 		reader, err := cli.ImagePull(ctx, imageName, types.ImagePullOptions{
 			RegistryAuth: generateDockerAuth(dockerBuildInfo.Credential),
 		})
@@ -105,12 +104,12 @@ func DoDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 		_, err = io.Copy(buf, reader)
 		if err != nil {
 			logs.Error("DOCKER_JOB|write image message error ", err)
-			postLog(buildInfo.BuildId, true, "获取拉取镜像信息日志失败："+err.Error(), taskId, buildInfo.ContainerHashId, buildInfo.ExecuteCount)
+			postLog(true, "获取拉取镜像信息日志失败："+err.Error(), buildInfo)
 		} else {
-			postLog(buildInfo.BuildId, false, buf.String(), taskId, buildInfo.ContainerHashId, buildInfo.ExecuteCount)
+			postLog(false, buf.String(), buildInfo)
 		}
 	} else {
-		postLog(buildInfo.BuildId, false, "本地存在镜像，准备启动构建环境..."+imageName, taskId, buildInfo.ContainerHashId, buildInfo.ExecuteCount)
+		postLog(false, "本地存在镜像，准备启动构建环境..."+imageName, buildInfo)
 	}
 
 	// 创建docker构建机运行准备空间，拉取docker构建机初始化文件
@@ -214,25 +213,30 @@ func dockerBuildFinish(buildInfo *api.ThirdPartyBuildWithStatus) {
 }
 
 // postLog 向后台上报日志
-func postLog(buildId string, red bool, message, tag, containerHashId string, executeCount *int) {
+func postLog(red bool, message string, buildInfo *api.ThirdPartyBuildInfo) {
+	taskId := "startVM-" + buildInfo.VmSeqId
+
 	logMessage := &api.LogMessage{
 		Message:      message,
 		Timestamp:    time.Now().UnixMilli(),
-		Tag:          tag,
-		JobId:        containerHashId,
+		Tag:          taskId,
+		JobId:        buildInfo.ContainerHashId,
 		LogType:      api.LogtypeLog,
-		ExecuteCount: executeCount,
+		ExecuteCount: buildInfo.ExecuteCount,
 		SubTag:       nil,
 	}
 
 	var err error
+	var re *httputil.DevopsResult
 	if red {
-		_, err = api.AddLogRedLine(buildId, logMessage)
+		re, err = api.AddLogRedLine(buildInfo.BuildId, logMessage, buildInfo.VmSeqId)
 	} else {
-		_, err = api.AddLogLine(buildId, logMessage)
+		re, err = api.AddLogLine(buildInfo.BuildId, logMessage, buildInfo.VmSeqId)
 	}
 	if err != nil {
 		logs.Error("DOCKER_JOB|api post log error", err)
+	} else {
+		logs.Error(fmt.Sprintf("DOCKER_JOB|api post log %v", re))
 	}
 }
 
@@ -313,7 +317,7 @@ func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo, dockerInitFile str
 	})
 
 	// 创建并挂载data和log
-	dataDir := fmt.Sprintf("%s/%s/data/%s/%s", workDir, localDockerWorkSpaceDirName, buildInfo.PipelineId, buildInfo.VmSeqId)
+	dataDir := fmt.Sprintf("%s/%s/data/%s/%s", workDir, LocalDockerWorkSpaceDirName, buildInfo.PipelineId, buildInfo.VmSeqId)
 	err := mkDir(dataDir)
 	if err != nil && !os.IsExist(err) {
 		return nil, errors.Wrapf(err, "create local data dir %s error", dataDir)
@@ -325,7 +329,7 @@ func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo, dockerInitFile str
 		ReadOnly: false,
 	})
 
-	logsDir := fmt.Sprintf("%s/%s/logs/%s/%s", workDir, localDockerWorkSpaceDirName, buildInfo.BuildId, buildInfo.VmSeqId)
+	logsDir := fmt.Sprintf("%s/%s/logs/%s/%s", workDir, LocalDockerWorkSpaceDirName, buildInfo.BuildId, buildInfo.VmSeqId)
 	err = mkDir(logsDir)
 	if err != nil && !os.IsExist(err) {
 		return nil, errors.Wrapf(err, "create local logs dir %s error", logsDir)

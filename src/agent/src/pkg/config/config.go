@@ -281,9 +281,13 @@ func LoadAgentConfig() error {
 		logsKeepHours = 96
 	}
 
-	dockerParallelTaskCount, err := conf.Section("").Key(KeyDockerTaskCount).Int()
-	if err != nil || dockerParallelTaskCount < 0 {
-		return errors.New("invalid dockerParallelTaskCount")
+	// 兼容旧版本 .agent.properties 没有这个键
+	dockerParallelTaskCount := 0
+	if conf.Section("").HasKey(KeyDockerTaskCount) {
+		dockerParallelTaskCount, err = conf.Section("").Key(KeyDockerTaskCount).Int()
+		if err != nil || dockerParallelTaskCount < 0 {
+			return errors.New("invalid dockerParallelTaskCount")
+		}
 	}
 
 	GAgentConfig.LogsKeepHours = logsKeepHours
