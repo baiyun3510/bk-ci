@@ -146,12 +146,12 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
             )
         }
         val deptIdApprovedList = mutableListOf<DeptInfo>()
-        val bgIdList = client.get(ServiceProjectOrganizationResource::class)
-            .getOrganizations(
-                userId = userId,
-                type = OrganizationType.bg,
-                id = 0
-            ).data!!.map { it.id }
+//        val bgIdList = client.get(ServiceProjectOrganizationResource::class)
+//            .getOrganizations(
+//                userId = userId,
+//                type = OrganizationType.bg,
+//                id = 0
+//            ).data!!.map { it.id }
         deptInfos.forEach forEach@{
             val count = storeDeptRelDao.countByCodeAndDeptId(
                 dslContext = dslContext,
@@ -163,9 +163,9 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
                 return@forEach
             }
             // 可见范围大于或等于BG则进入审核
-            if (it.deptId == 0 || bgIdList.contains("${it.deptId}")) {
-                it.status = ApprovalStatusEnum.PENDING.name
-            }
+//            if (it.deptId == 0 || bgIdList.contains("${it.deptId}")) {
+//                it.status = ApprovalStatusEnum.PENDING.name
+//            }
             deptIdApprovedList.add(it)
         }
         storeDeptRelDao.batchAddStoreDeptRel(
@@ -175,11 +175,6 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
             deptInfoList = deptIdApprovedList,
             storeType = storeType.type.toByte()
         )
-        // 知会接口人审核
-        val userBg =
-        deptIdApprovedList.forEach {
-
-        }
         return Result(true)
     }
 
