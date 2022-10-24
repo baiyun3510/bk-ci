@@ -27,21 +27,18 @@
 
 package com.tencent.devops.auth.api.op
 
-import com.tencent.devops.auth.pojo.action.ActionInfo
 import com.tencent.devops.auth.pojo.action.CreateActionDTO
-import com.tencent.devops.auth.pojo.action.UpdateActionDTO
+import com.tencent.devops.auth.pojo.action.DeteleActionDTO
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.pojo.Result
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import javax.ws.rs.Consumes
-import javax.ws.rs.GET
+import javax.ws.rs.DELETE
 import javax.ws.rs.HeaderParam
 import javax.ws.rs.POST
-import javax.ws.rs.PUT
 import javax.ws.rs.Path
-import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
@@ -61,49 +58,14 @@ interface OpActionResource {
         actionInfo: CreateActionDTO
     ): Result<Boolean>
 
-    @PUT
-    @ApiOperation("修改系统操作action")
-    @Path("/{actionId}")
-    fun updateSystemAction(
+    @DELETE
+    @ApiOperation("删除系统操作action")
+    @Path("/")
+    fun deleteSystemAction(
         @ApiParam("操作人")
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("资源编码")
-        @PathParam("actionId")
-        actionId: String,
-        @ApiParam("系统action参数")
-        actionInfo: UpdateActionDTO
+        @ApiParam("actionInfo")
+        actionInfo: DeteleActionDTO
     ): Result<Boolean>
-
-    @GET
-    @ApiOperation("按ID获取资源信息")
-    @Path("/{actionId}")
-    fun getAction(
-        @ApiParam("操作编码")
-        @PathParam("actionId")
-        actionId: String
-    ): Result<ActionInfo?>
-
-
-    @GET
-    @ApiOperation("获取操作列表")
-    @Path("/")
-    fun listAllAction(): Result<List<ActionInfo>?>
-
-    /**
-     * 返回以resouce为key的actionMap
-     */
-    @GET
-    @ApiOperation("获取系统操作列表")
-    @Path("/resource")
-    fun listActionResource(): Result<Map<String, List<ActionInfo>>?>
-
-    @GET
-    @ApiOperation("按资源获取操作列表")
-    @Path("/resources/{resourceId}")
-    fun listActionByResource(
-        @ApiParam("资源编码")
-        @PathParam("resourceId")
-        resourceId: String
-    ): Result<List<ActionInfo>?>
 }

@@ -41,7 +41,7 @@ import com.tencent.devops.common.auth.service.IamEsbService
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.client.ClientTokenService
 import com.tencent.devops.common.redis.RedisOperation
-import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -55,10 +55,8 @@ import org.springframework.core.Ordered
 @ConditionalOnWebApplication
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 @ConditionalOnProperty(prefix = "auth", name = ["idProvider"], havingValue = "new_v3")
+@AutoConfigureBefore(name = ["com.tencent.devops.common.auth.MockAuthAutoConfiguration"])
 class TxV3AuthAutoConfiguration {
-    companion object{
-        private val logger = LoggerFactory.getLogger(TxV3AuthAutoConfiguration::class.java)
-    }
 
     @Bean
     fun apigwHttpClientServiceImpl(
@@ -104,10 +102,8 @@ class TxV3AuthAutoConfiguration {
         bkAuthProperties: BkAuthProperties,
         objectMapper: ObjectMapper,
         bsAuthTokenApi: BSAuthTokenApi
-    ): BSAuthResourceApi {
-        logger.info("### fuck bsAuthResourceApi")
-        return BSAuthResourceApi(bkAuthProperties, objectMapper, bsAuthTokenApi)
-    }
+    ) =
+        BSAuthResourceApi(bkAuthProperties, objectMapper, bsAuthTokenApi)
 
     @Bean
     @Primary

@@ -37,7 +37,6 @@ import com.tencent.bk.sdk.iam.exception.IamException
 import com.tencent.bk.sdk.iam.service.IamResourceService
 import com.tencent.bk.sdk.iam.service.SystemService
 import com.tencent.devops.auth.dao.ResourceDao
-import com.tencent.devops.auth.pojo.enum.SystemType
 import com.tencent.devops.auth.pojo.resource.CreateResourceDTO
 import com.tencent.devops.auth.pojo.resource.ResourceInfo
 import com.tencent.devops.auth.pojo.resource.UpdateResourceDTO
@@ -47,64 +46,21 @@ import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import javax.annotation.PostConstruct
+import org.springframework.stereotype.Service
 
 class IamBkResourceServiceImpl @Autowired constructor(
     override val dslContext: DSLContext,
     override val resourceDao: ResourceDao,
     val iamConfiguration: IamConfiguration,
-    val resourceService: IamResourceService,
+    override val iamResourceService: IamResourceService,
     val iamSystemService: SystemService
-) : BkResourceServiceImpl(dslContext, resourceDao) {
+) : BkResourceServiceImpl(dslContext, resourceDao, iamResourceService) {
 
     @Value("\${iam.selector.project:#{null}}")
     val projectCallbackPath = "/api/service/auth/resource/projects"
 
     @Value("\${iam.selector.other:#{null}}")
     val otherResourceCallbackPath = "/api/service/auth/resource/instances/list"
-
-    @PostConstruct
-    fun initResource() {
-        try {
-            val systemId = iamConfiguration.systemId
-            // 获取蓝盾本地所有资源
-            val resourceInfos = resourceDao.getAllResource(dslContext) ?: return
-
-            // 获取iam侧有的资源类型
-            val iamResources = iamSystemService.getSystemFieldsInfo(systemId).resourceType.map {
-                it.id
-            }
-            val createResources = mutableListOf<CreateResourceDTO>()
-            // 以蓝盾的资源为源，同步置iam侧
-            resourceInfos.forEach {
-                if (!iamResources.contains(it.resourcetype)) {
-                    createResources.add(
-                        CreateResourceDTO(
-                            resourceId = it.resourcetype,
-                            name = it.name,
-                            englishName = it.englishname,
-                            desc = it.desc,
-                            englishDes = it.englishdesc,
-                            parent = it.parent,
-                            system = SystemType.get(it.system)
-                        )
-                    )
-                }
-            }
-            if (createResources.isEmpty()) {
-                logger.info("all ci resources(${resourceInfos.size}) in iam")
-                return
-            }
-            createResources.forEach {
-                logger.info("resources ${it.resourceId} start syn iam")
-                createExtSystem(it)
-                logger.info("resources ${it.resourceId} syn iam success")
-            }
-        } catch (e: Exception) {
-            logger.error("resources init fail. $e")
-            throw e
-        }
-    }
 
     override fun createExtSystem(resource: CreateResourceDTO) {
         logger.info("createExtSystem $resource")
@@ -123,7 +79,6 @@ class IamBkResourceServiceImpl @Autowired constructor(
         )
         // 1. 创建资源类型
         createIamResource(resource)
-
         // 2. 资源视图
         buildIamResourceSelectorInstance(resourceInfo)
     }
@@ -136,7 +91,7 @@ class IamBkResourceServiceImpl @Autowired constructor(
         updateResourceInfo.description = resource.desc
         updateResourceInfo.englishDescription = resource.englishDes
         try {
-            val result = resourceService.updateResource(updateResourceInfo, resourceType)
+            val result = iamResourceService.updateResource(updateResourceInfo, resourceType)
             logger.info("updateExtSystem createResource:$result")
 
             val resourceInfo = ResourceInfo(
@@ -162,7 +117,6 @@ class IamBkResourceServiceImpl @Autowired constructor(
     }
 
     private fun createIamResource(resource: CreateResourceDTO) {
-
         val systemId = iamConfiguration.systemId
         val resourceInfo = ResourceTypeDTO()
         resourceInfo.id = resource.resourceId
@@ -187,18 +141,17 @@ class IamBkResourceServiceImpl @Autowired constructor(
         val resourceInfos = mutableListOf<ResourceTypeDTO>()
         logger.info("createIamResource $resourceInfo")
         resourceInfos.add(resourceInfo)
-        val result = resourceService.createResource(resourceInfos)
+        val result = iamResourceService.createResource(resourceInfos)
         logger.info("createExtSystem createResource:$result")
     }
 
     private fun buildIamResourceSelectorInstance(resource: ResourceInfo) {
         val systemId = iamConfiguration.systemId
-        val selectInstance = resourceService.systemInstanceSelector
+        val selectInstance = iamResourceService.systemInstanceSelector
         val resourceSelectId = resource.resourceId + INSTANCELABLE
         val projectSelect = ResourceTypeChainDTO()
         projectSelect.id = AuthResourceType.PROJECT.value
         projectSelect.systemId = systemId
-
         var create = true
         // 如果存在视图做修改,不存在做新增
         selectInstance?.forEach {
@@ -211,11 +164,11 @@ class IamBkResourceServiceImpl @Autowired constructor(
         if (create) {
             val createSelectionDTO = buildResourceSelector(resource, projectSelect)
             logger.info("buildIamResourceSelectorInstance create $createSelectionDTO")
-            resourceService.createResourceInstanceSelector(arrayListOf(createSelectionDTO))
+            iamResourceService.createResourceInstanceSelector(arrayListOf(createSelectionDTO))
         } else {
             val updateSelectionDTO = buildResourceSelector(resource, projectSelect)
             logger.info("buildIamResourceSelectorInstance update $updateSelectionDTO")
-            resourceService.updateResourceInstanceSelector(resourceSelectId, updateSelectionDTO)
+            iamResourceService.updateResourceInstanceSelector(resourceSelectId, updateSelectionDTO)
         }
     }
 
