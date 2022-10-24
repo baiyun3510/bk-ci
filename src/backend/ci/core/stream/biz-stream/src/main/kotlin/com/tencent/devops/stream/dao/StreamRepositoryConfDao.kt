@@ -25,45 +25,43 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.process.pojo.code
+package com.tencent.devops.stream.dao
 
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.model.stream.tables.TRepositoryConf
+import org.jooq.DSLContext
+import org.jooq.Record1
+import org.jooq.Result
+import org.springframework.stereotype.Repository
 
-data class WebhookInfo(
-    @ApiModelProperty("仓库url链接", required = false)
-    val webhookRepoUrl: String?,
-    @ApiModelProperty("分支名", required = false)
-    val webhookBranch: String?,
-    @ApiModelProperty("别名", required = false)
-    val webhookAliasName: String?,
-    @ApiModelProperty("webhook类型", required = false)
-    val webhookType: String?,
-    @ApiModelProperty("事件类型", required = false)
-    val webhookEventType: String?,
-    @ApiModelProperty("提交信息", required = false)
-    val webhookMessage: String?,
-    @ApiModelProperty("提交信息id", required = false)
-    val webhookCommitId: String?,
-    @ApiModelProperty("合并后commitId", required = false)
-    // 合并后commitId
-    val webhookMergeCommitSha: String?,
-    @ApiModelProperty("源分支", required = false)
-    // 源分支
-    val webhookSourceBranch: String?,
-    // mr id
-    val mrId: String?,
-    // mr iid
-    val mrIid: String?,
-    // mr url
-    val mrUrl: String?,
-    // webhook仓库授权用户
-    val repoAuthUser: String?,
-    // tag 名称
-    val tagName: String?,
-    // issue iid,
-    val issueIid: String?,
-    // note id
-    val noteId: String?,
-    // review id
-    val reviewId: String?
-)
+@Repository
+class StreamRepositoryConfDao {
+
+    fun getRepoByGitDomain(
+        dslContext: DSLContext,
+        gitDomain: String,
+        limit: Int
+    ): Result<Record1<Long>> {
+        with(TRepositoryConf.T_REPOSITORY_CONF) {
+            return dslContext.select(ID).from(this)
+                .where(HOME_PAGE.like("%$gitDomain%"))
+                .limit(limit)
+                .fetch()
+        }
+    }
+
+    fun updateGitDomainByIds(
+        dslContext: DSLContext,
+        oldGitDomain: String,
+        newGitDomain: String,
+        idList: List<Long>
+    ): Int {
+        with(TRepositoryConf.T_REPOSITORY_CONF) {
+            return dslContext.update(this)
+                .set(URL, URL.replace(oldGitDomain, newGitDomain))
+                .set(HOME_PAGE, HOME_PAGE.replace(oldGitDomain, newGitDomain))
+                .set(GIT_HTTP_URL, GIT_HTTP_URL.replace(oldGitDomain, newGitDomain))
+                .set(GIT_SSH_URL, GIT_SSH_URL.replace(oldGitDomain, newGitDomain))
+                .where(ID.`in`(idList)).execute()
+        }
+    }
+}

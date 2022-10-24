@@ -170,16 +170,17 @@ class BkRepoSearchService @Autowired constructor(
             queryPath = "/$queryPath"
         }
 
-        val nodeList = bkRepoClient.queryByPattern(
+        val queryData = bkRepoClient.queryByPattern(
             "",
             projectId,
             if (customized) listOf(RepoUtils.CUSTOM_REPO) else listOf(RepoUtils.PIPELINE_REPO),
             listOf(queryPath),
             mapOf()
-        ).records
+        )
+        val nodeList = queryData.records
 
         val fileInfoList = bkRepoService.transferFileInfo(projectId, nodeList, emptyList(), false)
-        return Pair(LocalDateTime.now().timestamp(), fileInfoList)
+        return Pair(queryData.totalRecords, fileInfoList)
     }
 
     override fun serviceSearchFileAndProperty(
@@ -206,7 +207,7 @@ class BkRepoSearchService @Autowired constructor(
             }
         }
 
-        val nodeList = bkRepoClient.queryByNameAndMetadata(
+        val queryData = bkRepoClient.queryByNameAndMetadata(
             userId,
             projectId,
             repoNames,
@@ -214,10 +215,11 @@ class BkRepoSearchService @Autowired constructor(
             props.associate { it },
             0,
             10000
-        ).records
+        )
+        val nodeList = queryData.records
 
         val fileInfoList = bkRepoService.transferFileInfo(projectId, nodeList, emptyList(), false, generateShortUrl)
-        return Pair(LocalDateTime.now().timestamp(), fileInfoList)
+        return Pair(queryData.totalRecords, fileInfoList)
     }
 
     override fun serviceSearchFileAndPropertyByOr(

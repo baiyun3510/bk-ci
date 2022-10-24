@@ -25,45 +25,44 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.process.pojo.code
+package com.tencent.devops.stream.service
 
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.stream.dao.StreamRepositoryConfDao
+import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Primary
+import org.springframework.stereotype.Service
 
-data class WebhookInfo(
-    @ApiModelProperty("仓库url链接", required = false)
-    val webhookRepoUrl: String?,
-    @ApiModelProperty("分支名", required = false)
-    val webhookBranch: String?,
-    @ApiModelProperty("别名", required = false)
-    val webhookAliasName: String?,
-    @ApiModelProperty("webhook类型", required = false)
-    val webhookType: String?,
-    @ApiModelProperty("事件类型", required = false)
-    val webhookEventType: String?,
-    @ApiModelProperty("提交信息", required = false)
-    val webhookMessage: String?,
-    @ApiModelProperty("提交信息id", required = false)
-    val webhookCommitId: String?,
-    @ApiModelProperty("合并后commitId", required = false)
-    // 合并后commitId
-    val webhookMergeCommitSha: String?,
-    @ApiModelProperty("源分支", required = false)
-    // 源分支
-    val webhookSourceBranch: String?,
-    // mr id
-    val mrId: String?,
-    // mr iid
-    val mrIid: String?,
-    // mr url
-    val mrUrl: String?,
-    // webhook仓库授权用户
-    val repoAuthUser: String?,
-    // tag 名称
-    val tagName: String?,
-    // issue iid,
-    val issueIid: String?,
-    // note id
-    val noteId: String?,
-    // review id
-    val reviewId: String?
-)
+@Primary
+@Service
+class TXStreamRepositoryConfService @Autowired constructor(
+    private val dslContext: DSLContext,
+    private val streamRepositoryConfDao: StreamRepositoryConfDao
+) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(TXStreamRepositoryConfService::class.java)
+    }
+
+    fun updateGitDomain(
+        oldGitDomain: String,
+        newGitDomain: String,
+        limitNumber: Int
+    ): Int {
+        logger.info(
+            "TXStreamRepositoryConfService|updateGitDomain|oldGitDomain|$oldGitDomain" +
+                "|newGitDomain|$newGitDomain|limitNumber|$limitNumber"
+        )
+        val idList = streamRepositoryConfDao.getRepoByGitDomain(
+            dslContext = dslContext,
+            gitDomain = oldGitDomain,
+            limit = limitNumber
+        ).map { it.value1() }
+        return streamRepositoryConfDao.updateGitDomainByIds(
+            dslContext = dslContext,
+            oldGitDomain = oldGitDomain,
+            newGitDomain = newGitDomain,
+            idList = idList
+        )
+    }
+}
