@@ -580,7 +580,7 @@ abstract class AtomReleaseServiceImpl @Autowired constructor() : AtomReleaseServ
                     }
                     // 校验code码是否符合插件自定义错误码规范
                     errorCodes.forEach {
-                        if (it.length != defaulAtomErrorCodoLength && (!it.startsWith(defaulAtomErrorCodoPrefix))) {
+                        if (it.length != defaulAtomErrorCodoLength || (!it.startsWith(defaulAtomErrorCodoPrefix))) {
                             throw ErrorCodeException(
                                 errorCode = USER_REPOSITORY_ERROR_JSON_FIELD_IS_INVALID
                             )
