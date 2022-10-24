@@ -343,8 +343,6 @@ func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo) ([]mount.Mount, er
 		ReadOnly: false,
 	})
 
-	// TODO: issue_7748
-
 	return mounts, nil
 }
 
