@@ -34,7 +34,6 @@ import (
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/systemutil"
 	"runtime"
 	"strconv"
-	"strings"
 )
 
 func buildUrl(url string) string {
