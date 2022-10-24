@@ -8,8 +8,8 @@ import (
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/api"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/config"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/logs"
+	"github.com/Tencent/bk-ci/src/agent/src/pkg/upgrade/download"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util"
-	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/httputil"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/systemutil"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -53,8 +53,45 @@ const (
 	dockerLogDir                = "/data/logs"
 )
 
-// DoDockerJob 使用docker启动构建
-func DoDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
+func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
+	if !systemutil.IsLinux() {
+		GBuildDockerManager.AddCurrentJobs(-1)
+		dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
+			ThirdPartyBuildInfo: *buildInfo, Message: "目前仅支持linux系统使用docker构建机",
+		})
+		return
+	}
+	// 第一次使用docker构建机后，则直接开启docker构建机相关逻辑
+	if !config.GAgentConfig.EnableDockerBuild {
+		config.GAgentConfig.EnableDockerBuild = true
+		go config.GAgentConfig.SaveConfig()
+	}
+
+	// 兼容就数据，对于没有docker文件的需要重新下载，防止重复下载所以放到主流程做
+	if _, err := os.Stat(config.GetDockerInitFilePath()); err != nil {
+		if os.IsNotExist(err) {
+			_, err = download.DownloadDockerInitFile(systemutil.GetWorkDir())
+			if err != nil {
+				GBuildDockerManager.AddCurrentJobs(-1)
+				dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
+					ThirdPartyBuildInfo: *buildInfo, Message: "下载Docker构建机初始化脚本失败|" + err.Error(),
+				})
+				return
+			}
+		} else {
+			GBuildDockerManager.AddCurrentJobs(-1)
+			dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
+				ThirdPartyBuildInfo: *buildInfo, Message: "获取Docker构建机初始化脚本状态失败|" + err.Error(),
+			})
+			return
+		}
+	}
+
+	go doDockerJob(buildInfo)
+}
+
+// doDockerJob 使用docker启动构建
+func doDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 	// 各种情况退出时减运行任务数量
 	defer func() {
 		GBuildDockerManager.AddCurrentJobs(-1)
@@ -121,18 +158,10 @@ func DoDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 		dockerBuildFinish(&api.ThirdPartyBuildWithStatus{ThirdPartyBuildInfo: *buildInfo, Message: errMsg})
 		return
 	}
-	dockerInitFile, err := saveDockerInitFile(buildInfo, tmpDir)
-	if err != nil {
-		logs.Error("DOCKER_JOB|save docker init file error ", err)
-		dockerBuildFinish(&api.ThirdPartyBuildWithStatus{ThirdPartyBuildInfo: *buildInfo, Message: "保存dockerInit文件到本地失败：" + err.Error()})
-		return
-	}
-	// 结束时删除dockerInit文件
-	defer os.Remove(dockerInitFile)
 
 	// 创建容器
 	containerName := fmt.Sprintf("dispatch-%s-%s-%s", buildInfo.BuildId, buildInfo.VmSeqId, util.RandStringRunes(8))
-	mounts, err := parseContainerMounts(buildInfo, dockerInitFile)
+	mounts, err := parseContainerMounts(buildInfo)
 	if err != nil {
 		logs.Error("DOCKER_JOB| ", err)
 		dockerBuildFinish(&api.ThirdPartyBuildWithStatus{ThirdPartyBuildInfo: *buildInfo, Message: err.Error()})
@@ -227,16 +256,13 @@ func postLog(red bool, message string, buildInfo *api.ThirdPartyBuildInfo) {
 	}
 
 	var err error
-	var re *httputil.DevopsResult
 	if red {
-		re, err = api.AddLogRedLine(buildInfo.BuildId, logMessage, buildInfo.VmSeqId)
+		_, err = api.AddLogRedLine(buildInfo.BuildId, logMessage, buildInfo.VmSeqId)
 	} else {
-		re, err = api.AddLogLine(buildInfo.BuildId, logMessage, buildInfo.VmSeqId)
+		_, err = api.AddLogLine(buildInfo.BuildId, logMessage, buildInfo.VmSeqId)
 	}
 	if err != nil {
 		logs.Error("DOCKER_JOB|api post log error", err)
-	} else {
-		logs.Error(fmt.Sprintf("DOCKER_JOB|api post log %v", re))
 	}
 }
 
@@ -248,30 +274,6 @@ func mkDir(dir string) error {
 		err = err2
 	}
 	return err
-}
-
-// saveDockerInitFile 拉取dockerInit文件
-func saveDockerInitFile(buildInfo *api.ThirdPartyBuildInfo, tempDir string) (string, error) {
-	fileName := fmt.Sprintf(
-		"%s/devops_agent_docker_init_%s_%s_%s.sh",
-		tempDir, buildInfo.ProjectId, buildInfo.BuildId, buildInfo.VmSeqId)
-	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-	if err != nil {
-		return "", errors.Wrap(err, "create docker init file error")
-	}
-
-	reader, err := api.DownloadDockerInitFile()
-	if err != nil {
-		return "", errors.Wrap(err, "download docker init file error")
-	}
-	defer reader.Close()
-
-	_, err = io.Copy(file, reader)
-	if err != nil {
-		return "", errors.Wrap(err, "write docker init file error")
-	}
-
-	return fileName, nil
 }
 
 // generateDockerAuth 创建拉取docker凭据
@@ -293,7 +295,7 @@ func generateDockerAuth(cred *api.Credential) string {
 }
 
 // parseContainerMounts 解析生成容器挂载内容
-func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo, dockerInitFile string) ([]mount.Mount, error) {
+func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo) ([]mount.Mount, error) {
 	var mounts []mount.Mount
 
 	// 默认绑定本机的java用来执行worker，因为仅支持linux容器所以仅限linux构建机绑定
@@ -311,7 +313,7 @@ func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo, dockerInitFile str
 	workDir := systemutil.GetWorkDir()
 	mounts = append(mounts, mount.Mount{
 		Type:     mount.TypeBind,
-		Source:   dockerInitFile,
+		Source:   config.GetDockerInitFilePath(),
 		Target:   entryPointCmd,
 		ReadOnly: true,
 	})
