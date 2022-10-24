@@ -32,6 +32,8 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.project.api.service.ServiceProjectOrganizationResource
+import com.tencent.devops.project.pojo.enums.ApprovalStatusEnum
+import com.tencent.devops.project.pojo.enums.OrganizationType
 import com.tencent.devops.store.dao.common.StoreDeptRelDao
 import com.tencent.devops.store.dao.common.StoreMemberDao
 import com.tencent.devops.store.pojo.common.DeptInfo
@@ -156,7 +158,6 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
             }
             deptIdApprovedList.add(it)
         }
-        // 可见范围默认审核通过
         storeDeptRelDao.batchAdd(
             dslContext = dslContext,
             userId = userId,

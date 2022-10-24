@@ -630,30 +630,29 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
     override fun updateAtomErrorCodeInfo(
         userId: String,
         projectCode: String,
-        storeErrorCodeInfo: StoreErrorCodeInfo,
+        storeErrorCodeInfo: StoreErrorCodeInfo
     ): Result<Boolean> {
         val atomCode = storeErrorCodeInfo.storeCode
-        // 插件管理员才可修改
-        val isStoreAdmin = storeMemberDao.isStoreAdmin(
+        val isStoreMember = storeMemberDao.isStoreMember(
             dslContext = dslContext,
             userId = userId,
             storeCode = atomCode,
             storeType = storeErrorCodeInfo.storeType.type.toByte()
         )
-        if (!isStoreAdmin) {
+        if (!isStoreMember) {
             return MessageCodeUtil.generateResponseDataObject(CommonMessageCode.PERMISSION_DENIED)
         }
         val errorJsonStr = JsonUtil.toJson(storeErrorCodeInfo.errorCodeInfos)
         // 修改插件error.json文件内容
-        val updateAtomFileContentresult = updateAtomFileContent(
+        val updateAtomFileContentResult = updateAtomFileContent(
             userId = userId,
             projectCode = projectCode,
             atomCode = atomCode,
             content = errorJsonStr,
             filePath = ERROR_JSON_NAME
         )
-        if (updateAtomFileContentresult.isNotOk()) {
-            return updateAtomFileContentresult
+        if (updateAtomFileContentResult.isNotOk()) {
+            return updateAtomFileContentResult
         }
         // 文件内容修改成功，同步到数据库
         storeErrorCodeInfoDao.batchUpdateErrorCodeInfo(
