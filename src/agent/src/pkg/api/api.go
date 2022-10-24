@@ -137,25 +137,43 @@ func DownloadAgentInstallBatchZip(saveFile string) error {
 }
 
 // AuthHeaderDevopsBuildId log需要的buildId的header
-const AuthHeaderDevopsBuildId = "X-DEVOPS-BUILD-ID"
+const (
+	AuthHeaderDevopsBuildId = "X-DEVOPS-BUILD-ID"
+	AuthHeaderDevopsVmSeqId = "X-DEVOPS-VM-SID"
+)
 
-func AddLogLine(buildId string, message *LogMessage) (*httputil.DevopsResult, error) {
+func AddLogLine(buildId string, message *LogMessage, vmSeqId string) (*httputil.DevopsResult, error) {
 	url := buildUrl("/ms/log/api/build/logs")
 	headers := config.GAgentConfig.GetAuthHeaderMap()
 	headers[AuthHeaderDevopsBuildId] = buildId
+	headers[AuthHeaderDevopsVmSeqId] = vmSeqId
 	return httputil.NewHttpClient().
-		Post(url).Body(message).SetHeaders(config.GAgentConfig.GetAuthHeaderMap()).Execute().
+		Post(url).Body(message).SetHeaders(headers).Execute().
 		IntoDevopsResult()
 }
 
-func AddLogRedLine(buildId string, message *LogMessage) (*httputil.DevopsResult, error) {
+func AddLogRedLine(buildId string, message *LogMessage, vmSeqId string) (*httputil.DevopsResult, error) {
 	url := buildUrl("/ms/log/api/build/logs/red")
 	headers := config.GAgentConfig.GetAuthHeaderMap()
 	headers[AuthHeaderDevopsBuildId] = buildId
+	headers[AuthHeaderDevopsVmSeqId] = vmSeqId
 	return httputil.NewHttpClient().
-		Post(url).Body(message).SetHeaders(config.GAgentConfig.GetAuthHeaderMap()).Execute().
+		Post(url).Body(message).SetHeaders(headers).Execute().
 		IntoDevopsResult()
 }
+
+//const testShell = "#!/bin/bash\n" +
+//	"set -x\n" +
+//	"mkdir  -p /data/devops\n" +
+//	"cd /data/devops\n" +
+//	"mkdir -p logs\n" +
+//	"echo \"start to download the docker_init.sh...\" > /data/logs/docker.log\n" +
+//	"curl -k -s -H \"X-DEVOPS-BUILD-TYPE: DOCKER\" -H \"X-DEVOPS-PROJECT-ID: ${devops_project_id}\" -H \"X-DEVOPS-AGENT-ID: ${devops_agent_id}\" -H \"X-DEVOPS-AGENT-SECRET-KEY: ${devops_agent_secret_key}\" -o  docker_init.sh \"${devops_gateway}/static/bkrepo/files/docker_init.sh\" -L\n" +
+//	"echo docker_init\n" +
+//	"cat docker_init.sh\n" +
+//	"echo \"download docker_init.sh success, start it...\" >> /data/logs/docker.log\n" +
+//	"cat docker_init.sh >> /data/logs/docker.log\n" +
+//	"sh docker_init.sh $@"
 
 func DownloadDockerInitFile() (io.ReadCloser, error) {
 	url := buildUrl("/static/local/files/thirdpart_docker_init.sh")
