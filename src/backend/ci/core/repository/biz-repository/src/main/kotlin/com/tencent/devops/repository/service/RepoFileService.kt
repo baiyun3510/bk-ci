@@ -81,6 +81,7 @@ class RepoFileService @Autowired constructor(
 
     companion object {
         private val logger = LoggerFactory.getLogger(RepoFileService::class.java)
+        private const val tGitProjectPrefix = "git_"
     }
 
     @Value("\${aes.git:#{null}}")

@@ -120,7 +120,6 @@ class StoreDeptRelDao {
     ): IntArray? {
         with(TStoreDeptRel.T_STORE_DEPT_REL) {
             val addStep = deptInfoList.map {
-                val status = ApprovalStatusEnum.get(it.status).index.toByte()
                 dslContext.insertInto(this,
                     ID,
                     STORE_CODE,
