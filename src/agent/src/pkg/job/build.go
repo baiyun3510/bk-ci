@@ -123,8 +123,7 @@ func DoPollAndBuild() {
 			GBuildDockerManager.AddCurrentJobs(1)
 			GBuildManager.Lock.Unlock()
 
-			go DoDockerJob(buildInfo)
-
+			runDockerBuild(buildInfo)
 			continue
 		}
 

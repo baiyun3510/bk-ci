@@ -119,15 +119,22 @@ type AgentPropsResp struct {
 }
 
 type UpgradeInfo struct {
-	WorkerVersion  string   `json:"workerVersion"`
-	GoAgentVersion string   `json:"goAgentVersion"`
-	JdkVersion     []string `json:"jdkVersion"`
+	WorkerVersion      string             `json:"workerVersion"`
+	GoAgentVersion     string             `json:"goAgentVersion"`
+	JdkVersion         []string           `json:"jdkVersion"`
+	DockerInitFileInfo DockerInitFileInfo `json:"dockerInitFileInfo"`
+}
+
+type DockerInitFileInfo struct {
+	FileMd5     string
+	NeedUpgrade bool
 }
 
 type UpgradeItem struct {
-	Agent  bool `json:"agent"`
-	Worker bool `json:"worker"`
-	Jdk    bool `json:"jdk"`
+	Agent          bool `json:"agent"`
+	Worker         bool `json:"worker"`
+	Jdk            bool `json:"jdk"`
+	DockerInitFile bool `json:"dockerInitFile"`
 }
 
 func NewPipelineResponse(seqId string, status string, response string) *PipelineResponse {
