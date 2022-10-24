@@ -109,11 +109,13 @@ class StoreDeptRelDao {
         }
     }
 
-    fun batchAddStoreDeptRel(
+    fun batchAdd(
         dslContext: DSLContext,
         userId: String,
         storeCode: String,
         deptInfoList: List<DeptInfo>,
+        status: Byte,
+        comment: String,
         storeType: Byte
     ): IntArray? {
         with(TStoreDeptRel.T_STORE_DEPT_REL) {
@@ -140,12 +142,12 @@ class StoreDeptRelDao {
                         userId,
                         userId,
                         status,
-                        it.comment,
+                        comment,
                         LocalDateTime.now()
                     )
                     .onDuplicateKeyUpdate()
                     .set(STATUS, status)
-                    .set(COMMENT, it.comment)
+                    .set(COMMENT, comment)
                     .set(MODIFIER, userId)
                     .set(UPDATE_TIME, LocalDateTime.now())
             }

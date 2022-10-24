@@ -168,11 +168,13 @@ class StoreVisibleDeptServiceImpl @Autowired constructor(
 //            }
             deptIdApprovedList.add(it)
         }
-        storeDeptRelDao.batchAddStoreDeptRel(
+        storeDeptRelDao.batchAdd(
             dslContext = dslContext,
             userId = userId,
             storeCode = storeCode,
             deptInfoList = deptIdApprovedList,
+            status = DeptStatusEnum.APPROVED.status.toByte(),
+            comment = "AUTO APPROVE",
             storeType = storeType.type.toByte()
         )
         return Result(true)
