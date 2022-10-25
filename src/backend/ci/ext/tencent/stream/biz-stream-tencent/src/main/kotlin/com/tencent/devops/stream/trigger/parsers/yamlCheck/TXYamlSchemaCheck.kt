@@ -40,6 +40,7 @@ import com.tencent.devops.stream.config.TXStreamGitConfig
 import com.tencent.devops.stream.service.StreamGitTokenService
 import com.tencent.devops.stream.service.StreamScmService
 import com.tencent.devops.stream.trigger.actions.BaseAction
+import com.tencent.devops.stream.util.RetryUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Primary
@@ -89,8 +90,11 @@ class TXYamlSchemaCheck @Autowired constructor(
 
     private fun checkYamlSchema(originYaml: String, templateType: TemplateType? = null, isCiFile: Boolean) {
         val loadYaml = try {
-            YamlUtil.toYaml(yaml.load(originYaml))
+            RetryUtils.retryAnyException {
+                YamlUtil.toYaml(Yaml().load(originYaml))
+            }
         } catch (ignored: Throwable) {
+            logger.warn("TX_YAML_SCHEMA_CHECK|originYaml=$originYaml", ignored)
             throw YamlFormatException("There may be a problem with your yaml syntax ${ignored.message}")
         }
         // 解析锚点
@@ -133,25 +137,6 @@ class TXYamlSchemaCheck @Autowired constructor(
         // 先去取下redis看看有没有变量，没有拿代码里初始化好的变量
         val str = redisOperation.get("$REDIS_STREAM_YAML_SCHEMA:$file") ?: return getSchemaFromGit(file)
         return schemaFactory.getSchema(str)
-    }
-
-    private fun getSchemaFromGit(file: String): JsonSchema {
-        if (schemaMap[file] != null) {
-            return schemaMap[file]!!
-        }
-        val schema = schemaFactory.getSchema(
-            scmService.getYamlFromGit(
-                token = streamGitTokenService.getToken(txStreamGitConfig.schemaGitProjectId!!),
-                gitProjectId = txStreamGitConfig.schemaGitProjectId!!.toString(),
-                fileName = "${txStreamGitConfig.schemaGitPath}/$file.json",
-                ref = txStreamGitConfig.schemaGitRef!!,
-                useAccessToken = true
-            ).ifBlank {
-                throw RuntimeException("init yaml schema for git error: yaml blank")
-            }
-        )
-        schemaMap[file] = schema
-        return schema
     }
 }
 

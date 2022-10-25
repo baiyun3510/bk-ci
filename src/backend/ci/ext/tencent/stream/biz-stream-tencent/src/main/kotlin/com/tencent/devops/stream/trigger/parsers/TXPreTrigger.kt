@@ -29,6 +29,7 @@ package com.tencent.devops.stream.trigger.parsers
 
 import com.tencent.devops.common.webhook.enums.code.tgit.TGitPushOperationKind
 import com.tencent.devops.common.webhook.pojo.code.git.GitPushEvent
+import com.tencent.devops.stream.config.StreamGitConfig
 import com.tencent.devops.stream.config.StreamPreTriggerConfig
 import com.tencent.devops.stream.service.StreamBasicSettingService
 import com.tencent.devops.stream.service.StreamOauthService
@@ -43,7 +44,8 @@ class TXPreTrigger @Autowired constructor(
     private val config: StreamPreTriggerConfig,
     private val scmService: StreamScmService,
     private val streamOauthService: StreamOauthService,
-    private val gitBasicSettingService: StreamBasicSettingService
+    private val gitBasicSettingService: StreamBasicSettingService,
+    private val streamGitConfig: StreamGitConfig
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(TXPreTrigger::class.java)
@@ -66,25 +68,25 @@ class TXPreTrigger @Autowired constructor(
         // TODO: 目前直接写死使用橘子的oauth去拿用户的名称，后续支持公共账号了再改成公共账号
         val token = streamOauthService.getOauthToken("fayewang")?.accessToken
         if (token.isNullOrBlank()) {
-            logger.warn("create from store atom get project members error: get token null")
+            logger.warn("TXPreTrigger|enableAtomCi|create from store atom get project members error: get token null")
             return
         }
         // 因为用户是 devops 所以需要修改
         val realUser = getRealUser(event, token)
         if (realUser.isNullOrBlank()) {
-            logger.warn("create from store atom get project members error: no develop user")
+            logger.warn("TXPreTrigger|enableAtomCi|create from store atom get project members error: no develop user")
             return
         }
 
         try {
             gitBasicSettingService.initStreamConf(
                 userId = realUser,
-                projectId = GitCommonUtils.getCiProjectId(event.project_id),
+                projectId = GitCommonUtils.getCiProjectId(event.project_id, streamGitConfig.getScmType()),
                 gitProjectId = event.project_id,
                 enabled = true
             )
         } catch (e: Throwable) {
-            logger.error("create from store atom error: ${e.message}")
+            logger.warn("TXPreTrigger|enableAtomCi|error=${e.message}")
         }
     }
 
@@ -97,7 +99,7 @@ class TXPreTrigger @Autowired constructor(
             search = null
         )
         if (projectMember.isNullOrEmpty()) {
-            logger.warn("create from store atom get project members error")
+            logger.warn("TXPreTrigger|getRealUser|create from store atom get project members error")
             return null
         }
         var realUser: String? = null

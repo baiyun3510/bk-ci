@@ -46,12 +46,17 @@ class UserAtomResourceImpl @Autowired constructor(
     private val atomService: AtomService
     ) : UserAtomResource {
 
-    override fun getPipelineAtom(projectCode: String, atomCode: String, version: String): Result<PipelineAtom?> {
+    override fun getPipelineAtom(
+        projectCode: String,
+        atomCode: String,
+        version: String,
+        queryOfflineFlag: Boolean?
+    ): Result<PipelineAtom?> {
         return atomService.getPipelineAtom(
             projectCode = projectCode,
             atomCode = atomCode,
             version = version,
-            queryOfflineFlag = true
+            queryOfflineFlag = queryOfflineFlag ?: true
         )
     }
 
@@ -69,8 +74,8 @@ class UserAtomResourceImpl @Autowired constructor(
         queryProjectAtomFlag: Boolean,
         fitOsFlag: Boolean?,
         queryFitAgentBuildLessAtomFlag: Boolean?,
-        page: Int?,
-        pageSize: Int?
+        page: Int,
+        pageSize: Int
     ): Result<AtomResp<AtomRespItem>?> {
         return atomService.getPipelineAtoms(
             accessToken = accessToken,
@@ -86,8 +91,8 @@ class UserAtomResourceImpl @Autowired constructor(
             queryProjectAtomFlag = queryProjectAtomFlag,
             queryFitAgentBuildLessAtomFlag = queryFitAgentBuildLessAtomFlag,
             fitOsFlag = fitOsFlag,
-            page = page ?: 1,
-            pageSize = pageSize ?: 10
+            page = page,
+            pageSize = pageSize
         )
     }
 

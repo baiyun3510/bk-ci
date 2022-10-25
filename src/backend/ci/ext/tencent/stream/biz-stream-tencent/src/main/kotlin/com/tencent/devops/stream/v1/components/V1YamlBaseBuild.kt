@@ -31,7 +31,7 @@ import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.pipeline.Model
 import com.tencent.devops.common.pipeline.enums.ChannelCode
 import com.tencent.devops.common.redis.RedisOperation
-import com.tencent.devops.common.webhook.enums.code.tgit.TGitObjectKind
+import com.tencent.devops.common.webhook.enums.code.StreamGitObjectKind
 import com.tencent.devops.process.api.service.ServiceBuildResource
 import com.tencent.devops.process.api.service.ServicePipelineResource
 import com.tencent.devops.process.pojo.BuildId
@@ -110,7 +110,7 @@ abstract class V1YamlBaseBuild<T> @Autowired constructor(
                 gitPipelineResourceDao.deleteByPipelineId(dslContext, oldPipelineId)
                 processClient.delete(event.userId, gitProjectConf.projectCode!!, oldPipelineId, channelCode)
             } catch (e: Exception) {
-                logger.error("failed to delete pipeline resource gitBuildId:$gitBuildId, pipeline: $pipeline", e)
+                logger.warn("V1YamlBaseBuild|gitBuildId|$gitBuildId|pipeline|$pipeline|error", e)
             }
             // 再次新建
             pipeline.pipelineId = processClient.create(
@@ -165,8 +165,8 @@ abstract class V1YamlBaseBuild<T> @Autowired constructor(
             // 成功构建的添加 流水线-分支 记录
             if (!event.isFork() &&
                 (
-                    event.objectKind == TGitObjectKind.PUSH.value ||
-                        event.objectKind == TGitObjectKind.MERGE_REQUEST.value
+                    event.objectKind == StreamGitObjectKind.PUSH.value ||
+                        event.objectKind == StreamGitObjectKind.MERGE_REQUEST.value
                     )
             ) {
                 streamPipelineBranchService.saveOrUpdate(
@@ -176,7 +176,7 @@ abstract class V1YamlBaseBuild<T> @Autowired constructor(
                 )
             }
             // 推送启动构建消息,当人工触发时不推送构建消息
-            if (event.objectKind != TGitObjectKind.OBJECT_KIND_MANUAL) {
+            if (event.objectKind != StreamGitObjectKind.OBJECT_KIND_MANUAL) {
                 scmClient.pushCommitCheck(
                     commitId = event.commitId,
                     description = event.description ?: "",
@@ -191,9 +191,9 @@ abstract class V1YamlBaseBuild<T> @Autowired constructor(
             }
             return BuildId(buildId)
         } catch (e: Exception) {
-            logger.error(
-                "GitCI Build failed, gitProjectId[${gitProjectConf.gitProjectId}], " +
-                    "pipelineId[${pipeline.pipelineId}], gitBuildId[$gitBuildId]",
+            logger.warn(
+                "V1YamlBaseBuild|startBuild|GitCI Build failed|gitProjectId|${gitProjectConf.gitProjectId}|" +
+                    "pipelineId|${pipeline.pipelineId}|gitBuildId|$gitBuildId",
                 e
             )
             val build = gitRequestEventBuildDao.getByGitBuildId(dslContext, gitBuildId)
@@ -257,11 +257,11 @@ abstract class V1YamlBaseBuild<T> @Autowired constructor(
                 channelCode
             )
             if (response.isNotOk()) {
-                logger.error("get pipeline failed, msg: ${response.message}")
+                logger.warn("get pipeline failed, msg: ${response.message}")
                 return true
             }
         } catch (e: Exception) {
-            logger.error(
+            logger.warn(
                 "get pipeline failed, pipelineId: ${pipeline.pipelineId}, " +
                     "projectCode: ${gitProjectConf.projectCode}, error msg: ${e.message}"
             )

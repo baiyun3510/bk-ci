@@ -75,15 +75,16 @@ import com.tencent.devops.process.engine.pojo.BuildInfo
 import com.tencent.devops.project.api.service.ServiceProjectResource
 import com.tencent.devops.repository.api.ServiceRepositoryResource
 import com.tencent.devops.scm.utils.code.git.GitUtils
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
 import org.jooq.DSLContext
 import org.json.simple.JSONObject
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeUnit
 
 @Service
 @Suppress("ALL")
@@ -119,9 +120,16 @@ class LambdaDataService @Autowired constructor(
             )
             return
         }
+
         val projectInfo = projectCache.get(history.projectId)
         pushBuildHistory(projectInfo, history)
         pushBuildDetail(projectInfo, event.pipelineId, model)
+        val variablesWithType = lambdaPipelineBuildDao.getVarsWithType(
+            dslContext = dslContext,
+            projectId = event.projectId,
+            buildId = event.buildId
+        )
+        pushInvalidVariables(projectInfo, history, variablesWithType)
     }
 
     fun onBuildTaskFinish(event: PipelineBuildTaskFinishBroadCastEvent) {
@@ -203,7 +211,8 @@ class LambdaDataService @Autowired constructor(
                         mrId = mergeRequestId,
                         url = url,
                         eventType = eventType,
-                        channel = channel
+                        channel = channel,
+                        action = action
                     )
                 }
                 checkParamBlank(lambdaKafkaTopicConfig.buildCommitsTopic, "buildCommitsTopic")
@@ -216,6 +225,7 @@ class LambdaDataService @Autowired constructor(
 
     private fun pushTaskDetail(projectInfo: ProjectOrganize, task: TPipelineBuildTaskRecord) {
         try {
+            val isSecrecy = projectInfo.secrecy
             val startTime = task.startTime?.timestampmilli() ?: 0
             val endTime = task.endTime?.timestampmilli() ?: 0
             val taskAtom = task.taskAtom
@@ -263,6 +273,7 @@ class LambdaDataService @Autowired constructor(
                 }
             } else {
                 val taskParams = if (
+                    // @type 为buildType
                     taskParamMap["@type"] != "marketBuild" &&
                     taskParamMap["@type"] != "marketBuildLess"
                 ) {
@@ -303,7 +314,6 @@ class LambdaDataService @Autowired constructor(
                 } else {
                     JSONObject(JsonUtil.toMap(task.taskParams))
                 }
-
                 val dataPlatTaskDetail = DataPlatTaskDetail(
                     pipelineId = task.pipelineId,
                     buildId = task.buildId,
@@ -313,6 +323,7 @@ class LambdaDataService @Autowired constructor(
                     itemId = task.taskId,
                     atomCode = task.atomCode,
                     taskParams = taskParams,
+                    isSecrecy = isSecrecy,
                     status = BuildStatus.values()[task.status].statusName,
                     errorType = task.errorType,
                     errorCode = task.errorCode,
@@ -336,6 +347,60 @@ class LambdaDataService @Autowired constructor(
             }
         } catch (e: Exception) {
             logger.warn("Push task detail to kafka error, buildId: ${task.buildId}, taskId: ${task.taskId}", e)
+        }
+    }
+
+    private fun pushInvalidVariables(
+        projectInfo: ProjectOrganize,
+        historyRecord: TPipelineBuildHistoryRecord,
+        variablesWithType: List<BuildParameters>
+    ) {
+        try {
+            val variables = variablesWithType.filter {
+                !it.key.startsWith("BK_") && !it.key.startsWith("X-DEVOPS")
+            }.associate { it.key to it.value.toString() }
+            val invalidKeyList = mutableSetOf<String>()
+            variables.forEach { (key, _) ->
+                if (!pattern.matcher(key).find()) invalidKeyList.add(key)
+            }
+            if (invalidKeyList.isEmpty()) {
+                variables.forEach { (key, _) ->
+                    variables.forEach { (another, _) ->
+                        if (
+                            key != another && !(invalidKeyList.contains(key) && invalidKeyList.contains(another)) &&
+                            (
+                                key.startsWith(another) && key.removePrefix(another).startsWith('.') ||
+                                    another.startsWith(key) && another.removePrefix(key).startsWith('.')
+                                )
+                        ) {
+                            invalidKeyList.add(key)
+                            invalidKeyList.add(another)
+                        }
+                    }
+                }
+            }
+            if (invalidKeyList.isEmpty()) return
+            logger.info(
+                "invalidVarBuild buildId=${historyRecord.buildId}" +
+                    "|${historyRecord.startUser}|${historyRecord.buildNum}|$invalidKeyList"
+            )
+            val history = genBuildHistory(
+                projectInfo = projectInfo,
+                tPipelineBuildHistoryRecord = historyRecord,
+                buildStatus = BuildStatus.values(),
+                currentTimestamp = System.currentTimeMillis(),
+                invalidKeyList = invalidKeyList.toList()
+            )
+            val topic = checkParamBlank(
+                lambdaKafkaTopicConfig.invalidVarBuildHistoryTopic,
+                "invalidVarBuildHistoryTopic"
+            )
+            kafkaClient.send(topic, JsonUtil.toJson(history))
+        } catch (e: Exception) {
+            logger.warn(
+                "Push build history with invalid variable key to kafka error, buildId: ${historyRecord.buildId}",
+                e
+            )
         }
     }
 
@@ -487,6 +552,7 @@ class LambdaDataService @Autowired constructor(
                     }
                     return ProjectOrganize(
                         projectId = projectId,
+                        secrecy = projectInfo.secrecy,
                         bgName = projectInfo.bgName ?: "",
                         deptName = projectInfo.deptName ?: "",
                         centerName = projectInfo.centerName ?: "",
@@ -519,6 +585,7 @@ class LambdaDataService @Autowired constructor(
     ): DataPlatBuildDetail {
         return with(buildDetailRecord) {
             val projectId = projectInfo.projectId
+            val isSecrecy = projectInfo.secrecy
             DataPlatBuildDetail(
                 washTime = LocalDateTime.now().format(dateTimeFormatter),
                 buildId = buildId,
@@ -529,6 +596,7 @@ class LambdaDataService @Autowired constructor(
                 projectId = projectId,
                 pipelineId = pipelineId,
                 buildNum = buildNum,
+                isSecrecy = isSecrecy,
                 model = model,
                 trigger = trigger,
                 startUser = startUser,
@@ -577,7 +645,8 @@ class LambdaDataService @Autowired constructor(
         projectInfo: ProjectOrganize,
         tPipelineBuildHistoryRecord: TPipelineBuildHistoryRecord,
         buildStatus: Array<BuildStatus>,
-        currentTimestamp: Long
+        currentTimestamp: Long,
+        invalidKeyList: List<String>? = null
     ): DataPlatBuildHistory {
         return with(tPipelineBuildHistoryRecord) {
             val totalTime = if (startTime == null || endTime == null) {
@@ -588,6 +657,7 @@ class LambdaDataService @Autowired constructor(
 
             val labelList = mutableListOf<String>()
             val projectId = projectInfo.projectId
+            val isSecrecy = projectInfo.secrecy
             lambdaPipelineLabelDao.getLables(dslContext, projectId, pipelineId)?.forEach { label ->
                 labelList.add(label["name"] as String)
             }
@@ -634,9 +704,12 @@ class LambdaDataService @Autowired constructor(
                 startUser = startUser,
                 channel = channel,
                 labels = labelList,
+                isSecrecy = isSecrecy,
+                buildMsg = buildMsg,
                 bgId = projectInfo.bgId,
                 deptId = projectInfo.deptId,
-                centerId = projectInfo.centerId
+                centerId = projectInfo.centerId,
+                invalidKeyList = invalidKeyList
             )
         }
     }
@@ -682,5 +755,6 @@ class LambdaDataService @Autowired constructor(
     companion object {
         private val logger = LoggerFactory.getLogger(LambdaDataService::class.java)
         private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        private val pattern = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9\\.\\-_]*[a-zA-Z0-9\\-_]\$")
     }
 }
