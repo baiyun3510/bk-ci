@@ -25,41 +25,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.api.common
+package com.tencent.devops.auth.api.service
 
-import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.store.pojo.common.PublisherInfo
-import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import com.tencent.devops.auth.pojo.StrategyEntity
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import javax.ws.rs.Consumes
 import javax.ws.rs.GET
-import javax.ws.rs.HeaderParam
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["USER_MARKET_PUBLISHERS"], description = "研发商店-发布者")
-@Path("/user/market/publishers")
+@Api(tags = ["AUTH_GROUP_STRATEGY"], description = "权限-用户-策略")
+@Path("/service/auth/strategy")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface UserStorePublishersResource {
-
-    @ApiOperation("获取发布组件可选发布者")
+interface ServiceGroupStrategyResource {
     @GET
-    @Path("/get")
-    fun getPublishers(
-        @ApiParam("userId", required = true)
-        @HeaderParam(AUTH_HEADER_USER_ID)
-        userId: String,
-        @ApiParam("storeCode", required = true)
-        @QueryParam("storeCode")
-        storeCode: String,
-        @ApiParam("storeType", required = true)
-        @QueryParam("storeType")
-        storeType: StoreTypeEnum
-    ): Result<List<PublisherInfo>>
+    @Path("/getGroupStrategy")
+    @ApiOperation("获取组策略")
+    fun getGroupStrategy(
+        @ApiParam(name = "策略名", required = true)
+        @QueryParam("action")
+        strategyName: String
+    ): StrategyEntity?
 }
