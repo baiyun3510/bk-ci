@@ -44,7 +44,11 @@ object Versions {
     const val Xinge = "1.2.4.9"
     const val Pulsar = "2.7.2"
     const val JacksonDatatypeJsr = "2.11.4"
+    const val openTelemetryVersion = "1.14.0"
+    const val openTelemetryAlphaVersion = "1.14.0-alpha"
     const val reflections = "0.10.2"
+    const val pushGateway = "0.15.0"
     const val Resilience4j = "1.7.1"
     const val jjwt = "0.11.5"
+    const val mockk = "1.12.2"
 }

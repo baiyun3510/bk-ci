@@ -81,6 +81,7 @@ const val BK_CI_BUILD_FAIL_TASKNAMES = "BK_CI_BUILD_FAIL_TASKNAMES"
 const val PIPELINE_VIEW_MY_PIPELINES = "myPipeline"
 const val PIPELINE_VIEW_FAVORITE_PIPELINES = "collect"
 const val PIPELINE_VIEW_ALL_PIPELINES = "allPipeline"
+const val PIPELINE_VIEW_UNCLASSIFIED = "unclassified"
 
 const val PIPELINE_MATERIAL_URL = "BK_CI_PIEPLEINE_MATERIAL_URL" // pipeline.material.url
 const val PIPELINE_MATERIAL_BRANCHNAME = "BK_CI_PIPELINE_MATERIAL_BRANCHNAME" // pipeline.material.branchName
@@ -95,7 +96,6 @@ const val MAJORVERSION = "BK_CI_MAJOR_VERSION" // MajorVersion
 const val MINORVERSION = "BK_CI_MINOR_VERSION" // MinorVersion
 const val FIXVERSION = "BK_CI_FIX_VERSION" // FixVersion
 const val BUILD_NO = "BK_CI_BUILD_NO" // "BuildNo"
-const val BUILD_STATUS = "BK_CI_BUILD_STATUS" // "BuildStatus"
 
 /**
  * 后续新增的变量统一用“BK_CI_大写的变量名称”命名，历史的变量名称统一整改

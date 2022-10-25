@@ -27,11 +27,13 @@
 
 package com.tencent.devops.project.service.tof
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.common.cache.CacheBuilder
 import com.tencent.devops.common.api.constant.CommonMessageCode.SUCCESS
 import com.tencent.devops.common.api.exception.OperationException
+import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.service.utils.MessageCodeUtil
@@ -106,11 +108,13 @@ class TOFService @Autowired constructor(
             detail = getDeftFromCache(userId) ?: getDeptFromTof(operator, userId, bkTicket)
             if (detail == null) {
                 logger.info("user $userId is level office")
-                throw OperationException(MessageCodeUtil.getCodeLanMessage(
-                    messageCode = QUERY_USER_INFO_FAIL,
-                    defaultMessage = "用户$userId 已离职",
-                    params = arrayOf(userId)
-                ))
+                throw OperationException(
+                    MessageCodeUtil.getCodeLanMessage(
+                        messageCode = QUERY_USER_INFO_FAIL,
+                        defaultMessage = "用户$userId 已离职",
+                        params = arrayOf(userId)
+                    )
+                )
             }
             userDeptCache.put(userId, detail)
         }
@@ -236,60 +240,53 @@ class TOFService @Autowired constructor(
         bkTicket: String,
         userCache: Boolean? = true
     ): StaffInfoResponse {
-        try {
-            var info: StaffInfoResponse? = null
-            if (userCache!!) {
-                info = userInfoCache.getIfPresent(userId)
-            }
-            if (info == null) {
-                val startTime = System.currentTimeMillis()
-                logger.info("[$operator|$userId|$bkTicket] Start to get the staff info")
-                val path = "get_staff_info_by_login_name"
-                val responseContent = request(
-                    path, StaffInfoRequest(
-                    tofAppCode!!,
-                    tofAppSecret!!, operator, userId, bkTicket
-                    ), MessageCodeUtil.getCodeLanMessage(QUERY_USER_INFO_FAIL, "获取用户信息$userId 失败", arrayOf(userId))
-                )
-                val response: Response<StaffInfoResponse> = objectMapper.readValue(responseContent)
-                if (response.data == null) {
-                    uploadTofStatus(
-                        requestTime = startTime,
-                        statusCode = response.code,
-                        statusMessage = response.message,
-                        errorCode = QUERY_USER_INFO_FAIL,
-                        errorMessage = MessageCodeUtil.getCodeLanMessage(
-                            messageCode = QUERY_USER_INFO_FAIL,
-                            defaultMessage = "获取用户$userId 信息失败",
-                            params = arrayOf(userId)
-                        )
-                    )
-                    logger.warn("Fail to get the staff info|$userId|$bkTicket|$responseContent")
-                    throw OperationException(MessageCodeUtil.getCodeLanMessage(
-                        messageCode = QUERY_USER_INFO_FAIL,
-                        defaultMessage = "获取用户$userId 信息失败",
-                        params = arrayOf(userId)
-                    ))
-                }
+        var info: StaffInfoResponse? = null
+        if (userCache!!) {
+            info = userInfoCache.getIfPresent(userId)
+        }
+        if (info == null) {
+            val startTime = System.currentTimeMillis()
+            logger.info("[$operator|$userId|$bkTicket] Start to get the staff info")
+            val path = "get_staff_info_by_login_name"
+            val responseContent = request(
+                path, StaffInfoRequest(
+                tofAppCode!!,
+                tofAppSecret!!, operator, userId, bkTicket
+            ), MessageCodeUtil.getCodeLanMessage(QUERY_USER_INFO_FAIL, "获取用户信息$userId 失败", arrayOf(userId))
+            )
+            val response: Response<StaffInfoResponse> = objectMapper.readValue(responseContent)
+            if (response.data == null) {
                 uploadTofStatus(
                     requestTime = startTime,
                     statusCode = response.code,
-                    statusMessage = "success",
-                    errorCode = SUCCESS,
-                    errorMessage = "call tof success"
+                    statusMessage = response.message,
+                    errorCode = QUERY_USER_INFO_FAIL,
+                    errorMessage = MessageCodeUtil.getCodeLanMessage(
+                        messageCode = QUERY_USER_INFO_FAIL,
+                        defaultMessage = "获取用户$userId 信息失败",
+                        params = arrayOf(userId)
+                    )
                 )
-                info = response.data
-                userInfoCache.put(userId, info)
+                logger.warn("Fail to get the staff info|$userId|$bkTicket|$responseContent")
+                throw OperationException(
+                    MessageCodeUtil.getCodeLanMessage(
+                        messageCode = QUERY_USER_INFO_FAIL,
+                        defaultMessage = "获取用户$userId 信息失败",
+                        params = arrayOf(userId)
+                    )
+                )
             }
-            return info
-        } catch (t: Throwable) {
-            logger.warn("Fail to get the staff info of userId $userId with ticket $bkTicket", t)
-            throw OperationException(MessageCodeUtil.getCodeLanMessage(
-                messageCode = QUERY_USER_INFO_FAIL,
-                defaultMessage = "获取用户$userId 信息失败",
-                params = arrayOf(userId)
-            ))
+            uploadTofStatus(
+                requestTime = startTime,
+                statusCode = response.code,
+                statusMessage = "success",
+                errorCode = SUCCESS,
+                errorMessage = "call tof success"
+            )
+            info = response.data
+            userInfoCache.put(userId, info)
         }
+        return info
     }
 
     fun getStaffInfo(userId: String, bkTicket: String): StaffInfoResponse {
@@ -301,39 +298,33 @@ class TOFService @Autowired constructor(
     }
 
     fun getParentDeptInfo(groupId: String, level: Int): List<DeptInfo> {
-        try {
-            val path = "get_parent_dept_infos"
-            val startTime = System.currentTimeMillis()
-            val responseContent = request(
-                path,
-                ParentDeptInfoRequest(tofAppCode!!, tofAppSecret!!, groupId, level),
-                MessageCodeUtil.getCodeLanMessage(QUERY_ORG_FAIL)
-            )
-            val response: Response<List<DeptInfo>> = objectMapper.readValue(responseContent)
-            if (response.data == null) {
-                logger.warn("Fail to get the parent dept info of |$groupId|$level|$responseContent")
-                uploadTofStatus(
-                    requestTime = startTime,
-                    statusCode = response.code,
-                    statusMessage = response.message,
-                    errorCode = QUERY_ORG_FAIL,
-                    errorMessage = MessageCodeUtil.getCodeLanMessage(QUERY_ORG_FAIL)
-                )
-                throw OperationException(MessageCodeUtil.getCodeLanMessage(QUERY_ORG_FAIL))
-            }
+        val path = "get_parent_dept_infos"
+        val startTime = System.currentTimeMillis()
+        val responseContent = request(
+            path,
+            ParentDeptInfoRequest(tofAppCode!!, tofAppSecret!!, groupId, level),
+            MessageCodeUtil.getCodeLanMessage(QUERY_ORG_FAIL)
+        )
+        val response: Response<List<DeptInfo>> = objectMapper.readValue(responseContent)
+        if (response.data == null) {
+            logger.warn("Fail to get the parent dept info of |$groupId|$level|$responseContent")
             uploadTofStatus(
                 requestTime = startTime,
                 statusCode = response.code,
-                statusMessage = "success",
-                errorCode = SUCCESS,
-                errorMessage = "call tof success"
+                statusMessage = response.message,
+                errorCode = QUERY_ORG_FAIL,
+                errorMessage = MessageCodeUtil.getCodeLanMessage(QUERY_ORG_FAIL)
             )
-
-            return response.data
-        } catch (t: Throwable) {
-            logger.warn("Fail to get the parent dept info of group $groupId and level $level", t)
-            throw OperationException(MessageCodeUtil.getCodeLanMessage(ProjectMessageCode.QUERY_PAR_DEPARTMENT_FAIL))
+            throw OperationException(MessageCodeUtil.getCodeLanMessage(QUERY_ORG_FAIL))
         }
+        uploadTofStatus(
+            requestTime = startTime,
+            statusCode = response.code,
+            statusMessage = "success",
+            errorCode = SUCCESS,
+            errorMessage = "call tof success"
+        )
+        return response.data
     }
 
     private fun request(path: String, body: Any, errorMessage: String, apiModule: APIModule = APIModule.tof): String {
@@ -360,10 +351,15 @@ class TOFService @Autowired constructor(
 //        httpClient.newCall(request).execute().use { response ->
         OkhttpUtils.doHttp(request).use { response ->
             val responseContent = response.body()!!.string()
-            if (!response.isSuccessful) {
-                logger.warn("Fail to request $request with code ${response.code()}, " +
-                                "message ${response.message()} and body $responseContent")
-                throw RuntimeException(errorMessage)
+            logger.info("TOFService:$responseContent")
+            val responseObject = objectMapper.readValue<Map<String, Any>>(responseContent)
+            logger.info("TOFService:responseObject = $responseObject")
+            if (!response.isSuccessful || responseObject["code"] != "00") {
+                logger.warn(
+                    "Fail to request $request with code ${response.code()}, " +
+                        "message ${response.message()} and body $responseContent"
+                )
+                throw RemoteServiceException("Fail to request tof")
             }
             return responseContent
         }
@@ -458,14 +454,14 @@ class TOFService @Autowired constructor(
             }
         }
         return UserDeptDetail(
-                bgName = bgName,
-                bgId = bgId,
-                deptName = deptName,
-                deptId = deptId,
-                centerName = centerName,
-                centerId = centerId,
-                groupId = groupId,
-                groupName = groupName
+            bgName = bgName,
+            bgId = bgId,
+            deptName = deptName,
+            deptId = deptId,
+            centerName = centerName,
+            centerId = centerId,
+            groupId = groupId,
+            groupName = groupName
         )
     }
 

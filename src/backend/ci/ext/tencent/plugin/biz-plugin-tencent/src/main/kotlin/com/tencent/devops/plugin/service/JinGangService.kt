@@ -327,6 +327,7 @@ class JinGangService @Autowired constructor(
             if (status == "1") {
                 @Suppress("UNCHECKED_CAST")
                 val data = obj["data"] as Map<String, Any>
+
                 @Suppress("UNCHECKED_CAST")
                 val user = data["user"] as Collection<Any>?
                 return StarResponse(

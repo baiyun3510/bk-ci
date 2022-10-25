@@ -57,6 +57,14 @@ class ExtServiceBcsInitService @Autowired constructor(
     private val logger = LoggerFactory.getLogger(ExtServiceBcsInitService::class.java)
 
     @PostConstruct
+    fun initKubernetesEnv() {
+        // 异步初始化微扩展k8s环境信息
+        Thread {
+            initBcsNamespace()
+            initBcsImagePullSecret()
+        }.start()
+    }
+
     fun initBcsNamespace() {
         logger.info("begin execute initBcsNamespace")
         // 初始化bcs命名空间（包括已发布扩展服务版本的命名空间和处于测试中扩展服务版本的命名空间）
@@ -87,8 +95,7 @@ class ExtServiceBcsInitService @Autowired constructor(
         logger.info("create namespace:$grayNamespaceName result is:$grayNamespaceResult")
         logger.info("end execute initBcsNamespace")
     }
-
-    @PostConstruct
+    
     fun initBcsImagePullSecret() {
         logger.info("begin execute initBcsImagePullSecret")
         val secretName = extServiceImageSecretConfig.secretName

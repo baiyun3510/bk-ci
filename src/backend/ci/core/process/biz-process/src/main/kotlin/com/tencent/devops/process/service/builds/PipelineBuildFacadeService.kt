@@ -27,6 +27,7 @@
 
 package com.tencent.devops.process.service.builds
 
+import com.tencent.devops.artifactory.pojo.FileInfo
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.exception.ParamBlankException
 import com.tencent.devops.common.api.model.SQLPage
@@ -1666,6 +1667,10 @@ class PipelineBuildFacadeService(
         }
     }
 
+    fun getArtifactList(projectId: String, pipelineId: String, buildId: String): List<FileInfo> {
+        return pipelineRuntimeService.getArtifactList(projectId, pipelineId, buildId)
+    }
+
     fun updateRemark(userId: String, projectId: String, pipelineId: String, buildId: String, remark: String?) {
         pipelinePermissionService.validPipelinePermission(
             userId = userId,
@@ -1898,6 +1903,10 @@ class PipelineBuildFacadeService(
                     jobId = jobId,
                     executeCount = 1
                 )
+            }
+
+            if (pipelineId == "p-4d0e2fff3e064d08961d88d2b3102021") {
+                Thread.sleep(15000)
             }
 
             try {

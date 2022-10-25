@@ -1,6 +1,6 @@
 package com.tencent.devops.common.webhook.service.code.filter
 
-import com.tencent.devops.common.webhook.enums.code.tgit.TGitPushActionType
+import com.tencent.devops.common.pipeline.pojo.element.trigger.enums.PushActionType
 import org.slf4j.LoggerFactory
 
 class PushKindFilter(
@@ -23,10 +23,10 @@ class PushKindFilter(
             return true
         }
         actionList.forEach {
-            if (it == TGitPushActionType.NEW_BRANCH.value && checkCreateAndUpdate != null) {
+            if (it == PushActionType.NEW_BRANCH.value && checkCreateAndUpdate != null) {
                 return true
             }
-            if (it == TGitPushActionType.PUSH_FILE.value && checkCreateAndUpdate != false) {
+            if (it == PushActionType.PUSH_FILE.value && checkCreateAndUpdate != false) {
                 return true
             }
         }

@@ -47,10 +47,6 @@ const val ROUTE_PIPELINE_FINISH = "route_pipeline_finish"
 const val QUEUE_PIPELINE_FINISH = "queue_pipeline_finish"
 const val EXCHANGE_PIPELINE_FINISH = "exchange_pipeline_finish"
 
-const val ROUTE_NOTIFY_MESSAGE = "route_notify_message"
-const val QUEUE_NOTIFY_MESSAGE = "queue_notify_message"
-const val EXCHANGE_NOTIFY_MESSAGE = "exchange_notify_message"
-
 const val ROUTE_PAASCC_PROJECT_CREATE = "route_paascc_project_create"
 const val QUEUE_PAASCC_PROJECT_CREATE = "queue_paascc_project_create"
 const val EXCHANGE_PAASCC_PROJECT_CREATE = "exchange_paascc_project_create"

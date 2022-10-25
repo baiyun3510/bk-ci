@@ -38,7 +38,6 @@ import com.tencent.devops.common.pipeline.element.GcloudPufferElement
 import com.tencent.devops.common.pipeline.element.JobDevOpsExecuteTaskExtElement
 import com.tencent.devops.common.pipeline.element.JobDevOpsFastExecuteScriptElement
 import com.tencent.devops.common.pipeline.element.JobDevOpsFastPushFileElement
-import com.tencent.devops.common.pipeline.element.KtlintStyleElement
 import com.tencent.devops.common.pipeline.element.PushImageToThirdRepoElement
 import com.tencent.devops.common.pipeline.element.SendEmailNotifyElement
 import com.tencent.devops.common.pipeline.element.SendRTXNotifyElement
@@ -76,7 +75,6 @@ class PluginElementSubTypeFetcher : ElementSubTypeFetcher {
             PushImageToThirdRepoElement.classType to PushImageToThirdRepoElement::class.java,
             BuglyElement.classType to BuglyElement::class.java,
             AndroidCertInstallElement.classType to AndroidCertInstallElement::class.java,
-            KtlintStyleElement.classType to KtlintStyleElement::class.java,
             AtomBuildArchiveElement.classType to AtomBuildArchiveElement::class.java,
             SensitiveScanElement.classType to SensitiveScanElement::class.java,
             ExtServiceBuildDeployElement.classType to ExtServiceBuildDeployElement::class.java,

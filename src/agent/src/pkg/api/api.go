@@ -29,21 +29,15 @@ package api
 
 import (
 	"fmt"
-	"runtime"
-	"strconv"
-	"strings"
-
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/config"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/httputil"
 	"github.com/Tencent/bk-ci/src/agent/src/pkg/util/systemutil"
+	"runtime"
+	"strconv"
 )
 
 func buildUrl(url string) string {
-	if strings.HasPrefix(config.GAgentConfig.Gateway, "http") {
-		return config.GAgentConfig.Gateway + url
-	} else {
-		return "http://" + config.GAgentConfig.Gateway + url
-	}
+	return config.GetGateWay() + url
 }
 
 func Heartbeat(buildInfos []ThirdPartyBuildInfo, jdkVersion []string) (*httputil.DevopsResult, error) {
@@ -62,18 +56,20 @@ func Heartbeat(buildInfos []ThirdPartyBuildInfo, jdkVersion []string) (*httputil
 			Arch:       runtime.GOARCH,
 			JdkVersion: jdkVersion,
 		},
+		DockerParallelTaskCount: config.GAgentConfig.DockerParallelTaskCount,
 	}
 
 	return httputil.NewHttpClient().Post(url).Body(agentHeartbeatInfo).SetHeaders(config.GAgentConfig.GetAuthHeaderMap()).Execute().IntoDevopsResult()
 }
 
-func CheckUpgrade(jdkVersion []string) (*httputil.AgentResult, error) {
+func CheckUpgrade(jdkVersion []string, dockerInitFileMd5 DockerInitFileInfo) (*httputil.AgentResult, error) {
 	url := buildUrl("/ms/dispatch/api/buildAgent/agent/thirdPartyAgent/upgradeNew")
 
 	info := &UpgradeInfo{
-		WorkerVersion:  config.GAgentEnv.SlaveVersion,
-		GoAgentVersion: config.AgentVersion,
-		JdkVersion:     jdkVersion,
+		WorkerVersion:      config.GAgentEnv.SlaveVersion,
+		GoAgentVersion:     config.AgentVersion,
+		JdkVersion:         jdkVersion,
+		DockerInitFileInfo: dockerInitFileMd5,
 	}
 
 	return httputil.NewHttpClient().Post(url).Body(info).SetHeaders(config.GAgentConfig.GetAuthHeaderMap()).Execute().IntoAgentResult()
@@ -137,4 +133,30 @@ func DownloadAgentInstallBatchZip(saveFile string) error {
 	url := buildUrl(fmt.Sprintf("/ms/environment/api/external/thirdPartyAgent/%s/batch_zip",
 		config.GAgentConfig.BatchInstallKey))
 	return httputil.DownloadAgentInstallScript(url, config.GAgentConfig.GetAuthHeaderMap(), saveFile)
+}
+
+// AuthHeaderDevopsBuildId log需要的buildId的header
+const (
+	AuthHeaderDevopsBuildId = "X-DEVOPS-BUILD-ID"
+	AuthHeaderDevopsVmSeqId = "X-DEVOPS-VM-SID"
+)
+
+func AddLogLine(buildId string, message *LogMessage, vmSeqId string) (*httputil.DevopsResult, error) {
+	url := buildUrl("/ms/log/api/build/logs")
+	headers := config.GAgentConfig.GetAuthHeaderMap()
+	headers[AuthHeaderDevopsBuildId] = buildId
+	headers[AuthHeaderDevopsVmSeqId] = vmSeqId
+	return httputil.NewHttpClient().
+		Post(url).Body(message).SetHeaders(headers).Execute().
+		IntoDevopsResult()
+}
+
+func AddLogRedLine(buildId string, message *LogMessage, vmSeqId string) (*httputil.DevopsResult, error) {
+	url := buildUrl("/ms/log/api/build/logs/red")
+	headers := config.GAgentConfig.GetAuthHeaderMap()
+	headers[AuthHeaderDevopsBuildId] = buildId
+	headers[AuthHeaderDevopsVmSeqId] = vmSeqId
+	return httputil.NewHttpClient().
+		Post(url).Body(message).SetHeaders(headers).Execute().
+		IntoDevopsResult()
 }

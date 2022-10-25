@@ -27,6 +27,7 @@
 
 package com.tencent.devops.log.configuration
 
+import com.tencent.devops.common.stream.annotation.StreamEventConsumer
 import com.tencent.devops.common.stream.constants.StreamBinding
 import com.tencent.devops.log.event.LogOriginEvent
 import com.tencent.devops.log.event.LogStatusEvent
@@ -57,7 +58,7 @@ class LogMQConfiguration @Autowired constructor() {
         logServiceConfig: LogServiceConfig
     ) = BuildLogPrintService(streamBridge, logPrintBean, storageProperties, logServiceConfig)
 
-    @Bean(StreamBinding.BINDING_LOG_ORIGIN_EVENT_IN)
+    @StreamEventConsumer(StreamBinding.BINDING_LOG_ORIGIN_EVENT_DESTINATION, STREAM_CONSUMER_GROUP)
     fun logOriginEventIn(
         listenerService: BuildLogListenerService
     ): Consumer<Message<LogOriginEvent>> {
@@ -66,7 +67,7 @@ class LogMQConfiguration @Autowired constructor() {
         }
     }
 
-    @Bean(StreamBinding.BINDING_LOG_STORAGE_EVENT_IN)
+    @StreamEventConsumer(StreamBinding.BINDING_LOG_STORAGE_EVENT_DESTINATION, STREAM_CONSUMER_GROUP)
     fun logStorageEventIn(
         listenerService: BuildLogListenerService
     ): Consumer<Message<LogStorageEvent>> {
@@ -75,12 +76,16 @@ class LogMQConfiguration @Autowired constructor() {
         }
     }
 
-    @Bean(StreamBinding.BINDING_LOG_STATUS_EVENT_IN)
+    @StreamEventConsumer(StreamBinding.BINDING_LOG_STATUS_EVENT_DESTINATION, STREAM_CONSUMER_GROUP)
     fun logStatusEventIn(
         listenerService: BuildLogListenerService
     ): Consumer<Message<LogStatusEvent>> {
         return Consumer { event: Message<LogStatusEvent> ->
             listenerService.handleEvent(event.payload)
         }
+    }
+
+    companion object {
+        const val STREAM_CONSUMER_GROUP = "log-service"
     }
 }

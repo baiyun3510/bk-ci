@@ -17,6 +17,10 @@ allprojects {
     // 版本管理
     dependencyManagement {
         setApplyMavenExclusions(false)
+        imports {
+            mavenBom("io.prometheus:simpleclient_bom:${Versions.pushGateway}")
+            mavenBom("io.opentelemetry:opentelemetry-bom:${Versions.openTelemetryVersion}")
+        }
         dependencies {
             dependency("org.json:json:${Versions.orgJson}")
             dependency("org.mockito:mockito-all:${Versions.Mockito}")
@@ -58,6 +62,12 @@ allprojects {
             dependency("org.bouncycastle:bcprov-ext-jdk15on:${Versions.BouncyCastle}")
             dependency("org.mybatis:mybatis:${Versions.MyBatis}")
             dependency("commons-io:commons-io:${Versions.CommonIo}")
+            dependencySet("io.opentelemetry:${Versions.openTelemetryAlphaVersion}") {
+                entry("opentelemetry-exporter-prometheus")
+                entry("opentelemetry-sdk-log")
+                entry("opentelemetry-semconv")
+                entry("opentelemetry-sdk-extension-autoconfigure")
+            }
             dependencySet("org.glassfish.jersey.containers:${Versions.Jersey}") {
                 entry("jersey-container-servlet-core")
                 entry("jersey-container-servlet")
@@ -100,6 +110,7 @@ allprojects {
             }
             dependency("com.perforce:p4java:${Versions.p4}")
             dependency("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${Versions.JacksonDatatypeJsr}")
+            dependency("io.mockk:mockk:${Versions.mockk}")
             dependencySet("io.github.resilience4j:${Versions.Resilience4j}") {
                 entry("resilience4j-circuitbreaker")
             }
@@ -118,8 +129,8 @@ allprojects {
         it.exclude("com.flipkart.zjsonpatch", "zjsonpatch")
         it.exclude("com.zaxxer","HikariCP-java7")
     }
-    // 兼容dom4j 的 bug : https://github.com/gradle/gradle/issues/13656
     dependencies {
+        // 兼容dom4j 的 bug : https://github.com/gradle/gradle/issues/13656
         components {
             withModule("org.dom4j:dom4j") {
                 allVariants { withDependencies { clear() } }

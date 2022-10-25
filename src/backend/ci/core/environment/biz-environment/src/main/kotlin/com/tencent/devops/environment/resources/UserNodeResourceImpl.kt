@@ -55,8 +55,8 @@ class UserNodeResourceImpl @Autowired constructor(private val nodeService: NodeS
     }
 
     @BkTimed(extraTags = ["operate", "getNode"])
-    override fun list(userId: String, projectId: String): Result<List<NodeWithPermission>> {
-        return Result(NodeUtils.sortByUser(nodeService.list(userId, projectId), userId))
+    override fun list(userId: String, projectId: String, nodeIds: String?): Result<List<NodeWithPermission>> {
+        return Result(NodeUtils.sortByUser(nodeService.list(userId, projectId, nodeIds), userId))
     }
 
     override fun changeCreatedUser(userId: String, projectId: String, nodeHashId: String): Result<Boolean> {

@@ -33,4 +33,8 @@ dependencies {
     api("io.github.openfeign.form:feign-form")
     api("io.github.openfeign.form:feign-form-spring")
     api("io.github.openfeign:feign-spring4")
+    api("io.opentelemetry:opentelemetry-api")
+    api("io.opentelemetry:opentelemetry-sdk")
+    api("io.opentelemetry:opentelemetry-exporter-otlp")
+    api("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
 }

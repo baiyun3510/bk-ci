@@ -122,6 +122,12 @@ interface BuildJinGangAppResource {
     @POST
     @Path("/users/{userId}/app/update")
     fun updateTask(
+        @ApiParam("项目ID", required = true)
+        @HeaderParam(AUTH_HEADER_PROJECT_ID)
+        projectId: String,
+        @ApiParam("流水线ID", required = true)
+        @HeaderParam(AUTH_HEADER_PIPELINE_ID)
+        pipelineId: String,
         @ApiParam("流水线构建id", required = true)
         @HeaderParam(AUTH_HEADER_BUILD_ID)
         buildId: String,

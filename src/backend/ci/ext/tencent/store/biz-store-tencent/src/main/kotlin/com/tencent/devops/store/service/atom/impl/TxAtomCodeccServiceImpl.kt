@@ -35,8 +35,6 @@ import com.tencent.devops.store.dao.atom.MarketAtomDao
 import com.tencent.devops.store.dao.common.StoreReleaseDao
 import com.tencent.devops.store.pojo.atom.UpdateAtomInfo
 import com.tencent.devops.store.pojo.atom.enums.AtomStatusEnum
-import com.tencent.devops.store.pojo.common.STORE_REPO_CODECC_BUILD_KEY_PREFIX
-import com.tencent.devops.store.pojo.common.STORE_REPO_COMMIT_KEY_PREFIX
 import com.tencent.devops.store.pojo.common.StoreReleaseCreateRequest
 import com.tencent.devops.store.pojo.common.enums.AuditTypeEnum
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
@@ -46,6 +44,7 @@ import com.tencent.devops.store.service.atom.MarketAtomCommonService
 import com.tencent.devops.store.service.common.TxStoreCodeccCommonService
 import com.tencent.devops.store.service.common.TxStoreCodeccService
 import com.tencent.devops.store.service.websocket.StoreWebsocketService
+import com.tencent.devops.store.utils.TxStoreUtils
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
@@ -189,8 +188,8 @@ class TxAtomCodeccServiceImpl @Autowired constructor() : TxStoreCodeccCommonServ
         }
         if (validateFlag) {
             // 清空redis中保存的发布过程保存的buildId和commitId
-            redisOperation.delete("$STORE_REPO_COMMIT_KEY_PREFIX:$storeType:$storeCode:$storeId")
-            redisOperation.delete("$STORE_REPO_CODECC_BUILD_KEY_PREFIX:$storeType:$storeCode:$storeId")
+            redisOperation.delete(TxStoreUtils.getStoreRepoCommitKey(storeType, storeCode, storeId))
+            redisOperation.delete(TxStoreUtils.getStoreRepoCodeccBuildKey(storeType, storeCode, storeId))
         }
     }
 

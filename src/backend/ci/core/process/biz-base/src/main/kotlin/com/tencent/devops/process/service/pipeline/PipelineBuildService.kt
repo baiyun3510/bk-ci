@@ -248,6 +248,7 @@ class PipelineBuildService(
 
             val buildId = pipelineParamMap[PIPELINE_RETRY_BUILD_ID]?.value?.toString() ?: buildIdGenerator.getNextId()
 
+            logger.info("[$pipelineId]TimeTiggerStart")
             val interceptResult = pipelineInterceptorChain.filter(
                 InterceptData(
                     pipelineInfo = pipeline,

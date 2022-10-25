@@ -41,7 +41,6 @@ export function getPipelineStatusShapeIconCls (status) {
         WAITING: 'icon-clock',
         CANCELED: 'icon-exclamation-circle-shape',
         TERMINATE: 'icon-exclamation-circle-shape',
-        TRIGGER_REVIEWING: 'icon-exclamation-triangle-shape',
         REVIEWING: 'icon-exclamation-triangle-shape',
         REVIEW_ABORT: 'icon-exclamation-triangle-shape',
         FAILED: 'icon-close-circle-shape',

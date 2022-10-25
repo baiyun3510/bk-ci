@@ -68,6 +68,8 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
 
         tryRollBackQueue(event, record, logMessage)
 
+        // TODO: issue_7748 增加docker构建机类型的监控
+
         // #5806 已经不再排队，则退出监控, 暂时需求如此，后续可修改
         if (PipelineTaskStatus.toStatus(record.status) != PipelineTaskStatus.QUEUE) {
             return
