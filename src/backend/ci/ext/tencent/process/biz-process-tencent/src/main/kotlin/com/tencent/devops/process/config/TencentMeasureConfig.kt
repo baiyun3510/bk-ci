@@ -27,37 +27,35 @@
 
 package com.tencent.devops.process.config
 
+import com.tencent.devops.common.event.annotation.StreamEventConsumer
+import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
-import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQ
-import com.tencent.devops.common.event.dispatcher.pipeline.mq.Tools
+import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildFinishBroadCastEvent
 import com.tencent.devops.common.redis.RedisOperation
+import com.tencent.devops.common.stream.constants.StreamBinding
 import com.tencent.devops.process.engine.service.PipelineInfoService
 import com.tencent.devops.process.engine.service.PipelineTaskService
 import com.tencent.devops.process.engine.service.measure.MeasureServiceImpl
 import com.tencent.devops.process.listener.MeasurePipelineBuildFinishListener
 import com.tencent.devops.process.service.BuildVariableService
 import com.tencent.devops.process.service.ProjectCacheService
-import com.tencent.devops.process.service.measure.MeasureEventDispatcher
 import com.tencent.devops.process.template.service.TemplateService
+import java.util.function.Consumer
 import org.jooq.DSLContext
-import org.springframework.amqp.core.Binding
-import org.springframework.amqp.core.BindingBuilder
-import org.springframework.amqp.core.FanoutExchange
-import org.springframework.amqp.core.Queue
-import org.springframework.amqp.rabbit.connection.ConnectionFactory
-import org.springframework.amqp.rabbit.core.RabbitAdmin
-import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.messaging.Message
 
 @Suppress("ALL")
 @Configuration
 class TencentMeasureConfig {
+
+    companion object {
+        const val STREAM_CONSUMER_GROUP = "process-service"
+    }
 
     @Value("\${build.atomMonitorData.report.switch:false}")
     private val atomMonitorSwitch: String = "false"
@@ -66,7 +64,7 @@ class TencentMeasureConfig {
     private val maxMonitorDataSize: String = "1677216"
 
     @Bean
-    fun measureEventDispatcher(rabbitTemplate: RabbitTemplate) = MeasureEventDispatcher(rabbitTemplate)
+    fun measureEventDispatcher(streamBridge: StreamBridge) = SampleEventDispatcher(streamBridge)
 
     @Bean
     fun measureService(
@@ -78,7 +76,7 @@ class TencentMeasureConfig {
         @Autowired pipelineInfoService: PipelineInfoService,
         @Autowired redisOperation: RedisOperation,
         @Autowired pipelineEventDispatcher: PipelineEventDispatcher,
-        @Autowired measureEventDispatcher: MeasureEventDispatcher
+        @Autowired measureEventDispatcher: SampleEventDispatcher
     ) = MeasureServiceImpl(
         projectCacheService = projectCacheService,
         pipelineTaskService = pipelineTaskService,
@@ -92,52 +90,15 @@ class TencentMeasureConfig {
         measureEventDispatcher = measureEventDispatcher
     )
 
-    @Value("\${queueConcurrency.measure:3}")
-    private val measureConcurrency: Int? = null
-
     /**
      * 构建结束广播交换机
      */
-    @Bean
-    @ConditionalOnMissingBean(name = ["pipelineBuildFanoutExchange"])
-    fun pipelineBuildFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(MQ.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, true, false)
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
-    }
-
-    /**
-     * 构建结束度量上报队列--- 并发小
-     */
-    @Bean
-    fun pipelineBuildMeasureQueue() = Queue(MQ.QUEUE_PIPELINE_BUILD_FINISH_MEASURE)
-
-    @Bean
-    fun pipelineBuildMeasureQueueBind(
-        @Autowired pipelineBuildMeasureQueue: Queue,
-        @Autowired pipelineBuildFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(pipelineBuildMeasureQueue).to(pipelineBuildFanoutExchange)
-    }
-
-    @Bean
-    fun pipelineBuildMeasureListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired pipelineBuildMeasureQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired listener: MeasurePipelineBuildFinishListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        return Tools.createSimpleMessageListenerContainer(
-            connectionFactory = connectionFactory,
-            queue = pipelineBuildMeasureQueue,
-            rabbitAdmin = rabbitAdmin,
-            buildListener = listener,
-            messageConverter = messageConverter,
-            startConsumerMinInterval = 120000,
-            consecutiveActiveTrigger = 10,
-            concurrency = measureConcurrency!!,
-            maxConcurrency = 15
-        )
+    @StreamEventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    fun pipelineBuildMeasureListener(
+        @Autowired listener: MeasurePipelineBuildFinishListener
+    ): Consumer<Message<PipelineBuildFinishBroadCastEvent>> {
+        return Consumer { event: Message<PipelineBuildFinishBroadCastEvent> ->
+            listener.run(event.payload)
+        }
     }
 }

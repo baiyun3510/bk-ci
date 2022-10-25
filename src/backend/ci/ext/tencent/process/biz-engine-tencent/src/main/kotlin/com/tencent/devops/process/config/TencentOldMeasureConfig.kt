@@ -28,6 +28,7 @@
 
 package com.tencent.devops.process.config
 
+import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.process.engine.service.PipelineInfoService
@@ -35,13 +36,12 @@ import com.tencent.devops.process.engine.service.PipelineTaskService
 import com.tencent.devops.process.engine.service.measure.MeasureServiceImpl
 import com.tencent.devops.process.service.BuildVariableService
 import com.tencent.devops.process.service.ProjectCacheService
-import com.tencent.devops.process.service.measure.MeasureEventDispatcher
 import com.tencent.devops.process.template.service.TemplateService
 import org.jooq.DSLContext
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -57,7 +57,7 @@ class TencentOldMeasureConfig {
 
     @Bean
     @ConditionalOnMissingBean(name = ["measureEventDispatcher"])
-    fun measureEventDispatcher(rabbitTemplate: RabbitTemplate) = MeasureEventDispatcher(rabbitTemplate)
+    fun measureEventDispatcher(streamBridge: StreamBridge) = SampleEventDispatcher(streamBridge)
 
     @Bean
     @ConditionalOnMissingBean(name = ["measureService"])
@@ -70,7 +70,7 @@ class TencentOldMeasureConfig {
         @Autowired pipelineInfoService: PipelineInfoService,
         @Autowired redisOperation: RedisOperation,
         @Autowired pipelineEventDispatcher: PipelineEventDispatcher,
-        @Autowired measureEventDispatcher: MeasureEventDispatcher
+        @Autowired measureEventDispatcher: SampleEventDispatcher
     ) = MeasureServiceImpl(
         projectCacheService = projectCacheService,
         pipelineTaskService = pipelineTaskService,
