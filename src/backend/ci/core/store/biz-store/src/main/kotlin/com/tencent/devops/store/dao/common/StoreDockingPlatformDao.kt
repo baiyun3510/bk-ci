@@ -28,7 +28,6 @@
 package com.tencent.devops.store.dao.common
 
 import com.tencent.devops.common.api.util.DateTimeUtil
-import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.model.store.tables.TStoreDockingPlatform
 import com.tencent.devops.model.store.tables.records.TStoreDockingPlatformRecord
@@ -36,7 +35,6 @@ import com.tencent.devops.store.pojo.common.StoreDockingPlatformInfo
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import org.jooq.Condition
 import org.jooq.DSLContext
-import org.jooq.Record1
 import org.jooq.Result
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
@@ -75,7 +73,7 @@ class StoreDockingPlatformDao {
                     storeDockingPlatformRequest.logoUrl,
                     userId,
                     userId,
-                    storeDockingPlatformRequest.BgName,
+                    storeDockingPlatformRequest.ownerDeptName,
                     storeDockingPlatformRequest.owner,
                     storeDockingPlatformRequest.labels?.joinToString(",")
                 ).execute()
@@ -114,7 +112,7 @@ class StoreDockingPlatformDao {
                             storeDockingPlatformRequest.logoUrl,
                             userId,
                             userId,
-                            storeDockingPlatformRequest.BgName,
+                            storeDockingPlatformRequest.ownerDeptName,
                             storeDockingPlatformRequest.owner,
                             storeDockingPlatformRequest.labels?.joinToString(",")
                         )
@@ -140,7 +138,7 @@ class StoreDockingPlatformDao {
                 .set(LABELS, storeDockingPlatformRequest.labels?.joinToString(","))
                 .set(UPDATE_TIME, LocalDateTime.now())
                 .set(MODIFIER, userId)
-                .set(BG_NAME, storeDockingPlatformRequest.BgName)
+                .set(OWNER_DEPT_NAME, storeDockingPlatformRequest.ownerDeptName)
                 .set(OWNERS, storeDockingPlatformRequest.owner)
                 .where(ID.eq(id))
                 .execute()
@@ -162,7 +160,7 @@ class StoreDockingPlatformDao {
                     .set(LABELS, storeDockingPlatformRequest.labels?.joinToString(","))
                     .set(UPDATE_TIME, LocalDateTime.now())
                     .set(MODIFIER, userId)
-                    .set(BG_NAME, storeDockingPlatformRequest.BgName)
+                    .set(OWNER_DEPT_NAME, storeDockingPlatformRequest.ownerDeptName)
                     .set(OWNERS, storeDockingPlatformRequest.owner)
                 if (!storeDockingPlatformRequest.logoUrl.isNullOrBlank()) {
                     step = step.set(LOGO_URL, storeDockingPlatformRequest.logoUrl)
@@ -190,7 +188,7 @@ class StoreDockingPlatformDao {
             return dslContext.batch(storeDockingPlatformRequests.map {
                 dslContext.deleteFrom(this)
                     .where(PLATFORM_CODE.eq(it.platformCode))
-                    .and(BG_NAME.eq(it.BgName))
+                    .and(OWNER_DEPT_NAME.eq(it.ownerDeptName))
             }).execute().size
         }
     }
@@ -321,12 +319,12 @@ class StoreDockingPlatformDao {
                 summary = summary,
                 principal = principal,
                 logoUrl = logoUrl,
-                labels = if (!labels.isNullOrBlank()) labels.split(",") else null,
                 creator = creator,
+                labels = labels?.split(","),
                 modifier = modifier,
                 createTime = DateTimeUtil.toDateTime(createTime),
                 updateTime = DateTimeUtil.toDateTime(updateTime),
-                BgName = record.BgName,
+                ownerDeptName = record.ownerDeptName,
                 owner = record.owners
             )
         }

@@ -24,12 +24,11 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 package com.tencent.devops.store.dao.common
 
 import com.tencent.devops.model.store.tables.TStorePublisherInfo
-import com.tencent.devops.model.store.tables.TStorePublisherMemberRel
 import com.tencent.devops.model.store.tables.records.TStorePublisherInfoRecord
-import com.tencent.devops.model.store.tables.records.TStorePublisherMemberRelRecord
 import com.tencent.devops.store.pojo.common.PublisherInfo
 import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.enums.PublisherType
@@ -62,7 +61,7 @@ class PublishersDao {
                     .set(FOURTH_LEVEL_DEPT_ID, publisherInfo.fourthLevelDeptId?.toLong())
                     .set(FOURTH_LEVEL_DEPT_NAME, publisherInfo.fourthLevelDeptName)
                     .set(ORGANIZATION_NAME, publisherInfo.organizationName)
-                    .set(BG_NAME, publisherInfo.BgName)
+                    .set(BG_NAME, publisherInfo.bgName)
                     .set(CERTIFICATION_FLAG, publisherInfo.certificationFlag)
                     .set(STORE_TYPE, publisherInfo.storeType.type.toByte())
                     .set(CREATOR, publisherInfo.creator)
@@ -80,7 +79,7 @@ class PublishersDao {
                     .where(PUBLISHER_CODE.eq(it.publishersCode)
                         .and(PUBLISHER_TYPE.eq(it.publishersType.name))
                         .and(STORE_TYPE.eq(it.storeType.type.toByte())))
-                        .and(OWNER_DEPT_NAME.eq(it.BgName))
+                        .and(BG_NAME.eq(it.bgName))
                 }
             ).execute().size
         }
@@ -101,7 +100,7 @@ class PublishersDao {
                     .set(OWNERS, it.owners)
                     .set(CERTIFICATION_FLAG, it.certificationFlag)
                     .set(ORGANIZATION_NAME, it.organizationName)
-                    .set(BG_NAME, it.BgName)
+                    .set(BG_NAME, it.bgName)
                     .set(HELPER, it.helper)
                     .set(UPDATE_TIME, it.updateTime)
                     .set(MODIFIER, it.modifier)
@@ -109,35 +108,6 @@ class PublishersDao {
                     .and(STORE_TYPE.eq(it.storeType))
             }
             ).execute().size
-        }
-    }
-
-    fun batchCreatePublisherMemberRel(
-        dslContext: DSLContext,
-        storePublisherMemberRelInfos: List<TStorePublisherMemberRelRecord>
-    ): Int {
-        return dslContext.batchInsert(storePublisherMemberRelInfos).execute().size
-    }
-
-    fun batchDeletePublisherMemberRelByPublisherId(
-        dslContext: DSLContext,
-        organizePublishersIds: List<String>
-    ) {
-        with(TStorePublisherMemberRel.T_STORE_PUBLISHER_MEMBER_REL) {
-            dslContext.deleteFrom(this).where(PUBLISHER_ID.`in`(organizePublishersIds)).execute()
-        }
-    }
-
-    fun batchDeletePublisherMemberByMemberIds(
-        dslContext: DSLContext,
-        delStorePublisherMemberRelRecords: List<TStorePublisherMemberRelRecord>
-    ) {
-        with(TStorePublisherMemberRel.T_STORE_PUBLISHER_MEMBER_REL) {
-            dslContext.batch(delStorePublisherMemberRelRecords.map {
-                dslContext.deleteFrom(this)
-                    .where(PUBLISHER_ID.eq(it.publisherId))
-                    .and(MEMBER_ID.eq(it.memberId))
-            }).execute()
         }
     }
 
@@ -154,24 +124,6 @@ class PublishersDao {
             return dslContext.select(ID).from(this)
                 .where(PUBLISHER_CODE.eq(publisherCode))
                 .fetchOne(0, String::class.java)
-        }
-    }
-
-    fun getPublisherMemberRelByMemberId(dslContext: DSLContext, memberId: String): List<String> {
-        with(TStorePublisherMemberRel.T_STORE_PUBLISHER_MEMBER_REL) {
-            return dslContext.select(PUBLISHER_ID)
-                .from(this)
-                .where(MEMBER_ID.eq(memberId))
-                .fetchInto(String::class.java)
-        }
-    }
-
-    fun getPublisherMemberRelMemberIdsByPublisherId(dslContext: DSLContext, publisherId: String): List<String> {
-        with(TStorePublisherMemberRel.T_STORE_PUBLISHER_MEMBER_REL) {
-            return dslContext.select(MEMBER_ID)
-                .from(this)
-                .where(PUBLISHER_ID.eq(publisherId))
-                .fetchInto(String::class.java)
         }
     }
 
@@ -198,7 +150,7 @@ class PublishersDao {
                     fourthLevelDeptId = it.fourthLevelDeptId?.toInt(),
                     fourthLevelDeptName = it.fourthLevelDeptName,
                     organizationName = it.organizationName,
-                    BgName = it.BgName,
+                    bgName = it.bgName,
                     certificationFlag = it.certificationFlag,
                     storeType = StoreTypeEnum.getStoreTypeObj(it.storeType.toInt())!!,
                     creator = it.creator,
@@ -232,7 +184,7 @@ class PublishersDao {
                     fourthLevelDeptId = it.fourthLevelDeptId.toInt(),
                     fourthLevelDeptName = it.fourthLevelDeptName,
                     organizationName = it.organizationName,
-                    BgName = it.BgName,
+                    bgName = it.bgName,
                     certificationFlag = it.certificationFlag,
                     storeType = StoreTypeEnum.getStoreTypeObj(it.storeType.toInt())!!,
                     creator = it.creator,
