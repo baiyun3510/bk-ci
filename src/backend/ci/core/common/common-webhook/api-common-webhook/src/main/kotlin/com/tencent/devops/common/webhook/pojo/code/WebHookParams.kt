@@ -70,6 +70,7 @@ data class WebHookParams(
     var includeNoteTypes: String? = null,
     // push事件action
     var includePushAction: String? = null,
+    var enableThirdFilter: Boolean? = false,
     var thirdUrl: String? = null,
     var thirdSecretToken: String? = null
 )
