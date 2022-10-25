@@ -66,6 +66,4 @@ interface ServiceDeptResource {
         @ApiParam("组织名称", required = true)
         deptName: String
     ): Result<DeptInfoVo?>
-
-    fun getUserBgId()
 }
