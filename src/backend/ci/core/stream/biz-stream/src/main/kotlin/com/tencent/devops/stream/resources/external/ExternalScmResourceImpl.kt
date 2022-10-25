@@ -37,7 +37,6 @@ import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.common.webhook.pojo.code.git.GitReviewEvent
 import com.tencent.devops.stream.api.external.ExternalScmResource
-import com.tencent.devops.stream.trigger.mq.streamRequest.StreamRequestDispatcher
 import com.tencent.devops.stream.trigger.mq.streamRequest.StreamRequestEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired

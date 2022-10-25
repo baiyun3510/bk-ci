@@ -39,7 +39,6 @@ import com.tencent.devops.process.websocket.page.GithubHistoryPageBuild
 import com.tencent.devops.process.websocket.page.GithubStatusPageBuild
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
