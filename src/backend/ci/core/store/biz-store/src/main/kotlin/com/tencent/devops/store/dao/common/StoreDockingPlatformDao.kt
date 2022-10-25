@@ -28,7 +28,6 @@
 package com.tencent.devops.store.dao.common
 
 import com.tencent.devops.common.api.util.DateTimeUtil
-import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.model.store.tables.TStoreDockingPlatform
 import com.tencent.devops.model.store.tables.records.TStoreDockingPlatformRecord
@@ -36,7 +35,6 @@ import com.tencent.devops.store.pojo.common.StoreDockingPlatformInfo
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import org.jooq.Condition
 import org.jooq.DSLContext
-import org.jooq.Record1
 import org.jooq.Result
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
@@ -321,8 +319,8 @@ class StoreDockingPlatformDao {
                 summary = summary,
                 principal = principal,
                 logoUrl = logoUrl,
-                labels = if (!labels.isNullOrBlank()) labels.split(",") else null,
                 creator = creator,
+                labels = labels?.split(","),
                 modifier = modifier,
                 createTime = DateTimeUtil.toDateTime(createTime),
                 updateTime = DateTimeUtil.toDateTime(updateTime),

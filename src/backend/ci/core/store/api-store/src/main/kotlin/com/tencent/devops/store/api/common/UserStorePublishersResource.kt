@@ -25,46 +25,41 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.api.common
+package com.tencent.devops.store.resources.common
 
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.store.pojo.common.StoreLogoInfo
+import com.tencent.devops.store.pojo.common.PublisherInfo
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition
-import org.glassfish.jersey.media.multipart.FormDataParam
-import java.io.InputStream
 import javax.ws.rs.Consumes
+import javax.ws.rs.GET
 import javax.ws.rs.HeaderParam
-import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["SERVICE_STORE_LOGO"], description = "STORE-LOGO")
-@Path("/service/store/logo")
+@Api(tags = ["USER_MARKET_PUBLISHERS"], description = "研发商店-发布者")
+@Path("/user/market/publishers/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface ServiceStoreLogoResource {
+interface UserStorePublishersResource {
 
-    @ApiOperation("上传logo")
-    @POST
-    @Path("/upload")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    fun uploadStoreLogo(
+    @ApiOperation("获取发布组件可选发布者")
+    @GET
+    @Path("/get")
+    fun getPublishers(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("contentLength", required = true)
-        @HeaderParam("content-length")
-        contentLength: Long,
-        @ApiParam("logo", required = true)
-        @FormDataParam("logo")
-        inputStream: InputStream,
-        @FormDataParam("logo")
-        disposition: FormDataContentDisposition
-    ): Result<StoreLogoInfo?>
+        @ApiParam("storeCode", required = true)
+        @QueryParam("storeCode")
+        storeCode: String,
+        @ApiParam("storeType", required = true)
+        @QueryParam("storeType")
+        storeType: StoreTypeEnum
+    ): Result<List<PublisherInfo>>
 }

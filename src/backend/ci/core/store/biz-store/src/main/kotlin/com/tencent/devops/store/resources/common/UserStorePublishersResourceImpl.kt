@@ -28,30 +28,19 @@
 package com.tencent.devops.store.resources.common
 
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.store.api.common.ServiceStoreLogoResource
-import com.tencent.devops.store.pojo.common.StoreLogoInfo
-import com.tencent.devops.store.service.common.StoreLogoService
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition
-import org.springframework.beans.factory.annotation.Autowired
-import java.io.InputStream
+import com.tencent.devops.store.pojo.common.PublisherInfo
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import com.tencent.devops.store.service.common.PublishersDataService
 
-@RestResource
-class ServiceStoreLogoResourceImpl @Autowired constructor(
-    private val storeLogoService: StoreLogoService
-) : ServiceStoreLogoResource {
+class UserStorePublishersResourceImpl constructor(
+    private val publishersDataService: PublishersDataService
+) : UserStorePublishersResource {
 
-    override fun uploadStoreLogo(
+    override fun getPublishers(
         userId: String,
-        contentLength: Long,
-        inputStream: InputStream,
-        disposition: FormDataContentDisposition
-    ): Result<StoreLogoInfo?> {
-        return storeLogoService.uploadStoreLogo(
-            userId = userId,
-            contentLength = contentLength,
-            inputStream = inputStream,
-            disposition = disposition
-        )
+        storeCode: String,
+        storeType: StoreTypeEnum
+    ): Result<List<PublisherInfo>> {
+        return publishersDataService.getPublishers(userId, storeCode, storeType)
     }
 }
