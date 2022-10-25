@@ -28,7 +28,7 @@
 package com.tencent.devops.stream.trigger.timer.pojo.event
 
 import com.tencent.devops.common.event.annotation.Event
-import com.tencent.devops.common.event.enums.ActionType
+import com.tencent.devops.common.stream.enums.ActionType
 import com.tencent.devops.common.event.pojo.pipeline.IPipelineEvent
 import com.tencent.devops.stream.constant.MQ
 
@@ -37,7 +37,7 @@ import com.tencent.devops.stream.constant.MQ
  *
  * @version 1.0
  */
-@Event(MQ.EXCHANGE_STREAM_TIMER_CHANGE_FANOUT, MQ.QUEUE_STREAM_TIMER)
+@Event(MQ.QUEUE_STREAM_TIMER)
 data class StreamChangeEvent(
     override val source: String,
     override val projectId: String,

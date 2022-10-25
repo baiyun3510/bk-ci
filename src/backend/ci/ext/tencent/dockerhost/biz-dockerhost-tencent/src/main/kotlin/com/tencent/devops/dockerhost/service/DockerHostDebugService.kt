@@ -43,12 +43,10 @@ import com.github.dockerjava.core.DockerClientBuilder
 import com.github.dockerjava.core.command.PullImageResultCallback
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
-import com.tencent.devops.common.web.mq.alert.AlertLevel
 import com.tencent.devops.dispatch.docker.pojo.ContainerInfo
 import com.tencent.devops.dispatch.docker.pojo.DockerHostBuildInfo
 import com.tencent.devops.dockerhost.common.ErrorCodeEnum
 import com.tencent.devops.dockerhost.config.DockerHostConfig
-import com.tencent.devops.dockerhost.dispatch.AlertApi
 import com.tencent.devops.dockerhost.dispatch.DockerHostBuildResourceApi
 import com.tencent.devops.dockerhost.exception.ContainerException
 import com.tencent.devops.dockerhost.exception.NoSuchImageException
@@ -68,7 +66,6 @@ import java.io.File
 @Component
 class DockerHostDebugService(
     private val dockerHostConfig: DockerHostConfig,
-    private val alertApi: AlertApi,
     private val dockerHostBuildApi: DockerHostBuildResourceApi
 ) : AbstractDockerHostBuildService(dockerHostConfig, dockerHostBuildApi) {
 
@@ -252,8 +249,6 @@ class DockerHostDebugService(
             if (er is NotFoundException) {
                 throw NoSuchImageException("Create container failed: ${er.message}")
             } else {
-                alertApi.alert(AlertLevel.HIGH.name, "Docker构建机创建容器失败", "Docker构建机创建容器失败, " +
-                        "母机IP:${CommonUtils.getInnerIP()}， 失败信息：${er.message}")
                 throw ContainerException(
                     errorCodeEnum = ErrorCodeEnum.CREATE_CONTAINER_ERROR,
                     message = "Create container failed"

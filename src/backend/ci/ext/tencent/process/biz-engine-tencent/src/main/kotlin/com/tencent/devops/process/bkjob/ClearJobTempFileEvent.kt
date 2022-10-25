@@ -27,12 +27,12 @@
 
 package com.tencent.devops.process.bkjob
 
-import com.tencent.devops.common.event.annotation.Event
+import com.tencent.devops.common.event.annotation.RabbitEvent
 import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQ
-import com.tencent.devops.common.event.enums.ActionType
 import com.tencent.devops.common.event.pojo.pipeline.IPipelineRoutableEvent
+import com.tencent.devops.common.stream.enums.ActionType
 
-@Event(MQ.EXCHANGE_BKJOB_CLEAR_JOB_TMP_FANOUT, MQ.ROUTE_BKJOB_CLEAR_JOB_TMP_EVENT)
+@RabbitEvent(MQ.EXCHANGE_BKJOB_CLEAR_JOB_TMP_FANOUT, MQ.ROUTE_BKJOB_CLEAR_JOB_TMP_EVENT)
 data class ClearJobTempFileEvent(
     override val source: String,
     override val projectId: String,

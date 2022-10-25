@@ -31,7 +31,7 @@ import com.tencent.devops.common.api.enums.AgentStatus
 import com.tencent.devops.common.api.exception.InvalidParamException
 import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.client.Client
-import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
+import com.tencent.devops.common.event.dispatcher.mq.MQRoutableEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.pipeline.enums.VMBaseOS
 import com.tencent.devops.common.pipeline.type.agent.AgentType
@@ -39,8 +39,6 @@ import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentEnvDispatchT
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentIDDispatchType
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyDevCloudDispatchType
 import com.tencent.devops.common.redis.RedisOperation
-import com.tencent.devops.common.web.mq.alert.AlertLevel
-import com.tencent.devops.common.web.mq.alert.AlertUtils
 import com.tencent.devops.dispatch.exception.ErrorCodeEnum
 import com.tencent.devops.dispatch.service.ThirdPartyAgentService
 import com.tencent.devops.dispatch.service.dispatcher.Dispatcher
@@ -67,7 +65,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
     private val redisOperation: RedisOperation,
     private val buildLogPrinter: BuildLogPrinter,
     private val thirdPartyAgentBuildRedisUtils: ThirdPartyAgentBuildRedisUtils,
-    private val pipelineEventDispatcher: PipelineEventDispatcher,
+    private val pipelineEventDispatcher: MQRoutableEventDispatcher,
     private val thirdPartyAgentBuildService: ThirdPartyAgentService
 ) : Dispatcher {
     override fun canDispatch(event: PipelineAgentStartupEvent) =
@@ -548,7 +546,7 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
     override fun retry(
         client: Client,
         buildLogPrinter: BuildLogPrinter,
-        pipelineEventDispatcher: PipelineEventDispatcher,
+        pipelineEventDispatcher: MQRoutableEventDispatcher,
         event: PipelineAgentStartupEvent,
         errorCodeEnum: ErrorCodeEnum?,
         errorMessage: String?
@@ -562,11 +560,6 @@ class ThirdPartyAgentDispatcher @Autowired constructor(
                 errorType = errorCodeEnum?.errorType ?: ErrorCodeEnum.SYSTEM_ERROR.errorType,
                 errorCode = errorCodeEnum?.errorCode ?: ErrorCodeEnum.SYSTEM_ERROR.errorCode,
                 errorMsg = errorMessage ?: "Fail to start up after 60 retries"
-            )
-            AlertUtils.doAlert(
-                level = AlertLevel.HIGH, title = "DevOps Alert Notify",
-                message =
-                "Start Build Fail! pipeline(${event.pipelineId}) buildId(${event.buildId}) type(${event.dispatchType})"
             )
             return
         }

@@ -32,8 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.gson.JsonParser
 import com.tencent.devops.common.api.util.UnicodeUtil
-import com.tencent.devops.common.web.mq.alert.AlertLevel
-import com.tencent.devops.common.web.mq.alert.AlertUtils
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.plugin.pojo.ParametersInfo
 import com.tencent.devops.plugin.pojo.tcm.TcmApp
@@ -93,7 +91,6 @@ class TcmService @Autowired constructor(
             logger.info("tcm get apps response body for userId($userId): $body")
             val json = parser.parse(body).asJsonObject
             if (!response.isSuccessful) {
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "fail to get apps info for userId($userId)", body)
                 throw RuntimeException("fail to get apps info:$body")
             }
             val data = json["data"]
@@ -126,7 +123,6 @@ class TcmService @Autowired constructor(
             logger.info("tcm get apps templates response body for userId($userId): $body")
             val json = parser.parse(body).asJsonObject
             if (!response.isSuccessful) {
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "fail to get templates for userId($userId), ccid($ccid)", body)
                 throw RuntimeException("fail to get templates info:$body")
             }
             val data = json["data"]
@@ -161,7 +157,6 @@ class TcmService @Autowired constructor(
             logger.info("tcm get apps template info response body for userId($userId): $body")
             val json = parser.parse(body).asJsonObject
             if (!response.isSuccessful) {
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "fail to get template info for userId($userId), ccid($ccid)", body)
                 throw RuntimeException("fail to get templates info:$body")
             }
             val data = json["data"]
@@ -205,7 +200,6 @@ class TcmService @Autowired constructor(
                 throw RuntimeException(resultMap["message"] as? String ?: "")
             } catch (e: Exception) {
                 // 失败，告警
-                AlertUtils.doAlert(AlertLevel.CRITICAL, "tcm operation fail for build($buildId)", e.message ?: "")
                 throw TcmException(e.message ?: "")
             }
         }

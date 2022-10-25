@@ -59,7 +59,7 @@ import com.tencent.devops.auth.service.sample.SamplePermissionRoleService
 import com.tencent.devops.auth.service.sample.SamplePermissionUrlServiceImpl
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.client.ClientTokenService
-import com.tencent.devops.common.stream.annotation.StreamEventConsumer
+import com.tencent.devops.common.event.annotation.StreamEventConsumer
 import com.tencent.devops.common.stream.constants.StreamBinding
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
