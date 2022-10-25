@@ -260,10 +260,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
-            AlertUtils.doAlert(
-                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
-                "拉取上一次构建svn代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
-            )
             return false
         }
         if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != ele.revision)) {
@@ -304,10 +300,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
-            AlertUtils.doAlert(
-                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
-                "拉取上一次构建svn代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
-            )
             return false
         }
 
@@ -393,10 +385,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
-            AlertUtils.doAlert(
-                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
-                "拉取上一次构建${ele.getClassType()}代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
-            )
             return false
         }
         if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != latestRevision)) {
@@ -466,10 +454,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
-            AlertUtils.doAlert(
-                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
-                "拉取上一次构建${ele.getAtomCode()}代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
-            )
             return false
         }
 
