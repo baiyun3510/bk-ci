@@ -80,7 +80,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         var hasCodeChange = false
         var hasScmElement = false
         val variables = HashMap<String, String>()
-        LOG.info("execute timerTrigger")
         run outer@{
             model.stages.forEach { stage ->
                 stage.containers.forEach { container ->
@@ -99,7 +98,6 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
                         }
                     } else if (noScm && container is VMBuildContainer) {
                         container.elements.forEach ele@{ ele ->
-                            LOG.info("pipeline is $pipelineId | eleCode is ${ele.getAtomCode()}")
                             // 插件没有启用或者是post action不需要比较变更
                             if (!ele.isElementEnable() || ele.additionalOptions?.elementPostInfo != null) {
                                 return@ele
@@ -262,6 +260,10 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
+            AlertUtils.doAlert(
+                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
+                "拉取上一次构建svn代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
+            )
             return false
         }
         if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != ele.revision)) {
@@ -280,7 +282,7 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         val input = ele.data["input"]
         if (input !is Map<*, *>) return false
 
-        val repositoryConfig = getMarketBuildRepoConfig(input, variables)
+        val repositoryConfig = getMarketBuildRepoConfig(input, variables) ?: return false
 
         // get pre commit
         val svnPath = EnvUtils.parseEnv(input["svnPath"] as String?, variables)
@@ -302,17 +304,18 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
+            AlertUtils.doAlert(
+                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
+                "拉取上一次构建svn代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
+            )
             return false
         }
 
         // start check
         return if (latestCommit.isOk() && (latestCommit.data == null ||
-                    latestCommit.data!!.commit != preCommit.data!!.revision)
-        ) {
-            LOG.info(
-                "[$pipelineId] [${ele.id}] scm svn change: lastCommitId=" +
-                        "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$preCommit"
-            )
+                latestCommit.data!!.commit != preCommit.data!!.revision)) {
+            LOG.info("[$pipelineId] [${ele.id}] scm svn change: lastCommitId=" +
+                "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$preCommit")
             true
         } else {
             LOG.info("[$pipelineId] [${ele.id}] svn not change")
@@ -334,6 +337,9 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             gitPullMode != null -> EnvUtils.parseEnv(gitPullMode.value, variables)
             !oldBranchName.isNullOrBlank() -> EnvUtils.parseEnv(oldBranchName, variables)
             else -> return false
+        }
+        if (branchName.isBlank()) {
+            return false
         }
         val gitPullModeType = gitPullMode?.type ?: GitPullModeType.BRANCH
 //        val latestRevision =
@@ -387,13 +393,15 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
+            AlertUtils.doAlert(
+                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
+                "拉取上一次构建${ele.getClassType()}代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
+            )
             return false
         }
         if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != latestRevision)) {
-            LOG.info(
-                "[$pipelineId] [${ele.id}] ${ele.getClassType()} change: lastCommitId=" +
-                        "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$latestRevision"
-            )
+            LOG.info("[$pipelineId] [${ele.id}] ${ele.getClassType()} change: lastCommitId=" +
+                "${if (latestCommit.data != null) latestCommit.data!!.commit else null}, newCommitId=$latestRevision")
             return true
         }
         return false
@@ -408,7 +416,7 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         val input = ele.data["input"]
         if (input !is Map<*, *>) return false
 
-        val repositoryConfig = getMarketBuildRepoConfig(input, variables)
+        val repositoryConfig = getMarketBuildRepoConfig(input, variables) ?: return false
 
         val gitPullMode = EnvUtils.parseEnv(input["pullType"] as String?, variables)
         val branchName = if (ele.getAtomCode() == "checkout") {
@@ -426,14 +434,11 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             return false
         }
 
-        LOG.info("check change new | atomCode is ${ele.getAtomCode()} | branchName is : $branchName")
         // 如果是commit id ,则gitPullModeType直接比对就可以了，不需要再拉commit id
         // get pre vision
         val preCommit =
-            if (gitPullMode == GitPullModeType.COMMIT_ID.name && ele.getAtomCode() != "checkout") {
-                EnvUtils.parseEnv(input["commitId"] as String?, variables)
-            } else if (gitPullMode == GitPullModeType.COMMIT_ID.name && ele.getAtomCode() == "checkout") {
-                EnvUtils.parseEnv(input["refName"] as String?, variables)
+            if (gitPullMode == GitPullModeType.COMMIT_ID.name) {
+                branchName
             } else {
                 val result =
                     scmProxyService.recursiveFetchLatestRevision(
@@ -461,15 +466,17 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
             )
         } catch (e: Exception) {
             LOG.warn("[$pipelineId] scmService.getLatestRevision fail", e)
+            AlertUtils.doAlert(
+                "SCM", AlertLevel.MEDIUM, "ServiceCommitResource.getLatestCommit Error",
+                "拉取上一次构建${ele.getAtomCode()}代码commitId出现异常, projectId: $projectId, pipelineId: $pipelineId $e"
+            )
             return false
         }
 
         // start check
         return if (latestCommit.isOk() && (latestCommit.data == null || latestCommit.data!!.commit != preCommit)) {
-            LOG.info(
-                "[$pipelineId] [${ele.id}] ${ele.getClassType()} " +
-                        "change: lastCommitId=${latestCommit.data?.commit}, newCommitId=$preCommit"
-            )
+            LOG.info("[$pipelineId] [${ele.id}] ${ele.getClassType()} " +
+                "change: lastCommitId=${latestCommit.data?.commit}, newCommitId=$preCommit")
             true
         } else {
             LOG.info("[$pipelineId] [${ele.id}] ${ele.getAtomCode()} scm not change")
@@ -477,12 +484,12 @@ class TimerTriggerScmChangeInterceptor @Autowired constructor(
         }
     }
 
-    private fun getMarketBuildRepoConfig(input: Map<*, *>, variables: Map<String, String>): RepositoryConfig {
+    private fun getMarketBuildRepoConfig(input: Map<*, *>, variables: Map<String, String>): RepositoryConfig? {
         val repositoryType = RepositoryType.parseType(input["repositoryType"] as String?)
-        val repositoryId = if (repositoryType == RepositoryType.ID) {
-            EnvUtils.parseEnv(input["repositoryHashId"] as String?, variables)
-        } else {
-            EnvUtils.parseEnv(input["repositoryName"] as String?, variables)
+        val repositoryId = when (repositoryType) {
+            RepositoryType.ID -> EnvUtils.parseEnv(input["repositoryHashId"] as String?, variables)
+            RepositoryType.NAME -> EnvUtils.parseEnv(input["repositoryName"] as String?, variables)
+            else -> return null
         }
         return buildConfig(repositoryId, repositoryType)
     }

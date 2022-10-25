@@ -38,10 +38,7 @@ dependencies {
     api("org.jooq:jooq")
 }
 
-val moduleNameList = name.split("-")
-val moduleName = moduleNameList[1]
-
-var moduleNames = when (moduleName) {
+var moduleNames = when (val moduleName = name.split("-")[1]) {
     "misc" -> {
         listOf("process", "project", "repository", "dispatch", "plugin", "quality", "artifactory", "environment")
     }
@@ -55,10 +52,6 @@ var moduleNames = when (moduleName) {
         listOf("stream")
     }
     else -> listOf(moduleName)
-}
-
-if (name == "model-dispatch-bcs") {
-    moduleNames = listOf("dispatch_bcs")
 }
 
 if (name == "model-dispatch-kubernetes") {
