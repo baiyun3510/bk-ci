@@ -19,30 +19,46 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
 // buildDockerManager docker构建机构建对象管理
 type buildDockerManager struct {
-	// CurrentJobsCount 使用时需要进行原子操作防止出现并发问题
-	currentJobsCount int32
+	// instances 正在执行中的构建对象 [string]*api.ThirdPartyDockerTaskInfo
+	instances sync.Map
 }
 
-func (b *buildDockerManager) GetCurrentJobsCount() int32 {
-	return atomic.LoadInt32(&b.currentJobsCount)
+func (b *buildDockerManager) GetInstanceCount() int {
+	var i = 0
+	b.instances.Range(func(key, value interface{}) bool {
+		i++
+		return true
+	})
+	return i
 }
 
-func (b *buildDockerManager) AddCurrentJobs(num int32) int32 {
-	return atomic.AddInt32(&b.currentJobsCount, num)
+func (b *buildDockerManager) GetInstances() []api.ThirdPartyDockerTaskInfo {
+	result := make([]api.ThirdPartyDockerTaskInfo, 0)
+	b.instances.Range(func(key, value interface{}) bool {
+		result = append(result, *value.(*api.ThirdPartyDockerTaskInfo))
+		return true
+	})
+	return result
+}
+
+func (b *buildDockerManager) AddBuild(buildId string, info *api.ThirdPartyDockerTaskInfo) {
+	b.instances.Store(buildId, info)
+}
+
+func (b *buildDockerManager) RemoveBuild(buildId string) {
+	b.instances.Delete(buildId)
 }
 
 var GBuildDockerManager *buildDockerManager
 
 func init() {
-	GBuildDockerManager = &buildDockerManager{
-		currentJobsCount: 0,
-	}
+	GBuildDockerManager = new(buildDockerManager)
 }
 
 const (
@@ -55,7 +71,7 @@ const (
 
 func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 	if !systemutil.IsLinux() {
-		GBuildDockerManager.AddCurrentJobs(-1)
+		GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 		dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
 			ThirdPartyBuildInfo: *buildInfo, Message: "目前仅支持linux系统使用docker构建机",
 		})
@@ -72,14 +88,14 @@ func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 		if os.IsNotExist(err) {
 			_, err = download.DownloadDockerInitFile(systemutil.GetWorkDir())
 			if err != nil {
-				GBuildDockerManager.AddCurrentJobs(-1)
+				GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 				dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
 					ThirdPartyBuildInfo: *buildInfo, Message: "下载Docker构建机初始化脚本失败|" + err.Error(),
 				})
 				return
 			}
 		} else {
-			GBuildDockerManager.AddCurrentJobs(-1)
+			GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 			dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
 				ThirdPartyBuildInfo: *buildInfo, Message: "获取Docker构建机初始化脚本状态失败|" + err.Error(),
 			})
@@ -94,7 +110,7 @@ func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 func doDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 	// 各种情况退出时减运行任务数量
 	defer func() {
-		GBuildDockerManager.AddCurrentJobs(-1)
+		GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 	}()
 
 	dockerBuildInfo := buildInfo.DockerBuildInfo

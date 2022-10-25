@@ -68,8 +68,6 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
 
         tryRollBackQueue(event, record, logMessage)
 
-        // TODO: issue_7748 增加docker构建机类型的监控
-
         // #5806 已经不再排队，则退出监控, 暂时需求如此，后续可修改
         if (PipelineTaskStatus.toStatus(record.status) != PipelineTaskStatus.QUEUE) {
             return
@@ -77,46 +75,72 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
 
         val agentDetail = client.get(ServiceThirdPartyAgentResource::class)
             .getAgentDetail(userId = event.userId, projectId = event.projectId, agentHashId = record.agentId)
-            .data
+            .data ?: return
 
-        if (agentDetail != null) {
-            val tag = VMUtils.genStartVMTaskId(event.vmSeqId)
-            val heartbeatInfo = agentDetail.heartbeatInfo
+        val tag = VMUtils.genStartVMTaskId(event.vmSeqId)
+        val heartbeatInfo = agentDetail.heartbeatInfo
 
-            logMessage.append(
-                MessageCodeUtil.getCodeLanMessage(
-                    messageCode = ProcessMessageCode.BUILD_AGENT_DETAIL_LINK_ERROR,
-                    params = arrayOf(event.projectId, agentDetail.nodeId)
-                )
+        logMessage.append(
+            MessageCodeUtil.getCodeLanMessage(
+                messageCode = ProcessMessageCode.BUILD_AGENT_DETAIL_LINK_ERROR,
+                params = arrayOf(event.projectId, agentDetail.nodeId)
             )
+        )
+
+        // #7748 agent使用docker作为构建机
+        var parallelTaskCount = agentDetail.parallelTaskCount
+        var busyTaskSize = heartbeatInfo?.busyTaskSize
+        if (record.dockerInfo != null) {
+            parallelTaskCount = agentDetail.dockerParallelTaskCount
+            busyTaskSize = heartbeatInfo?.dockerBusyTaskSize
+        }
+
+        if (record.dockerInfo != null) {
+            logMessage.append("|Docker构建|最大并行构建量(maximum parallelism)/当前正在运行构建数量(Running): ")
+        } else {
             logMessage.append("|最大并行构建量(maximum parallelism)/当前正在运行构建数量(Running): ")
-            if (agentDetail.parallelTaskCount != "0") {
-                logMessage.append(agentDetail.parallelTaskCount).append("/").append(heartbeatInfo?.busyTaskSize ?: 0)
-            }
+        }
+        if (parallelTaskCount != "0") {
+            logMessage.append(parallelTaskCount).append("/")
+                .append(busyTaskSize ?: 0)
+        }
 
-            if (agentDetail.parallelTaskCount == "0") {
-                logMessage.append("无限制(unlimited), 注意负载(Attention)")
-            }
-            log(event, logMessage, tag)
+        if (parallelTaskCount == "0") {
+            logMessage.append("无限制(unlimited), 注意负载(Attention)")
+        }
+        log(event, logMessage, tag)
 
-            if (heartbeatInfo != null) {
+        if (heartbeatInfo == null) {
+            return
+        }
 
-                heartbeatInfo.heartbeatTime?.let { self ->
-                    logMessage.append("构建机最近心跳时间（heartbeat Time): ${DateTimeUtil.formatDate(Date(self))}")
+        heartbeatInfo.heartbeatTime?.let { self ->
+            logMessage.append("构建机最近心跳时间（heartbeat Time): ${DateTimeUtil.formatDate(Date(self))}")
+        }
+
+        if (record.dockerInfo != null) {
+            logMessage.append("|Docker构建|最近${heartbeatInfo.dockerTaskList?.size}次运行中的构建:\n")
+        } else {
+            logMessage.append("|最近${heartbeatInfo.taskList.size}次运行中的构建:\n")
+        }
+
+        if (record.dockerInfo != null) {
+            heartbeatInfo.dockerTaskList?.forEach {
+                thirdPartyAgentBuildDao.get(dslContext, it.buildId, it.vmSeqId)?.let { r1 ->
+                    logMessage.append("<a href='${genBuildDetailUrl(r1.projectId, r1.pipelineId, r1.buildId)}'>")
+                    logMessage.append("运行中(Running) #${r1.buildNum}</a> (${r1.pipelineName} ${r1.taskName})\n")
                 }
-
-                logMessage.append("|最近${heartbeatInfo.taskList.size}次运行中的构建:\n")
-
-                heartbeatInfo.taskList.forEach {
-                    thirdPartyAgentBuildDao.get(dslContext, it.buildId, it.vmSeqId)?.let { r1 ->
-                        logMessage.append("<a href='${genBuildDetailUrl(r1.projectId, r1.pipelineId, r1.buildId)}'>")
-                        logMessage.append("运行中(Running) #${r1.buildNum}</a> (${r1.pipelineName} ${r1.taskName})\n")
-                    }
+            }
+        } else {
+            heartbeatInfo.taskList.forEach {
+                thirdPartyAgentBuildDao.get(dslContext, it.buildId, it.vmSeqId)?.let { r1 ->
+                    logMessage.append("<a href='${genBuildDetailUrl(r1.projectId, r1.pipelineId, r1.buildId)}'>")
+                    logMessage.append("运行中(Running) #${r1.buildNum}</a> (${r1.pipelineName} ${r1.taskName})\n")
                 }
-
-                log(event, logMessage, tag)
             }
         }
+
+        log(event, logMessage, tag)
     }
 
     private fun log(event: AgentStartMonitor, sb: StringBuilder, tag: String) {
@@ -132,7 +156,7 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
 
     private fun genBuildDetailUrl(projectId: String, pipelineId: String, buildId: String): String {
         return HomeHostUtil.getHost(commonConfig.devopsHostGateway!!) +
-            "/console/pipeline/$projectId/$pipelineId/detail/$buildId"
+                "/console/pipeline/$projectId/$pipelineId/detail/$buildId"
     }
 
     /**
@@ -143,6 +167,7 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
      * 未解决的场景：
      *  本次不涉及构建机集群重新漂移指定其他构建机，需要重新设计。
      */
+    // TODO: issue_7748 增加docker构建机类型的监控
     fun tryRollBackQueue(event: AgentStartMonitor, record: TDispatchThirdpartyAgentBuildRecord, sb: StringBuilder) {
         if (PipelineTaskStatus.toStatus(record.status) != PipelineTaskStatus.RUNNING) {
             return

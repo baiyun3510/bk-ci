@@ -101,12 +101,12 @@ func DoUpgradeOperation(changeItems upgradeChangeItem) error {
 	}
 
 	// 进入升级逻辑时防止agent接构建任务，同时确保无任何构建任务在进行
-	job.GBuildManager.Lock.Lock()
+	job.BuildTotalManager.Lock.Lock()
 	defer func() {
-		job.GBuildManager.Lock.Unlock()
+		job.BuildTotalManager.Lock.Unlock()
 	}()
 	if job.GBuildManager.GetPreInstancesCount() > 0 && job.GBuildManager.GetInstanceCount() > 0 ||
-		job.GBuildDockerManager.GetCurrentJobsCount() > 0 {
+		job.GBuildDockerManager.GetInstanceCount() > 0 {
 		return nil
 	}
 
