@@ -49,7 +49,7 @@ var moduleNames = when (moduleName) {
         listOf("process", "project", "openapi")
     }
     "lambda" -> {
-        listOf("process", "project", "lambda")
+        listOf("process", "project", "lambda", "store")
     }
     "gitci" -> {
         listOf("stream")
