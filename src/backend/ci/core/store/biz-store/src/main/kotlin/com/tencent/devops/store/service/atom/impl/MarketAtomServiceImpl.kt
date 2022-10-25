@@ -223,7 +223,7 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
     private var defaulAtomErrorCodoLength: Int = 6
 
     @Value("\${store.defaulAtomErrorCodoPrefix:8}")
-    lateinit var private var defaulAtomErrorCodoPrefix: String
+    private lateinit var defaulAtomErrorCodoPrefix: String
 
     companion object {
         private val logger = LoggerFactory.getLogger(MarketAtomServiceImpl::class.java)
