@@ -47,7 +47,7 @@ data class NewHeartbeatInfo(
     @ApiModelProperty("启动者")
     val startedUser: String,
     @ApiModelProperty("第三方构建信息列表")
-    var taskList: List<ThirdPartyBuildInfo>,
+    var taskList: List<ThirdPartyBuildInfo>?,
     @ApiModelProperty("Agent属性信息")
     val props: AgentPropsInfo?,
     @ApiModelProperty("构建机id")

@@ -119,21 +119,27 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
         }
 
         if (record.dockerInfo != null) {
-            logMessage.append("|Docker构建|最近${heartbeatInfo.dockerTaskList?.size}次运行中的构建:\n")
+            logMessage.append("|Docker构建|最近${heartbeatInfo.dockerTaskList?.size ?: 0}次运行中的构建:\n")
         } else {
-            logMessage.append("|最近${heartbeatInfo.taskList.size}次运行中的构建:\n")
+            logMessage.append("|最近${heartbeatInfo.taskList?.size ?: 0}次运行中的构建:\n")
         }
 
         if (record.dockerInfo != null) {
-            heartbeatInfo.dockerTaskList?.forEach {
+            heartbeatInfo.dockerTaskList?.forEach dockerInfoFor@{
                 thirdPartyAgentBuildDao.get(dslContext, it.buildId, it.vmSeqId)?.let { r1 ->
+                    if (r1.dockerInfo == null) {
+                        return@dockerInfoFor
+                    }
                     logMessage.append("<a href='${genBuildDetailUrl(r1.projectId, r1.pipelineId, r1.buildId)}'>")
                     logMessage.append("运行中(Running) #${r1.buildNum}</a> (${r1.pipelineName} ${r1.taskName})\n")
                 }
             }
         } else {
-            heartbeatInfo.taskList.forEach {
+            heartbeatInfo.taskList?.forEach taskInfoFor@{
                 thirdPartyAgentBuildDao.get(dslContext, it.buildId, it.vmSeqId)?.let { r1 ->
+                    if (r1.dockerInfo != null) {
+                        return@taskInfoFor
+                    }
                     logMessage.append("<a href='${genBuildDetailUrl(r1.projectId, r1.pipelineId, r1.buildId)}'>")
                     logMessage.append("运行中(Running) #${r1.buildNum}</a> (${r1.pipelineName} ${r1.taskName})\n")
                 }
