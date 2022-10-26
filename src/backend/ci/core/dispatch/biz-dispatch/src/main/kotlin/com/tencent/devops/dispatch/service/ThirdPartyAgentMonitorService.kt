@@ -167,7 +167,6 @@ class ThirdPartyAgentMonitorService @Autowired constructor(
      * 未解决的场景：
      *  本次不涉及构建机集群重新漂移指定其他构建机，需要重新设计。
      */
-    // TODO: issue_7748 增加docker构建机类型的监控
     fun tryRollBackQueue(event: AgentStartMonitor, record: TDispatchThirdpartyAgentBuildRecord, sb: StringBuilder) {
         if (PipelineTaskStatus.toStatus(record.status) != PipelineTaskStatus.RUNNING) {
             return

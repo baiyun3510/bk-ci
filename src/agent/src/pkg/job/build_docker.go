@@ -83,7 +83,7 @@ func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 		go config.GAgentConfig.SaveConfig()
 	}
 
-	// 兼容就数据，对于没有docker文件的需要重新下载，防止重复下载所以放到主流程做
+	// 兼容旧数据，对于没有docker文件的需要重新下载，防止重复下载所以放到主流程做
 	if _, err := os.Stat(config.GetDockerInitFilePath()); err != nil {
 		if os.IsNotExist(err) {
 			_, err = download.DownloadDockerInitFile(systemutil.GetWorkDir())
@@ -144,6 +144,7 @@ func doDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 	// 本地没有镜像的需要拉取新的镜像
 	if !localExist {
 		postLog(false, "开始拉取镜像，镜像名称："+imageName, buildInfo)
+		postLog(false, "过大的镜像拉取时间过长（超过3分钟）可能会导致构建机重新领取任务，等待即可，镜像拉取完即可正常执行。也可以预先在本地拉取，构建机会直接启动已存在镜像。"+imageName, buildInfo)
 		reader, err := cli.ImagePull(ctx, imageName, types.ImagePullOptions{
 			RegistryAuth: generateDockerAuth(dockerBuildInfo.Credential),
 		})
