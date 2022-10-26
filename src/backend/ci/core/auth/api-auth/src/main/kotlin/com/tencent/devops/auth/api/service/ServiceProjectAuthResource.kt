@@ -172,7 +172,7 @@ interface ServiceProjectAuthResource {
     @ApiOperation("获取组策略")
     fun getGroupStrategy(
         @ApiParam(name = "策略名", required = true)
-        @QueryParam("action")
+        @QueryParam("strategyName")
         strategyName: String
     ): Result<StrategyEntity?>
 }
