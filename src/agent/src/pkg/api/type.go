@@ -140,8 +140,8 @@ type UpgradeInfo struct {
 }
 
 type DockerInitFileInfo struct {
-	FileMd5     string
-	NeedUpgrade bool
+	FileMd5     string `json:"fileMd5"`
+	NeedUpgrade bool   `json:"needUpgrade"`
 }
 
 type UpgradeItem struct {

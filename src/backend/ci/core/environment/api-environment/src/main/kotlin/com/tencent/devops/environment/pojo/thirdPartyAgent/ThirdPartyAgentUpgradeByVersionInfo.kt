@@ -12,7 +12,7 @@ data class ThirdPartyAgentUpgradeByVersionInfo(
     @ApiModelProperty("jdk版本")
     val jdkVersion: List<String>?,
     @ApiModelProperty("docker init 文件升级信息")
-    val dockerInitFileInfo: DockerInitFileInfo
+    val dockerInitFileInfo: DockerInitFileInfo?
 )
 
 @ApiModel("docker init 文件升级信息")
