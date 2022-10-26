@@ -51,16 +51,21 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @Service
-class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
-    private val dslContext: DSLContext,
-    private val txOpMigrateStoreDescriptionDao: TxOpMigrateStoreDescriptionDao,
-    private val client: Client
-) : TxOpMigrateStoreDescriptionService {
+class TxOpMigrateStoreDescriptionServiceImpl : TxOpMigrateStoreDescriptionService {
+
+    @Autowired
+    lateinit var dslContext: DSLContext
+
+    @Autowired
+    lateinit var txOpMigrateStoreDescriptionDao: TxOpMigrateStoreDescriptionDao
+
+    @Autowired
+    lateinit var client: Client
 
     companion object {
         private val logger = LoggerFactory.getLogger(TxOpMigrateStoreDescriptionServiceImpl::class.java)
         private const val DEFAULT_PAGE_SIZE = 100
-        private const val BK_CI_PATH_REGEX = "!\\[(.*)]\\((http://radosgw.open.oa.com(.*))\\)"
+        private const val BK_CI_PATH_REGEX = "(!\\[(.*?)]\\()(http[s]?://radosgw.open.oa.com(.*?))(\\))"
     }
 
     override fun migrateStoreDescription(): Boolean {
@@ -98,14 +103,11 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
                         return@forEach
                     }
                     pathList.forEach path@{
-                        logger.info("migrateAtomDescription atomCode:${atomDescriptionRecord[tAtom.ATOM_CODE]} path:$it")
                         val bkRepoFileUrl = getBkRepoFileUrl(it, userId)
                         if (bkRepoFileUrl.isNullOrBlank()) {
-                            logger.info("migrateAtomDescription atomCode:${atomDescriptionRecord[tAtom.ATOM_CODE]} bkRepoFileUrl:$bkRepoFileUrl")
                             return@path
                         }
                         pathMap[it.replace("?", "\\?")] = bkRepoFileUrl
-                        logger.info("migrateAtomDescription atomCode:${tAtom.ATOM_CODE} pathMap:$pathMap")
                     }
                     if (pathMap.isEmpty()) {
                         return@forEach
@@ -285,7 +287,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         }
     }
 
-    private fun checkLogoUrlCondition(description: String?): List<String>? {
+    fun checkLogoUrlCondition(description: String?): List<String>? {
         if (description.isNullOrBlank()) {
             return null
         }
@@ -293,9 +295,8 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         val matcher: Matcher = pattern.matcher(description)
         val pathList = mutableListOf<String>()
         while (matcher.find()) {
-            pathList.add(matcher.group(2))
+            pathList.add(matcher.group(3))
         }
-        logger.info("checkLogoUrlCondition  pathList:$pathList")
         return pathList
     }
 
@@ -306,11 +307,11 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         return url.substring(index + 1).toLowerCase()
     }
 
-    private fun replaceDescription(description: String, pathMap: Map<String, String>): String {
-        var newDescription = ""
+    fun replaceDescription(description: String, pathMap: Map<String, String>): String {
+        var newDescription = description
         pathMap.forEach {
             val pattern: Pattern = Pattern.compile("(!\\[(.*)]\\()(${it.key})(\\))")
-            val matcher: Matcher = pattern.matcher(description)
+            val matcher: Matcher = pattern.matcher(newDescription)
             newDescription = matcher.replaceAll("$1${it.value}$4")
         }
         return newDescription
