@@ -85,7 +85,7 @@ class TxV3ProjectPermissionServiceImpl @Autowired constructor(
     ): String {
         // TODO: 是否干掉
         // 同步创建V0项目
-        val projectId = createResourcesToV0(userId, accessToken, resourceRegisterInfo, userDeptDetail)
+        // val projectId = createResourcesToV0(userId, accessToken, resourceRegisterInfo, userDeptDetail)
         // 异步创建V3项目
         projectDispatcher.dispatch(
             TxIamV3CreateEvent(
@@ -93,12 +93,12 @@ class TxV3ProjectPermissionServiceImpl @Autowired constructor(
                 retryCount = 0,
                 delayMills = 1000,
                 resourceRegisterInfo = resourceRegisterInfo,
-                projectId = projectId,
+                projectId = "",
                 iamProjectId = null,
                 subjectScopes = subjectScopes
             )
         )
-        return projectId
+        return ""
     }
 
     override fun deleteResource(projectCode: String) {
