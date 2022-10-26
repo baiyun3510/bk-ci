@@ -160,7 +160,8 @@ func doDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 			logs.Error("DOCKER_JOB|write image message error ", err)
 			postLog(true, "获取拉取镜像信息日志失败："+err.Error(), buildInfo)
 		} else {
-			postLog(false, buf.String(), buildInfo)
+			// 异步打印，防止过大卡住主流程
+			go postLog(false, buf.String(), buildInfo)
 		}
 	} else {
 		postLog(false, "本地存在镜像，准备启动构建环境..."+imageName, buildInfo)
