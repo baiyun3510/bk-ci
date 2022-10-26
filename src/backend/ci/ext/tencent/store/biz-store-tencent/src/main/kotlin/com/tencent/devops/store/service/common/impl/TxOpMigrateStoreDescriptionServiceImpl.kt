@@ -51,11 +51,16 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @Service
-class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
-    private val dslContext: DSLContext,
-    private val txOpMigrateStoreDescriptionDao: TxOpMigrateStoreDescriptionDao,
-    private val client: Client
-) : TxOpMigrateStoreDescriptionService {
+class TxOpMigrateStoreDescriptionServiceImpl : TxOpMigrateStoreDescriptionService {
+
+    @Autowired
+    lateinit var dslContext: DSLContext
+
+    @Autowired
+    lateinit var txOpMigrateStoreDescriptionDao: TxOpMigrateStoreDescriptionDao
+
+    @Autowired
+    lateinit var client: Client
 
     companion object {
         private val logger = LoggerFactory.getLogger(TxOpMigrateStoreDescriptionServiceImpl::class.java)
@@ -282,7 +287,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         }
     }
 
-    private fun checkLogoUrlCondition(description: String?): List<String>? {
+    fun checkLogoUrlCondition(description: String?): List<String>? {
         if (description.isNullOrBlank()) {
             return null
         }
@@ -302,7 +307,7 @@ class TxOpMigrateStoreDescriptionServiceImpl @Autowired constructor(
         return url.substring(index + 1).toLowerCase()
     }
 
-    private fun replaceDescription(description: String, pathMap: Map<String, String>): String {
+    fun replaceDescription(description: String, pathMap: Map<String, String>): String {
         var newDescription = description
         pathMap.forEach {
             val pattern: Pattern = Pattern.compile("(!\\[(.*)]\\()(${it.key})(\\))")
