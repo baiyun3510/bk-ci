@@ -67,13 +67,4 @@ interface ServiceDeptResource {
         @ApiParam("组织名称", required = true)
         deptName: String
     ): Result<DeptInfoVo?>
-
-    @GET
-    @Path("/groupStrategy")
-    @ApiOperation("获取组策略")
-    fun getGroupStrategy(
-        @QueryParam("strategyName")
-        @ApiParam("组织名称", required = true)
-        strategyName: String
-    ): Result<StrategyEntity?>
 }

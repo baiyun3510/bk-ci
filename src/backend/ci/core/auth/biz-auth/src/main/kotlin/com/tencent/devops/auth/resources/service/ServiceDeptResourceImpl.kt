@@ -48,10 +48,4 @@ class ServiceDeptResourceImpl @Autowired constructor(
     override fun getDeptByName(userId: String, deptName: String): Result<DeptInfoVo?> {
         return Result(deptService.getDeptByName(deptName, userId))
     }
-
-    override fun getGroupStrategy(strategyName: String): Result<StrategyEntity?> {
-        return Result(
-            strategyService.getStrategyByName(strategyName)
-        )
-    }
 }
