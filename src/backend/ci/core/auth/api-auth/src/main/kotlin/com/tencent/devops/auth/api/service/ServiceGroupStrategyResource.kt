@@ -45,6 +45,6 @@ import javax.ws.rs.core.MediaType
 interface ServiceGroupStrategyResource {
     @GET
     @Path("/getGroupStrategy")
-    @ApiOperation("获取组策略")
+    @ApiOperation("获取策略")
     fun getGroupStrategy(): List<StrategyEntity>
 }
