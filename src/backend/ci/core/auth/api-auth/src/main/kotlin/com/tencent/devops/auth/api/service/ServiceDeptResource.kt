@@ -27,6 +27,7 @@
 
 package com.tencent.devops.auth.api.service
 
+import com.tencent.devops.auth.pojo.StrategyEntity
 import com.tencent.devops.auth.pojo.vo.DeptInfoVo
 import com.tencent.devops.common.api.auth.AUTH_HEADER_DEVOPS_USER_ID
 import com.tencent.devops.common.api.pojo.Result
@@ -66,4 +67,13 @@ interface ServiceDeptResource {
         @ApiParam("组织名称", required = true)
         deptName: String
     ): Result<DeptInfoVo?>
+
+    @GET
+    @Path("/groupStrategy")
+    @ApiOperation("获取组策略")
+    fun getGroupStrategy(
+        @QueryParam("strategyName")
+        @ApiParam("组织名称", required = true)
+        strategyName: String
+    ): Result<StrategyEntity?>
 }

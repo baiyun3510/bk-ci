@@ -129,10 +129,4 @@ class ServiceProjectAuthResourceImpl @Autowired constructor(
             )
         )
     }
-
-    override fun getGroupStrategy(strategyName: String): Result<StrategyEntity?> {
-        return Result(
-            strategyService.getStrategyByName(strategyName)
-        )
-    }
 }

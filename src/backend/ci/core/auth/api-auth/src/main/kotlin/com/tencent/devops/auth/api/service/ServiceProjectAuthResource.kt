@@ -166,13 +166,4 @@ interface ServiceProjectAuthResource {
         @ApiParam("项目Id", required = true)
         projectId: String
     ): Result<List<BKAuthProjectRolesResources>>
-
-    @GET
-    @Path("/getGroupStrategy")
-    @ApiOperation("获取组策略")
-    fun getGroupStrategy(
-        @ApiParam(name = "策略名", required = true)
-        @QueryParam("strategyName")
-        strategyName: String
-    ): Result<StrategyEntity?>
 }
