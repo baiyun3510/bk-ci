@@ -33,8 +33,14 @@ import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatch
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildFinishBroadCastEvent
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.stream.constants.StreamBinding
+import com.tencent.devops.process.engine.control.CallBackControl
+import com.tencent.devops.process.engine.listener.pipeline.MQPipelineUpdateListener
+import com.tencent.devops.process.engine.service.AgentPipelineRefService
+import com.tencent.devops.process.engine.service.PipelineAtomStatisticsService
 import com.tencent.devops.process.engine.service.PipelineInfoService
+import com.tencent.devops.process.engine.service.PipelineRuntimeService
 import com.tencent.devops.process.engine.service.PipelineTaskService
+import com.tencent.devops.process.engine.service.PipelineWebhookService
 import com.tencent.devops.process.engine.service.measure.MeasureServiceImpl
 import com.tencent.devops.process.listener.MeasurePipelineBuildFinishListener
 import com.tencent.devops.process.service.BuildVariableService
@@ -88,6 +94,15 @@ class TencentMeasureConfig {
         atomMonitorSwitch = atomMonitorSwitch,
         maxMonitorDataSize = maxMonitorDataSize,
         measureEventDispatcher = measureEventDispatcher
+    )
+
+    @Bean
+    fun measurePipelineBuildFinishListener(
+        @Autowired pipelineRuntimeService: PipelineRuntimeService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = MeasurePipelineBuildFinishListener(
+        pipelineRuntimeService = pipelineRuntimeService,
+        pipelineEventDispatcher = pipelineEventDispatcher
     )
 
     /**
