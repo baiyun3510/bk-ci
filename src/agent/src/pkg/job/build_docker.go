@@ -19,30 +19,46 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
 // buildDockerManager docker构建机构建对象管理
 type buildDockerManager struct {
-	// CurrentJobsCount 使用时需要进行原子操作防止出现并发问题
-	currentJobsCount int32
+	// instances 正在执行中的构建对象 [string]*api.ThirdPartyDockerTaskInfo
+	instances sync.Map
 }
 
-func (b *buildDockerManager) GetCurrentJobsCount() int32 {
-	return atomic.LoadInt32(&b.currentJobsCount)
+func (b *buildDockerManager) GetInstanceCount() int {
+	var i = 0
+	b.instances.Range(func(key, value interface{}) bool {
+		i++
+		return true
+	})
+	return i
 }
 
-func (b *buildDockerManager) AddCurrentJobs(num int32) int32 {
-	return atomic.AddInt32(&b.currentJobsCount, num)
+func (b *buildDockerManager) GetInstances() []api.ThirdPartyDockerTaskInfo {
+	result := make([]api.ThirdPartyDockerTaskInfo, 0)
+	b.instances.Range(func(key, value interface{}) bool {
+		result = append(result, *value.(*api.ThirdPartyDockerTaskInfo))
+		return true
+	})
+	return result
+}
+
+func (b *buildDockerManager) AddBuild(buildId string, info *api.ThirdPartyDockerTaskInfo) {
+	b.instances.Store(buildId, info)
+}
+
+func (b *buildDockerManager) RemoveBuild(buildId string) {
+	b.instances.Delete(buildId)
 }
 
 var GBuildDockerManager *buildDockerManager
 
 func init() {
-	GBuildDockerManager = &buildDockerManager{
-		currentJobsCount: 0,
-	}
+	GBuildDockerManager = new(buildDockerManager)
 }
 
 const (
@@ -55,7 +71,7 @@ const (
 
 func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 	if !systemutil.IsLinux() {
-		GBuildDockerManager.AddCurrentJobs(-1)
+		GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 		dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
 			ThirdPartyBuildInfo: *buildInfo, Message: "目前仅支持linux系统使用docker构建机",
 		})
@@ -67,19 +83,19 @@ func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 		go config.GAgentConfig.SaveConfig()
 	}
 
-	// 兼容就数据，对于没有docker文件的需要重新下载，防止重复下载所以放到主流程做
+	// 兼容旧数据，对于没有docker文件的需要重新下载，防止重复下载所以放到主流程做
 	if _, err := os.Stat(config.GetDockerInitFilePath()); err != nil {
 		if os.IsNotExist(err) {
 			_, err = download.DownloadDockerInitFile(systemutil.GetWorkDir())
 			if err != nil {
-				GBuildDockerManager.AddCurrentJobs(-1)
+				GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 				dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
 					ThirdPartyBuildInfo: *buildInfo, Message: "下载Docker构建机初始化脚本失败|" + err.Error(),
 				})
 				return
 			}
 		} else {
-			GBuildDockerManager.AddCurrentJobs(-1)
+			GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 			dockerBuildFinish(&api.ThirdPartyBuildWithStatus{
 				ThirdPartyBuildInfo: *buildInfo, Message: "获取Docker构建机初始化脚本状态失败|" + err.Error(),
 			})
@@ -94,7 +110,7 @@ func runDockerBuild(buildInfo *api.ThirdPartyBuildInfo) {
 func doDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 	// 各种情况退出时减运行任务数量
 	defer func() {
-		GBuildDockerManager.AddCurrentJobs(-1)
+		GBuildDockerManager.RemoveBuild(buildInfo.BuildId)
 	}()
 
 	dockerBuildInfo := buildInfo.DockerBuildInfo
@@ -128,6 +144,7 @@ func doDockerJob(buildInfo *api.ThirdPartyBuildInfo) {
 	// 本地没有镜像的需要拉取新的镜像
 	if !localExist {
 		postLog(false, "开始拉取镜像，镜像名称："+imageName, buildInfo)
+		postLog(false, "过大的镜像拉取时间过长（超过3分钟）可能会导致构建机重新领取任务，等待即可，镜像拉取完即可正常执行。也可以预先在本地拉取，构建机会直接启动已存在镜像。"+imageName, buildInfo)
 		reader, err := cli.ImagePull(ctx, imageName, types.ImagePullOptions{
 			RegistryAuth: generateDockerAuth(dockerBuildInfo.Credential),
 		})
@@ -342,8 +359,6 @@ func parseContainerMounts(buildInfo *api.ThirdPartyBuildInfo) ([]mount.Mount, er
 		Target:   dockerLogDir,
 		ReadOnly: false,
 	})
-
-	// TODO: issue_7748
 
 	return mounts, nil
 }

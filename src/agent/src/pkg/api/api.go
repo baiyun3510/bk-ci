@@ -40,9 +40,18 @@ func buildUrl(url string) string {
 	return config.GetGateWay() + url
 }
 
-func Heartbeat(buildInfos []ThirdPartyBuildInfo, jdkVersion []string) (*httputil.DevopsResult, error) {
+func Heartbeat(buildInfos []ThirdPartyBuildInfo, jdkVersion []string, dockerTaskList []ThirdPartyDockerTaskInfo) (*httputil.DevopsResult, error) {
 	url := buildUrl("/ms/environment/api/buildAgent/agent/thirdPartyAgent/agents/newHeartbeat")
 
+	var taskList []ThirdPartyTaskInfo
+	for _, info := range buildInfos {
+		taskList = append(taskList, ThirdPartyTaskInfo{
+			ProjectId: info.ProjectId,
+			BuildId:   info.BuildId,
+			VmSeqId:   info.VmSeqId,
+			Workspace: info.Workspace,
+		})
+	}
 	agentHeartbeatInfo := &AgentHeartbeatInfo{
 		MasterVersion:     config.AgentVersion,
 		SlaveVersion:      config.GAgentEnv.SlaveVersion,
@@ -51,12 +60,13 @@ func Heartbeat(buildInfos []ThirdPartyBuildInfo, jdkVersion []string) (*httputil
 		ParallelTaskCount: config.GAgentConfig.ParallelTaskCount,
 		AgentInstallPath:  systemutil.GetExecutableDir(),
 		StartedUser:       systemutil.GetCurrentUser().Username,
-		TaskList:          buildInfos,
+		TaskList:          taskList,
 		Props: AgentPropsInfo{
 			Arch:       runtime.GOARCH,
 			JdkVersion: jdkVersion,
 		},
 		DockerParallelTaskCount: config.GAgentConfig.DockerParallelTaskCount,
+		DockerTaskList:          dockerTaskList,
 	}
 
 	return httputil.NewHttpClient().Post(url).Body(agentHeartbeatInfo).SetHeaders(config.GAgentConfig.GetAuthHeaderMap()).Execute().IntoDevopsResult()
