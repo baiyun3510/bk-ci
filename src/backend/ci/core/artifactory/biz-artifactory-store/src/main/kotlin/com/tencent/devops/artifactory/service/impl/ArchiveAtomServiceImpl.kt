@@ -105,11 +105,12 @@ abstract class ArchiveAtomServiceImpl : ArchiveAtomService {
         if (verifyAtomPackageResult.isNotOk()) {
             return Result(verifyAtomPackageResult.status, verifyAtomPackageResult.message, null)
         }
-        handleArchiveFile(disposition, inputStream, projectCode, atomCode, version)
         val atomEnvRequests: List<AtomEnvRequest>
         val taskDataMap: Map<String, Any>
         val packageFileInfos: MutableList<PackageFileInfo>
-        try { // 校验taskJson配置是否正确
+        try {
+            handleArchiveFile(disposition, inputStream, projectCode, atomCode, version)
+            // 校验taskJson配置是否正确
             val verifyAtomTaskJsonResult =
                 client.get(ServiceMarketAtomArchiveResource::class).verifyAtomTaskJson(
                     userId = userId,

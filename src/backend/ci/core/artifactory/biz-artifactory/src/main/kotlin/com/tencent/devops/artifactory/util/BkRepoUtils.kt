@@ -55,6 +55,7 @@ object BkRepoUtils {
     const val REPO_NAME_REPORT = "report"
     const val REPO_NAME_PLUGIN = "plugin"
     const val REPO_NAME_STATIC = "static"
+    const val REPO_NAME_SERVICE = "service"
 
     fun parseArtifactoryInfo(path: String): ArtifactInfo {
         val normalizedPath = path.trim().removePrefix("/").removePrefix("./")
@@ -73,7 +74,8 @@ object BkRepoUtils {
                 repoName == REPO_NAME_CUSTOM ||
                 repoName == REPO_NAME_REPORT ||
                 repoName == REPO_NAME_PLUGIN ||
-                repoName == REPO_NAME_STATIC
+                repoName == REPO_NAME_STATIC ||
+                repoName == REPO_NAME_SERVICE
         if (!validateRepoName) {
             throw ErrorCodeException(errorCode = CommonMessageCode.PARAMETER_IS_INVALID, params = arrayOf("repoName"))
         }

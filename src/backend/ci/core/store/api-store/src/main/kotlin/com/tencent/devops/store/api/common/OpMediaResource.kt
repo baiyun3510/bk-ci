@@ -79,7 +79,7 @@ interface OpMediaResource {
         mediaId: String
     ): Result<StoreMediaInfo?>
 
-    @ApiOperation("获取扩展服务所有媒体信息")
+    @ApiOperation("获取微扩展所有媒体信息")
     @Path("/storesCodes/{storeCode}/types/{labelType}")
     @GET
     fun getStoreMediaByStoreCode(

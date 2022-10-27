@@ -114,17 +114,17 @@ object StoreMessageCode {
     const val USER_IMAGE_VERSION_NOT_EXIST = "2120310" // 标识为{0}版本号为{1}的镜像不存在
     const val USER_IMAGE_PROJECT_IS_INVALID = "2120311" // 研发商店：容器镜像[{0}]在项目[{1}]下不可用，请联系镜像发布者调整可见范围，调整后手动安装镜像
 
-    // 扩展服务相关的错误提示
-    const val USER_SERVICE_RELEASED_IS_NOT_ALLOW_DELETE = "2120401" // 研发商店：扩展服务{0}已发布到商店，请先下架再删除
-    const val USER_SERVICE_USED_IS_NOT_ALLOW_DELETE = "2120402" // 研发商店：扩展服务{0}已安装到其他项目下使用，请勿移除
-    const val USER_SERVICE_VERSION_IS_INVALID = "2120403" // 研发商店：扩展服务升级的版本号{0}错误，应为{1}
-    const val USER_SERVICE_VERSION_IS_NOT_FINISH = "2120404" // 研发商店：扩展服务{0}的{1}版本发布未结束，请稍后再试
+    // 微扩展相关的错误提示
+    const val USER_SERVICE_RELEASED_IS_NOT_ALLOW_DELETE = "2120401" // 研发商店：微扩展{0}已发布到商店，请先下架再删除
+    const val USER_SERVICE_USED_IS_NOT_ALLOW_DELETE = "2120402" // 研发商店：微扩展{0}已安装到其他项目下使用，请勿移除
+    const val USER_SERVICE_VERSION_IS_INVALID = "2120403" // 研发商店：微扩展升级的版本号{0}错误，应为{1}
+    const val USER_SERVICE_VERSION_IS_NOT_FINISH = "2120404" // 研发商店：微扩展{0}的{1}版本发布未结束，请稍后再试
     const val USER_SERVICE_CODE_DIFF = "2120405" // 研发商店：扩展编码与extension.json文件内编码不一致
-    const val USER_SERVICE_RELEASE_STEPS_ERROR = "2120406" // 研发商店：扩展服务发布流程状态变更顺序不正确
+    const val USER_SERVICE_RELEASE_STEPS_ERROR = "2120406" // 研发商店：微扩展发布流程状态变更顺序不正确
     const val USER_SERVICE_PROJECT_UNENABLE = "2120407" // 研发商店：选中调试项目已被禁用
     const val USER_SERVICE_PROJECT_NOT_PERMISSION = "2120408" // 研发商店：选中调试项目无创建流水线权限
-    const val USER_SERVICE_NOT_EXIST = "2120409" // 研发商店：扩展服务不存在{0}
-    const val USER_ITEM_SERVICE_USED_IS_NOT_ALLOW_DELETE = "2120410" // 研发商店：扩展点下还有可用的扩展服务，不能删除
+    const val USER_SERVICE_NOT_EXIST = "2120409" // 研发商店：微扩展不存在{0}
+    const val USER_ITEM_SERVICE_USED_IS_NOT_ALLOW_DELETE = "2120410" // 研发商店：扩展点下还有可用的微扩展，不能删除
 
     // store公共业务相关的错误提示
     const val USER_PRAISE_IS_INVALID = "2120901" // 研发商店：你已点赞过

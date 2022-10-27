@@ -33,14 +33,18 @@ import com.tencent.devops.common.pipeline.pojo.CheckImageInitPipelineReq
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.process.pojo.AtomMarketInitPipelineResp
 import com.tencent.devops.process.pojo.CheckImageInitPipelineResp
-import com.tencent.devops.process.service.AtomMarketInitPipelineService
+import com.tencent.devops.process.pojo.ExtServiceBuildInitPipelineReq
+import com.tencent.devops.process.pojo.ExtServiceBuildInitPipelineResp
+import com.tencent.devops.process.service.store.AtomMarketInitPipelineService
 import com.tencent.devops.process.service.store.CheckImageInitPipelineService
+import com.tencent.devops.process.service.store.ExtServiceBuildInitPipelineService
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class ServicePipelineInitResourceImpl @Autowired constructor(
     private val atomMarketInitPipelineService: AtomMarketInitPipelineService,
-    private val checkImageInitPipelineService: CheckImageInitPipelineService
+    private val checkImageInitPipelineService: CheckImageInitPipelineService,
+    private val extServiceBuildInitPipelineService: ExtServiceBuildInitPipelineService
 ) : ServicePipelineInitResource {
 
     override fun initAtomMarketPipeline(
@@ -64,6 +68,18 @@ class ServicePipelineInitResourceImpl @Autowired constructor(
             userId = userId,
             projectCode = projectCode,
             checkImageInitPipelineReq = checkImageInitPipelineReq
+        )
+    }
+
+    override fun initExtServiceBuildPipeline(
+        userId: String,
+        projectCode: String,
+        extServiceBuildInitPipelineReq: ExtServiceBuildInitPipelineReq
+    ): Result<ExtServiceBuildInitPipelineResp> {
+        return extServiceBuildInitPipelineService.initPipeline(
+            userId = userId,
+            projectCode = projectCode,
+            extServiceBuildInitPipelineReq = extServiceBuildInitPipelineReq
         )
     }
 }

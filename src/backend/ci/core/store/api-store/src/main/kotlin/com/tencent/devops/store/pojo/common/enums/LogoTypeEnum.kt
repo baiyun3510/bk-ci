@@ -32,5 +32,5 @@ enum class LogoTypeEnum {
     TEMPLATE,  // 模版logo
     IMAGE,  // 镜像logo
     BANNER, // banner
-    SERVICE; // 扩展服务
+    SERVICE; // 微扩展
 }
