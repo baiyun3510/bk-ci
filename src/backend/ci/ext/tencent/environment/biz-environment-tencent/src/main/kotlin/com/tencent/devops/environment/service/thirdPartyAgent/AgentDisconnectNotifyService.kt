@@ -275,10 +275,10 @@ class AgentDisconnectNotifyService @Autowired constructor(
             "\t\t\t\t\t\t\t\t\t<tbody>\n" +
             "\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n" +
             "\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\">\n" +
-            "\t\t\t\t\t\t\t\t\t\t\t\t<img src=\"http://file.tapd.oa.com//tfl/pictures/201807/tapd_20363462_1531467552_72.png\" width=\"52\" style=\"display: block\">\n" +
+            "\t\t\t\t\t\t\t\t\t\t\t\t<img src=\"https://raw.githubusercontent.com/Tencent/bk-ci/master/docs/resource/img/logo_icon.png\" width=\"52\" style=\"display: block\">\n" +
             "\t\t\t\t\t\t\t\t\t\t\t</td>\n" +
             "\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\">\n" +
-            "\t\t\t\t\t\t\t\t\t\t\t\t<img src=\"http://file.tapd.oa.com//tfl/pictures/201807/tapd_20363462_1531467605_41.png\" width=\"176\" style=\"display: block\">\n" +
+            "\t\t\t\t\t\t\t\t\t\t\t\t<img src=\"https://raw.githubusercontent.com/Tencent/bk-ci/master/docs/resource/img/logo_text.png\" width=\"176\" style=\"display: block\">\n" +
             "\t\t\t\t\t\t\t\t\t\t\t</td>\n" +
             "\t\t\t\t\t\t\t\t\t\t</tr>\n" +
             "\t\t\t\t\t\t\t\t\t</tbody>\n" +
