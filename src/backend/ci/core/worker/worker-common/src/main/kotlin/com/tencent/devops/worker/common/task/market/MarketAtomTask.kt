@@ -659,13 +659,13 @@ open class MarketAtomTask : ITask() {
             if (isPlatformCodeRegistered) {
                 addPlatformCode(platformCode)
                 atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
+                val platformErrorCode = atomResult?.platformErrorCode
+                if (platformErrorCode != null) {
+                    addPlatformErrorCode(platformErrorCode)
+                }
             } else {
                 logger.warn("the platformCode:$platformCode Not registered")
             }
-        }
-        val platformErrorCode = atomResult?.platformErrorCode
-        if (platformErrorCode != null) {
-            addPlatformErrorCode(platformErrorCode)
         }
         deletePluginFile(atomTmpSpace)
         val success: Boolean
