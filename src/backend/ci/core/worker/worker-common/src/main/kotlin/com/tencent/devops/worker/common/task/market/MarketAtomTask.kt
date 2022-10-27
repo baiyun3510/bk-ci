@@ -654,14 +654,23 @@ open class MarketAtomTask : ITask() {
         }
         // 添加插件对接平台错误码信息
         val platformCode = atomResult?.platformCode
+//        if (!platformCode.isNullOrBlank()) {
+//            val isPlatformCodeRegistered = atomApi.isPlatformCodeRegistered(platformCode)
+//            if (isPlatformCodeRegistered) {
+//                addPlatformCode(platformCode)
+//                atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
+//                val platformErrorCode = atomResult?.platformErrorCode
+//                if (platformErrorCode != null) {
+//                    addPlatformErrorCode(platformErrorCode)
+//                }
+//            } else {
+//                logger.warn("the platformCode:$platformCode Not registered")
+//            }
+//        }
+
         if (!platformCode.isNullOrBlank()) {
-            val isPlatformCodeRegistered = atomApi.isPlatformCodeRegistered(platformCode)
-            if (isPlatformCodeRegistered) {
-                addPlatformCode(platformCode)
-                atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
-            } else {
-                logger.warn("the platformCode:$platformCode Not registered")
-            }
+            addPlatformCode(platformCode)
+            atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
         }
         val platformErrorCode = atomResult?.platformErrorCode
         if (platformErrorCode != null) {
