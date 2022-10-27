@@ -664,7 +664,8 @@ open class MarketAtomTask : ITask() {
                     addPlatformErrorCode(platformErrorCode)
                 }
             } else {
-                logger.warn("the platformCode:$platformCode Not registered")
+                logger.warn("PlatformCode:$platformCode has not been registered and failed to enter " +
+                        "the library. Please contact Devops-helper to register first")
             }
         }
 
