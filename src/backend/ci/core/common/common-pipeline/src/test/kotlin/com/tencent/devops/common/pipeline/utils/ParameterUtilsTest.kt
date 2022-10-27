@@ -39,9 +39,9 @@ class ParameterUtilsTest {
     @Test
     fun testGetListValueByKey() {
         val plist = mutableListOf<BuildParameters>()
-        plist.add(BuildParameters(key="A", value = true, valueType = BuildFormPropertyType.BOOLEAN))
+        plist.add(BuildParameters(key = "A", value = true, valueType = BuildFormPropertyType.BOOLEAN))
         val expect = "any"
-        plist.add(BuildParameters(key="B", value = expect, valueType = BuildFormPropertyType.STRING))
+        plist.add(BuildParameters(key = "B", value = expect, valueType = BuildFormPropertyType.STRING))
 
         var actual = ParameterUtils.getListValueByKey(plist, "B")
         Assertions.assertEquals(expect, actual)
