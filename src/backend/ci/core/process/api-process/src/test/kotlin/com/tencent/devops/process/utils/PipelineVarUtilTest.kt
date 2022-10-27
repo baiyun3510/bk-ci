@@ -27,8 +27,6 @@
 
 package com.tencent.devops.process.utils
 
-import com.tencent.devops.artifactory.pojo.FileInfo
-import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.pipeline.enums.BuildFormPropertyType
 import com.tencent.devops.common.pipeline.pojo.BuildParameters
 import com.tencent.devops.common.service.utils.CommonUtils
@@ -132,12 +130,6 @@ class PipelineVarUtilTest {
     }
 
     @Test
-    fun test() {
-        val a = JsonUtil.to("[]", Array<FileInfo>::class.java)
-        println(a.isNullOrEmpty())
-    }
-
-    @Test
     fun newVarToOldVar() {
         assertEquals("MajorVersion", PipelineVarUtil.newVarToOldVar(MAJORVERSION))
         assertEquals("MinorVersion", PipelineVarUtil.newVarToOldVar(MINORVERSION))
@@ -171,7 +163,6 @@ class PipelineVarUtilTest {
         assertEquals("project.name.chinese", PipelineVarUtil.newVarToOldVar(PROJECT_NAME_CHINESE))
         assertEquals("pipeline.name", PipelineVarUtil.newVarToOldVar(PIPELINE_NAME))
     }
-
 
     @Test
     fun testGetRecommendVersion() {

@@ -79,8 +79,10 @@ class PipelineBuildVarDao @Autowired constructor() {
                 baseStep.set(VAR_TYPE, valueType)
             }
             return baseStep.set(VALUE, value.toString())
-                .where(BUILD_ID.eq(buildId).and(KEY.eq(name)).and(READ_ONLY.isNull.or(READ_ONLY.eq(false)))
-                    .and(PROJECT_ID.eq(projectId)))
+                .where(
+                    BUILD_ID.eq(buildId).and(KEY.eq(name)).and(PROJECT_ID.eq(projectId))
+                        .and(READ_ONLY.isNull.or(READ_ONLY.eq(false)))
+                )
                 .execute()
         }
     }
@@ -165,34 +167,21 @@ class PipelineBuildVarDao @Autowired constructor() {
             variables.forEach { v ->
                 val valueString = v.value.toString()
                 if (valueString.length > maxLength) {
-                    LOG.error("$buildId|ABANDON_DATA|len[${v.key}]=${valueString.length}(max=$maxLength)")
+                    LOG.warn("$buildId|ABANDON_DATA|len[${v.key}]=${valueString.length}(max=$maxLength)")
                     return@forEach
                 }
-                if (v.valueType != null) {
-                    dslContext.insertInto(this)
-                        .set(PROJECT_ID, projectId)
-                        .set(PIPELINE_ID, pipelineId)
-                        .set(BUILD_ID, buildId)
-                        .set(KEY, v.key)
-                        .set(VALUE, v.value.toString())
-                        .set(VAR_TYPE, v.valueType!!.name)
-                        .set(READ_ONLY, v.readOnly)
-                        .onDuplicateKeyUpdate()
-                        .set(VALUE, v.value.toString())
-                        .set(VAR_TYPE, v.valueType!!.name)
-                        .execute()
-                } else {
-                    dslContext.insertInto(this)
-                        .set(PROJECT_ID, projectId)
-                        .set(PIPELINE_ID, pipelineId)
-                        .set(BUILD_ID, buildId)
-                        .set(KEY, v.key)
-                        .set(VALUE, v.value.toString())
-                        .set(READ_ONLY, v.readOnly)
-                        .onDuplicateKeyUpdate()
-                        .set(VALUE, v.value.toString())
-                        .execute()
-                }
+                dslContext.insertInto(this)
+                    .set(PROJECT_ID, projectId)
+                    .set(PIPELINE_ID, pipelineId)
+                    .set(BUILD_ID, buildId)
+                    .set(KEY, v.key)
+                    .set(VALUE, v.value.toString())
+                    .set(READ_ONLY, v.readOnly)
+                    .apply { v.valueType?.let { this.set(VAR_TYPE, it.name) } }
+                    .onDuplicateKeyUpdate()
+                    .set(VALUE, v.value.toString())
+                    .apply { v.valueType?.let { this.set(VAR_TYPE, it.name) } }
+                    .execute()
             }
         }
     }
@@ -211,8 +200,8 @@ class PipelineBuildVarDao @Autowired constructor() {
                     baseStep.set(VAR_TYPE, valueType.name)
                 }
                 baseStep.set(VALUE, v.value.toString()).where(
-                    BUILD_ID.eq(buildId).and(KEY.eq(v.key)).and(READ_ONLY.notEqual(true).and(PROJECT_ID.eq(projectId))
-                    )
+                    BUILD_ID.eq(buildId).and(KEY.eq(v.key)).and(PROJECT_ID.eq(projectId))
+                        .and(READ_ONLY.isNull.or(READ_ONLY.eq(false)))
                 ).execute()
             }
         }

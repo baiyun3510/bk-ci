@@ -86,7 +86,7 @@ open class BaseBuildDetailService constructor(
     ): Model {
         val watcher = Watcher(id = "updateDetail#$buildId#$operation")
         var message = "nothing"
-        var record :TPipelineBuildDetailRecord? = null
+        var record: TPipelineBuildDetailRecord? = null
         val lock = RedisLock(redisOperation, "process.build.detail.lock.$buildId", ExpiredTimeInSeconds)
 
         try {
@@ -140,7 +140,7 @@ open class BaseBuildDetailService constructor(
         } finally {
             lock.unlock()
             logger.info("[$buildId|$buildStatus]|$operation|update_detail_model| $message")
-            if (message == "update done") {
+            if (message == "update done") { // 防止MQ异常导致锁时间过长，将推送事件移出锁定范围
                 watcher.start("dispatchEvent")
                 pipelineDetailChangeEvent(projectId, buildId)
             }

@@ -1526,7 +1526,7 @@ class PipelineRuntimeService @Autowired constructor(
             logger.info("[$pipelineId]|getExecuteTime-$buildId executeTime: $executeTime")
 
             val buildParameters = getBuildParametersFromStartup(projectId, buildId)
-
+            // 修正推荐版本号过长和流水号重复更新导致的问题
             val recommendVersion = PipelineVarUtil.getRecommendVersion(buildParameters)
             logger.info("[$pipelineId]|getRecommendVersion-$buildId recommendVersion: $recommendVersion")
             val remark = buildVariableService.getVariable(projectId, pipelineId, buildId, PIPELINE_BUILD_REMARK)

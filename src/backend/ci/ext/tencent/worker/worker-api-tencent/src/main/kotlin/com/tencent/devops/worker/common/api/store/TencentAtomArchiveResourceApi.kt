@@ -149,6 +149,13 @@ class TencentAtomArchiveResourceApi : AbstractBuildResourceApi(),
         return objectMapper.readValue(responseContent)
     }
 
+    override fun isPlatformCodeRegistered(platformCode: String): Boolean {
+        val path = "/store/api/build/store/docking/platforms/codes/$platformCode/validate"
+        val request = buildGet(path)
+        val responseContent = request(request, "获取插件对接平台注册信息失败")
+        return objectMapper.readValue(responseContent)
+    }
+
     override fun archiveAtom(
         atomCode: String,
         atomVersion: String,

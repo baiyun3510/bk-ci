@@ -419,6 +419,7 @@ object PipelineVarUtil {
     fun newVarToOldVar(newVarName: String): String? = newVarMappingOldVar[newVarName]
 
     const val MAX_VERSION_LEN = 64
+
     /**
      * 从流水线启动参数[buildParameters]中找出推荐版本号,由[MAJORVERSION].[MINORVERSION].[FIXVERSION].[BUILD_NO]组成
      * 需要注意的是，旧的参数命名继续兼容有效，由{MarjorVersion}.{MinorVersion}.{FixVersion}.{BuildNo} 组成，所以启动参数切记
@@ -431,7 +432,6 @@ object PipelineVarUtil {
         } else return null
         return CommonUtils.interceptStringInLength("$recommendVersionPrefix.$buildNo", MAX_VERSION_LEN)
     }
-
 
     /**
      * 从流水线启动参数[buildParameters]中找出版本号前缀，由[MAJORVERSION].[MINORVERSION].[FIXVERSION] 组成，
