@@ -30,11 +30,15 @@ package com.tencent.devops.monitoring.configuration
 import com.tencent.devops.common.event.annotation.StreamEventConsumer
 import com.tencent.devops.common.event.pojo.measure.AtomMonitorReportBroadCastEvent
 import com.tencent.devops.common.stream.constants.StreamBinding
+import com.tencent.devops.monitoring.client.InfluxdbClient
 import com.tencent.devops.monitoring.consumer.AtomMonitorReportListener
+import com.tencent.devops.monitoring.consumer.processor.monitor.AbstractMonitorProcessor
+import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.Message
 import java.util.function.Consumer
+import org.springframework.context.annotation.Bean
 
 @Configuration
 class ListenerConfiguration {
@@ -42,6 +46,13 @@ class ListenerConfiguration {
     companion object {
         const val STREAM_CONSUMER_GROUP = "monitoring-service"
     }
+
+    @Bean
+    fun monitorReportListener(
+        @Autowired influxdbClient: InfluxdbClient,
+        @Autowired monitorProcessors: List<AbstractMonitorProcessor>,
+        @Autowired meterRegistry: MeterRegistry
+    ) = AtomMonitorReportListener(influxdbClient, monitorProcessors, meterRegistry)
 
     @StreamEventConsumer(StreamBinding.EXCHANGE_ATOM_MONITOR_DATA_REPORT_FANOUT, STREAM_CONSUMER_GROUP)
     fun atomMonitorReportListener(
