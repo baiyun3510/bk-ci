@@ -68,6 +68,7 @@ import com.tencent.devops.process.utils.PIPELINE_VIEW_ALL_PIPELINES
 import com.tencent.devops.process.utils.PIPELINE_VIEW_FAVORITE_PIPELINES
 import com.tencent.devops.process.utils.PIPELINE_VIEW_MY_PIPELINES
 import com.tencent.devops.project.api.service.ServiceAllocIdResource
+import org.apache.commons.lang3.StringUtils
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -91,8 +92,6 @@ class PipelineViewService @Autowired constructor(
     private val pipelineGroupService: PipelineGroupService,
     private val client: Client
 ) {
-
-
     fun addUsingView(userId: String, projectId: String, viewId: String) {
         pipelineViewLastViewDao.save(
             dslContext = dslContext,
@@ -471,7 +470,7 @@ class PipelineViewService @Autowired constructor(
         )
         for (filter in filters) {
             val match = if (filter is PipelineViewFilterByName) {
-                pipelineInfo.pipelineName.contains(filter.pipelineName)
+                StringUtils.containsIgnoreCase(pipelineInfo.pipelineName, filter.pipelineName)
             } else if (filter is PipelineViewFilterByCreator) {
                 filter.userIds.contains(pipelineInfo.creator)
             } else if (filter is PipelineViewFilterByLabel) {
@@ -593,7 +592,7 @@ class PipelineViewService @Autowired constructor(
                         key = "流水线名称",
                         hits = mutableListOf(
                             PipelineViewHitFilters.FilterInfo.Hit(
-                                hit = pipelineInfo.pipelineName.contains(filter.pipelineName),
+                                hit = StringUtils.containsIgnoreCase(pipelineInfo.pipelineName, filter.pipelineName),
                                 value = filter.pipelineName
                             )
                         )
@@ -634,7 +633,6 @@ class PipelineViewService @Autowired constructor(
             } else {
                 continue
             }
-
         }
         return hitFilters
     }
@@ -658,7 +656,7 @@ class PipelineViewService @Autowired constructor(
             var isMatch = view.logic == Logic.AND.name
             for (filter in filters) {
                 val match = if (filter is PipelineViewFilterByName) {
-                    pipelineViewMatchDynamic.pipelineName.contains(filter.pipelineName)
+                    StringUtils.containsIgnoreCase(pipelineViewMatchDynamic.pipelineName, filter.pipelineName)
                 } else if (filter is PipelineViewFilterByCreator) {
                     filter.userIds.contains(userId)
                 } else if (filter is PipelineViewFilterByLabel) {
