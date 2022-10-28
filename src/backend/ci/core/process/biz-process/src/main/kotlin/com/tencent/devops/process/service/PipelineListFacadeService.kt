@@ -713,7 +713,7 @@ class PipelineListFacadeService @Autowired constructor(
             userId = userId
         ).toInt()
         val recycleCount = pipelineInfoDao.countDeletePipeline(dslContext, projectId, deletedPipelineStoreDays.toLong())
-        return PipelineCount(totalCount, myFavoriteCount, myPipelineCount,recycleCount)
+        return PipelineCount(totalCount, myFavoriteCount, myPipelineCount, recycleCount)
     }
 
     private fun handlePipelineQueryList(

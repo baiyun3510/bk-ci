@@ -141,13 +141,18 @@ class PipelineViewGroupService @Autowired constructor(
                 defaultMessage = "view scope can`t change , user:$userId , view:$viewIdEncode , project:$projectId"
             )
         }
+        if (pipelineView.viewType == PipelineViewType.UNCLASSIFIED) {
+            pipelineView.viewType = oldView.viewType
+        }
         // 更新视图
         var result = false
         dslContext.transaction { t ->
             val context = DSL.using(t)
             result = pipelineViewService.updateView(userId, projectId, viewId, pipelineView, context)
             if (result) {
-                pipelineViewGroupDao.remove(context, projectId, viewId)
+                if (pipelineView.pipelineIds != null) {
+                    pipelineViewGroupDao.remove(context, projectId, viewId)
+                }
                 redisOperation.delete(firstInitMark(projectId, viewId))
                 initViewGroup(
                     context = context,
@@ -320,7 +325,7 @@ class PipelineViewGroupService @Autowired constructor(
             watcher.stop()
         } else {
             watcher.start("initStaticViewGroup")
-            pipelineView.pipelineIds.forEach {
+            pipelineView.pipelineIds?.forEach {
                 pipelineViewGroupDao.create(
                     dslContext = context,
                     projectId = projectId,
@@ -421,7 +426,7 @@ class PipelineViewGroupService @Autowired constructor(
                 .filter { pipelineViewService.matchView(previewCondition, it) }
                 .map { it.pipelineId }
         } else {
-            pipelineView.pipelineIds.filter { allPipelineInfoMap.containsKey(it) }
+            pipelineView.pipelineIds?.filter { allPipelineInfoMap.containsKey(it) } ?: emptyList()
         }
 
         // 新增流水线 = 新流水线 - 老流水线
