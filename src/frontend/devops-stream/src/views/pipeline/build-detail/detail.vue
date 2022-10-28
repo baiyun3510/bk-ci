@@ -90,19 +90,20 @@
                 </span>
             </p>
 
-            <div v-bk-tooltips="computedOptToolTip" class="nav-button" v-if="buildDetail.status === 'RUNNING'">
-                <bk-button class="detail-button" @click="cancleBuild" :loading="isOperating" :disabled="!curPipeline.enabled || !permission">{{$t('pipeline.cancelBuild')}}</bk-button>
-            </div>
-            <div v-bk-tooltips="computedOptToolTip" class="nav-button" v-else>
-                <bk-button class="detail-button" @click="rebuild" :loading="isOperating" :disabled="!curPipeline.enabled || !permission">{{$t('pipeline.rebuild')}}</bk-button>
-            </div>
+                <div v-bk-tooltips="computedOptToolTip" class="nav-button" v-if="['RUNNING', 'PREPARE_ENV', 'QUEUE', 'LOOP_WAITING', 'CALL_WAITING', 'REVIEWING', 'TRIGGER_REVIEWING'].includes(buildDetail.status)">
+                    <bk-button class="detail-button" @click="cancleBuild" :loading="isOperating" :disabled="!curPipeline.enabled || !permission">{{$t('pipeline.cancelBuild')}}</bk-button>
+                </div>
+                <div v-bk-tooltips="computedOptToolTip" class="nav-button" v-else>
+                    <bk-button class="detail-button" @click="rebuild" :loading="isOperating" :disabled="!curPipeline.enabled || !permission">{{$t('pipeline.rebuild')}}</bk-button>
+                </div>
+            </section>
+            <pipeline
+                class="detail-stages"
+                :editable="false"
+                :is-exec-detail="true"
+                :pipeline="{ stages: stageList }"
+            ></pipeline>
         </section>
-        <pipeline
-            class="detail-stages"
-            :editable="false"
-            :is-exec-detail="true"
-            :pipeline="{ stages: stageList }"
-        ></pipeline>
     </article>
 </template>
 
