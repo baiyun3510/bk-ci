@@ -28,6 +28,7 @@
 package com.tencent.devops.stream.trigger.service
 
 import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.event.dispatcher.mq.MQEventDispatcher
 import com.tencent.devops.common.redis.RedisOperation
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,7 +41,7 @@ class TXGitCheckService @Autowired constructor(
     client: Client,
     redisOperation: RedisOperation,
     private val streamTriggerTokenService: StreamTriggerTokenService,
-    private val streamEventDispatcher: MQEventDispatcher
+    private val streamEventDispatcher: SampleEventDispatcher
 ) : GitCheckService(
     client = client,
     redisOperation = redisOperation,
