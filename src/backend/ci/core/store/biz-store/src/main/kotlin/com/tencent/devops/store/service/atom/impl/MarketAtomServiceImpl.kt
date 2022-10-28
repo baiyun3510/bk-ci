@@ -219,11 +219,11 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
     @Autowired
     lateinit var client: Client
 
-    @Value("\${store.defaulAtomErrorCodoLength:6}")
-    private var defaulAtomErrorCodoLength: Int = 6
+    @Value("\${store.defaultAtomErrorCodeLength:6}")
+    private var defaultAtomErrorCodeLength: Int = 6
 
-    @Value("\${store.defaulAtomErrorCodoPrefix:8}")
-    private lateinit var defaulAtomErrorCodoPrefix: String
+    @Value("\${store.defaultAtomErrorCodePrefix:8}")
+    private lateinit var defaultAtomErrorCodePrefix: String
 
     companion object {
         private val logger = LoggerFactory.getLogger(MarketAtomServiceImpl::class.java)
@@ -634,15 +634,6 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
         return Result(showVersionInfo)
     }
 
-    private fun getDuplicateData(strList: List<String>): List<String> {
-        val set = mutableSetOf<String>()
-        val duplicateData = mutableListOf<String>()
-        strList.forEach {
-            if (set.contains(it)) duplicateData.add(it) else set.add(it)
-        }
-        return duplicateData
-    }
-
     override fun updateAtomErrorCodeInfo(
         userId: String,
         projectCode: String,
@@ -671,7 +662,7 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
             }
             // 校验code码是否符合插件自定义错误码规范
             errorCodes.forEach {
-                if ((it.length != defaulAtomErrorCodoLength) || (!it.startsWith(defaulAtomErrorCodoPrefix))) {
+                if ((it.length != defaultAtomErrorCodeLength) || (!it.startsWith(defaultAtomErrorCodePrefix))) {
                     throw ErrorCodeException(
                         errorCode = StoreMessageCode.USER_REPOSITORY_ERROR_JSON_FIELD_IS_INVALID
                     )
@@ -710,6 +701,15 @@ abstract class MarketAtomServiceImpl @Autowired constructor() : MarketAtomServic
             )
         }
         return Result(true)
+    }
+
+    private fun getDuplicateData(strList: List<String>): List<String> {
+        val set = mutableSetOf<String>()
+        val duplicateData = mutableListOf<String>()
+        strList.forEach {
+            if (set.contains(it)) duplicateData.add(it) else set.add(it)
+        }
+        return duplicateData
     }
 
     @Suppress("UNCHECKED_CAST")

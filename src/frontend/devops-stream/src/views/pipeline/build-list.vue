@@ -30,12 +30,7 @@
         <section class="main-body section-box">
             <section class="build-filter">
                 <bk-input v-model="filterData.commitMsg" class="filter-item w300" :placeholder="$t('pipeline.commitMsg')"></bk-input>
-                <bk-member-selector
-                    class="filter-item"
-                    api="https://api.open.woa.com/api/c/compapi/v2/usermanage/fs_list_users/"
-                    :placeholder="$t('pipeline.actor')"
-                    v-model="filterData.triggerUser"
-                ></bk-member-selector>
+                <bk-input v-model="filterData.triggerUser" name="triggerUser" class="filter-item w300" :placeholder="$t('pipeline.actor')"></bk-input>
                 <bk-select v-model="filterData.branch"
                     class="filter-item"
                     :placeholder="$t('pipeline.branch')"
@@ -51,28 +46,32 @@
                         :name="option">
                     </bk-option>
                 </bk-select>
-                 <bk-select v-model="filterData.event"
+                 <bk-select
+                    v-model="filterData.event"
                     class="filter-item"
                     :placeholder="$t('pipeline.event')"
+                    :loading="isLoadingEvent"
                     multiple
                     searchable
-                    :loading="isLoadingEvent"
                     @toggle="toggleFilterEvent"
                 >
-                    <bk-option v-for="event in eventList"
+                    <bk-option
+                        v-for="event in eventList"
                         :key="event.id"
                         :id="event.id"
                         :name="event.name">
                     </bk-option>
                 </bk-select>
-                <bk-select v-model="filterData[filter.id]"
+                <bk-select
                     v-for="filter in filterList"
                     :key="filter.id"
-                    class="filter-item"
                     :placeholder="filter.placeholder"
+                    class="filter-item"
                     multiple
+                    @change="(val) => handleStatusChange(val, filter.id)"
                 >
-                    <bk-option v-for="option in filter.data"
+                    <bk-option
+                        v-for="option in filter.data"
                         :key="option.id"
                         :id="option.id"
                         :name="option.name">
@@ -110,12 +109,7 @@
                 <bk-table-column :label="$t('pipeline.commitMsg')">
                     <template slot-scope="props">
                         <section class="commit-message">
-                            <i
-                                :class="getIconClass(props.row.buildHistory.status)"
-                                v-bk-tooltips="{
-                                    content: props.row.buildHistory.stageStatus && props.row.buildHistory.stageStatus[0] && props.row.buildHistory.stageStatus[0].showMsg
-                                }"
-                            ></i>
+                            <i :class="getIconClass(props.row.buildHistory.status)"></i>
                             <p>
                                 <span class="message">{{ props.row.gitRequestEvent.buildTitle }}</span>
                                 <span class="info">{{ props.row.displayName }} #{{ props.row.buildHistory.buildNum }}：{{ props.row.reason }}</span>
@@ -287,12 +281,10 @@
     import '@blueking/bkui-form/dist/bkui-form.css'
     import UiTips from '@/components/ui-form/tips.vue'
     import UiSelector from '@/components/ui-form/selector.vue'
-    import UiCompanyStaff from '@/components/ui-form/company-staff.vue'
     const BkUiForm = createForm({
         components: {
             tips: UiTips,
-            selector: UiSelector,
-            companyStaff: UiCompanyStaff
+            selector: UiSelector
         }
     })
 
@@ -318,7 +310,7 @@
             const getFilterData = () => {
                 return {
                     commitMsg: commitMsg || '',
-                    triggerUser: (triggerUser && triggerUser.split(',')) || [],
+                    triggerUser: triggerUser || '',
                     branch: (branch && branch.split(',')) || [],
                     event: (event && event.split(',')) || [],
                     status: (status && status.split(',')) || [],
@@ -340,9 +332,14 @@
                         id: 'status',
                         placeholder: this.$t('status'),
                         data: [
-                            { name: this.$t('pipeline.succeed'), id: 'SUCCEED' },
-                            { name: this.$t('pipeline.failed'), id: 'FAILED' },
-                            { name: this.$t('pipeline.canceled'), id: 'CANCELED' }
+                            { name: this.$t('pipeline.succeed'), val: ['SUCCEED'], id: 'succeed' },
+                            { name: this.$t('pipeline.failed'), val: ['FAILED'], id: 'failed' },
+                            { name: this.$t('pipeline.canceled'), val: ['CANCELED'], id: 'canceled' },
+                            { name: this.$t('pipeline.queue'), val: ['QUEUE', 'QUEUE_CACHE'], id: 'queue' },
+                            { name: this.$t('pipeline.queueTimeout'), val: ['QUEUE_TIMEOUT'], id: 'queueTimeout' },
+                            { name: this.$t('pipeline.running'), val: ['RUNNING'], id: 'running' },
+                            { name: this.$t('pipeline.reviewing'), val: ['REVIEWING', 'TRIGGER_REVIEWING'], id: 'reviewing' },
+                            { name: this.$t('pipeline.stageSuccess'), val: ['STAGE_SUCCESS'], id: 'stageSuccess' },
                         ]
                     }
                 ],
@@ -458,6 +455,12 @@
                 return [getPipelineStatusClass(status), ...getPipelineStatusCircleIconCls(status)]
             },
 
+            handleStatusChange (val, id) {
+                const filter = this.filterList.find(filter => filter.id === id)
+                const options = filter.data.filter(data => val.includes(data.id))
+                this.filterData[id] = options.map(opstion => opstion.val).flat()
+            },
+
             toggleFilterBranch (isOpen) {
                 if (isOpen) {
                     this.isLoadingBranch = true
@@ -555,7 +558,7 @@
                 this.compactPaging.current = 1
                 this.filterData = {
                     commitMsg: '',
-                    triggerUser: [],
+                    triggerUser: '',
                     branch: [],
                     event: [],
                     status: [],
@@ -587,11 +590,14 @@
             },
 
             getBuildData () {
+                let { triggerUser } = this.filterData
+                triggerUser = triggerUser ? triggerUser.split(',') : []
                 const params = {
                     page: this.compactPaging.current,
                     pageSize: this.compactPaging.limit,
                     pipelineId: this.curPipeline.pipelineId,
                     ...this.filterData,
+                    triggerUser
                 }
                 return pipelines.getPipelineBuildList(this.projectId, params).then((res = {}) => {
                     this.buildList = (res.records || []).map((build) => {
@@ -633,7 +639,7 @@
             getPipelineBranchApi (query = {}) {
                 const params = {
                     page: 1,
-                    pageSize: 100,
+                    perPage: 100,
                     projectId: this.projectId,
                     ...query
                 }
@@ -690,7 +696,7 @@
             getBranchCommits (value, options, query = {}) {
                 const params = {
                     page: 1,
-                    pageSize: 100,
+                    perPage: 100,
                     projectId: this.projectId,
                     branch: this.formData.branch,
                     ...query
@@ -823,7 +829,7 @@
             resetFilter () {
                 this.filterData = {
                     commitMsg: '',
-                    triggerUser: [],
+                    triggerUser: '',
                     branch: [],
                     event: [],
                     status: [],
@@ -947,7 +953,7 @@
                 &.executing {
                     font-size: 14px;
                 }
-                &.icon-exclamation, &.icon-exclamation-triangle, &.icon-clock, &.stream-reviewing-2 {
+                &.icon-exclamation, &.icon-exclamation-triangle, &.icon-clock {
                     font-size: 24px;
                 }
                 &.running {
