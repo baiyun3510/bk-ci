@@ -121,7 +121,8 @@ class ProjectUserRefreshService @Autowired constructor(
                         projectUserDao.delete(dslContext, it.userId)
                         logger.info("user ${it.userId} is level office, delete t_user info")
                     } else if (tofDeptInfo.centerId.toInt() != it.centerId
-                        || tofDeptInfo.deptId.toInt() != it.deptId) {
+                        || tofDeptInfo.deptId.toInt() != it.deptId
+                        || tofDeptInfo.centerName != it.centerName) {
                         logger.info(
                             "${it.userId} cent id is diff, " +
                                 "tof ${tofDeptInfo.centerId} ${tofDeptInfo.centerName}, " +
