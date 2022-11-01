@@ -33,11 +33,13 @@ import com.tencent.devops.project.api.op.OpUserResource
 import com.tencent.devops.project.pojo.UserInfo
 import com.tencent.devops.project.pojo.user.UserDeptDetail
 import com.tencent.devops.project.service.ProjectUserRefreshService
+import com.tencent.devops.project.service.tof.TOFService
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class OpUserResourceImpl @Autowired constructor(
-    val projectUserRefreshService: ProjectUserRefreshService
+    val projectUserRefreshService: ProjectUserRefreshService,
+    val tofService: TOFService
 ) : OpUserResource {
 
     override fun refreshUserGroup(userId: String): Result<UserDeptDetail?> {
@@ -62,5 +64,9 @@ class OpUserResourceImpl @Autowired constructor(
 
     override fun createPublicAccount(userInfo: UserInfo): Result<Boolean> {
         return Result(projectUserRefreshService.createPublicAccount(userInfo))
+    }
+
+    override fun getDeptFromTof(userId: String): Result<UserDeptDetail?> {
+        return Result(tofService.getDeptFromTof(operator = null, userId = userId, bkTicket = ""))
     }
 }

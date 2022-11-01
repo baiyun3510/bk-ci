@@ -89,4 +89,11 @@ interface OpUserResource {
     fun createPublicAccount(
         userInfo: UserInfo
     ): Result<Boolean>
+
+    @ApiOperation("获取用户组织架构信息")
+    @GET
+    @Path("/getDeptFromTof")
+    fun getDeptFromTof(
+        userId: String
+    ): Result<UserDeptDetail?>
 }
