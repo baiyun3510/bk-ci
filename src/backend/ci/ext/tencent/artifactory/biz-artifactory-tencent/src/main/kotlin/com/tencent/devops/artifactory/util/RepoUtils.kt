@@ -115,8 +115,7 @@ object RepoUtils {
                 modifiedTime = LocalDateTime.parse(lastModifiedDate, DateTimeFormatter.ISO_DATE_TIME).timestamp(),
                 checksums = FileChecksums(sha256, "", md5 ?: ""),
                 meta = metadata.entries.associate { Pair(it.key, it.value.toString()) },
-                nodeMetadata = nodeMetadata,
-                createdBy = createdBy
+                nodeMetadata = nodeMetadata
             )
         }
     }
