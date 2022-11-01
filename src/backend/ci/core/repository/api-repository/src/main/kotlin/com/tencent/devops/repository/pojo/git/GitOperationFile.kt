@@ -24,21 +24,27 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.tencent.devops.dispatch.bcs
 
-import com.tencent.devops.common.service.MicroService
-import com.tencent.devops.common.service.MicroServiceApplication
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.scheduling.annotation.EnableScheduling
+package com.tencent.devops.repository.pojo.git
 
-@MicroService
-@EnableScheduling
-@ComponentScan(
-    "com.tencent.devops.dispatch.bcs",
-    "com.tencent.devops.common.dispatch.sdk"
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.tencent.devops.repository.pojo.enums.GitCodeFileEncoding
+import io.swagger.annotations.ApiModelProperty
+
+data class GitOperationFile(
+    @JsonProperty("file_path")
+    @ApiModelProperty(name = "file_path")
+    val filePath: String,
+    @JsonProperty("branch_name")
+    @ApiModelProperty(name = "branch_name")
+    val branch: String,
+    @JsonProperty("encoding")
+    @ApiModelProperty(name = "encoding")
+    val encoding: GitCodeFileEncoding = GitCodeFileEncoding.TEXT,
+    @JsonProperty("content")
+    @ApiModelProperty(name = "content")
+    val content: String,
+    @JsonProperty("commit_message")
+    @ApiModelProperty(name = "commit_message")
+    val commitMessage: String
 )
-class DispatchBcsApplication
-
-fun main(args: Array<String>) {
-    MicroServiceApplication.run(DispatchBcsApplication::class, args)
-}

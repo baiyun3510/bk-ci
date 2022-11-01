@@ -25,26 +25,43 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.repository.pojo.git
+package com.tencent.devops.stream.dao
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.tencent.devops.repository.pojo.enums.GitCodeFileEncoding
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.model.stream.tables.TRepositoryConf
+import org.jooq.DSLContext
+import org.jooq.Record1
+import org.jooq.Result
+import org.springframework.stereotype.Repository
 
-data class GitCreateFile(
-    @JsonProperty("file_path")
-    @ApiModelProperty(name = "file_path")
-    val filePath: String,
-    @JsonProperty("branch_name")
-    @ApiModelProperty(name = "branch_name")
-    val branch: String,
-    @JsonProperty("encoding")
-    @ApiModelProperty(name = "encoding")
-    val encoding: GitCodeFileEncoding = GitCodeFileEncoding.TEXT,
-    @JsonProperty("content")
-    @ApiModelProperty(name = "content")
-    val content: String,
-    @JsonProperty("commit_message")
-    @ApiModelProperty(name = "commit_message")
-    val commitMessage: String
-)
+@Repository
+class StreamRepositoryConfDao {
+
+    fun getRepoByGitDomain(
+        dslContext: DSLContext,
+        gitDomain: String,
+        limit: Int
+    ): Result<Record1<Long>> {
+        with(TRepositoryConf.T_REPOSITORY_CONF) {
+            return dslContext.select(ID).from(this)
+                .where(HOME_PAGE.like("%$gitDomain%"))
+                .limit(limit)
+                .fetch()
+        }
+    }
+
+    fun updateGitDomainByIds(
+        dslContext: DSLContext,
+        oldGitDomain: String,
+        newGitDomain: String,
+        idList: List<Long>
+    ): Int {
+        with(TRepositoryConf.T_REPOSITORY_CONF) {
+            return dslContext.update(this)
+                .set(URL, URL.replace(oldGitDomain, newGitDomain))
+                .set(HOME_PAGE, HOME_PAGE.replace(oldGitDomain, newGitDomain))
+                .set(GIT_HTTP_URL, GIT_HTTP_URL.replace(oldGitDomain, newGitDomain))
+                .set(GIT_SSH_URL, GIT_SSH_URL.replace(oldGitDomain, newGitDomain))
+                .where(ID.`in`(idList)).execute()
+        }
+    }
+}

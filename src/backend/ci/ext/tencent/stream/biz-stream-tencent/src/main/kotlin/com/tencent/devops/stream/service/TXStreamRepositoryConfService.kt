@@ -25,10 +25,44 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":core:dispatch-bcs:biz-dispatch-bcs"))
-    api(project(":ext:tencent:common:common-digest-tencent"))
-    api(project(":ext:tencent:common:common-auth:common-auth-tencent"))
+package com.tencent.devops.stream.service
+
+import com.tencent.devops.stream.dao.StreamRepositoryConfDao
+import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Primary
+import org.springframework.stereotype.Service
+
+@Primary
+@Service
+class TXStreamRepositoryConfService @Autowired constructor(
+    private val dslContext: DSLContext,
+    private val streamRepositoryConfDao: StreamRepositoryConfDao
+) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(TXStreamRepositoryConfService::class.java)
+    }
+
+    fun updateGitDomain(
+        oldGitDomain: String,
+        newGitDomain: String,
+        limitNumber: Int
+    ): Int {
+        logger.info(
+            "TXStreamRepositoryConfService|updateGitDomain|oldGitDomain|$oldGitDomain" +
+                "|newGitDomain|$newGitDomain|limitNumber|$limitNumber"
+        )
+        val idList = streamRepositoryConfDao.getRepoByGitDomain(
+            dslContext = dslContext,
+            gitDomain = oldGitDomain,
+            limit = limitNumber
+        ).map { it.value1() }
+        return streamRepositoryConfDao.updateGitDomainByIds(
+            dslContext = dslContext,
+            oldGitDomain = oldGitDomain,
+            newGitDomain = newGitDomain,
+            idList = idList
+        )
+    }
 }
-
-
