@@ -27,7 +27,7 @@
 
 package com.tencent.devops.plugin.init
 
-import com.tencent.devops.common.event.annotation.StreamEventConsumer
+import com.tencent.devops.common.event.annotation.EventConsumer
 import com.tencent.devops.common.stream.constants.StreamBinding
 import com.tencent.devops.plugin.api.pojo.GitWebhookUnlockEvent
 import com.tencent.devops.plugin.listener.git.GitWebhookUnlockListener
@@ -43,7 +43,7 @@ class GitWebhookUnlockConfiguration {
         const val STREAM_CONSUMER_GROUP = "plugin-service"
     }
 
-    @StreamEventConsumer(StreamBinding.QUEUE_GIT_WEBHOOK_UNLOCK_EVENT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.QUEUE_GIT_WEBHOOK_UNLOCK_EVENT, STREAM_CONSUMER_GROUP)
     fun metricsQualityDailyReportListener(
         @Autowired listener: GitWebhookUnlockListener
     ): Consumer<Message<GitWebhookUnlockEvent>> {

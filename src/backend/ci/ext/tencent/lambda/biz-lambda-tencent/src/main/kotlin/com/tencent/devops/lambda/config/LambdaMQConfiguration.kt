@@ -26,7 +26,7 @@
  */
 package com.tencent.devops.lambda.config
 
-import com.tencent.devops.common.event.annotation.StreamEventConsumer
+import com.tencent.devops.common.event.annotation.EventConsumer
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildCommitFinishEvent
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildFinishBroadCastEvent
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildTaskFinishBroadCastEvent
@@ -54,7 +54,7 @@ class LambdaMQConfiguration {
     /**
      * 构建结束广播交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
     fun pipelineBuildFinishListener(
         @Autowired lambdaBuildFinishListener: LambdaBuildFinishListener
     ): Consumer<Message<PipelineBuildFinishBroadCastEvent>> {
@@ -66,7 +66,7 @@ class LambdaMQConfiguration {
     /**
      * 任务结束广播交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_ELEMENT_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_ELEMENT_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
     fun pipelineBuildElementFinishListener(
         @Autowired lambdaBuildTaskFinishListener: LambdaBuildTaskFinishListener
     ): Consumer<Message<PipelineBuildTaskFinishBroadCastEvent>> {
@@ -78,7 +78,7 @@ class LambdaMQConfiguration {
     /**
      * 构建project创建广播交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PROJECT_CREATE_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PROJECT_CREATE_FANOUT, STREAM_CONSUMER_GROUP)
     fun projectCreateListener(
         @Autowired lambdaProjectService: LambdaProjectService
     ): Consumer<Message<ProjectCreateBroadCastEvent>> {
@@ -90,7 +90,7 @@ class LambdaMQConfiguration {
     /**
      * 构建project更新广播交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PROJECT_UPDATE_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PROJECT_UPDATE_FANOUT, STREAM_CONSUMER_GROUP)
     fun projectUpdateListener(
         @Autowired lambdaProjectService: LambdaProjectService
     ): Consumer<Message<ProjectUpdateBroadCastEvent>> {
@@ -102,7 +102,7 @@ class LambdaMQConfiguration {
     /**
      * 构建model更新广播交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PIPELINE_EXTENDS_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_EXTENDS_FANOUT, STREAM_CONSUMER_GROUP)
     fun pipelineModelAnalysisListener(
         @Autowired lambdaPipelineModelListener: LambdaPipelineModelListener
     ): Consumer<Message<PipelineModelAnalysisEvent>> {
@@ -114,7 +114,7 @@ class LambdaMQConfiguration {
     /**
      * webhook commits完成事件交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_COMMIT_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_COMMIT_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
     fun pipelineBuildCommitsFinishListener(
         @Autowired lambdaBuildCommitFinishListener: LambdaBuildCommitFinishListener
     ): Consumer<Message<PipelineBuildCommitFinishEvent>> {

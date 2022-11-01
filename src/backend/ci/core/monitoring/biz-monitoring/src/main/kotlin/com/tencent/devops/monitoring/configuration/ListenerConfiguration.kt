@@ -27,7 +27,7 @@
 
 package com.tencent.devops.monitoring.configuration
 
-import com.tencent.devops.common.event.annotation.StreamEventConsumer
+import com.tencent.devops.common.event.annotation.EventConsumer
 import com.tencent.devops.common.event.pojo.measure.AtomMonitorReportBroadCastEvent
 import com.tencent.devops.common.stream.constants.StreamBinding
 import com.tencent.devops.monitoring.client.InfluxdbClient
@@ -54,7 +54,7 @@ class ListenerConfiguration {
         @Autowired meterRegistry: MeterRegistry
     ) = AtomMonitorReportListener(influxdbClient, monitorProcessors, meterRegistry)
 
-    @StreamEventConsumer(StreamBinding.EXCHANGE_ATOM_MONITOR_DATA_REPORT_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_ATOM_MONITOR_DATA_REPORT_FANOUT, STREAM_CONSUMER_GROUP)
     fun atomMonitorReportListener(
         @Autowired listener: AtomMonitorReportListener
     ): Consumer<Message<AtomMonitorReportBroadCastEvent>> {

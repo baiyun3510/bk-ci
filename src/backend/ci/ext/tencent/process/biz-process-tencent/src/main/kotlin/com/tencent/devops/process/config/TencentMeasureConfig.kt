@@ -27,7 +27,7 @@
 
 package com.tencent.devops.process.config
 
-import com.tencent.devops.common.event.annotation.StreamEventConsumer
+import com.tencent.devops.common.event.annotation.EventConsumer
 import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildFinishBroadCastEvent
@@ -108,7 +108,7 @@ class TencentMeasureConfig {
     /**
      * 构建结束广播交换机
      */
-    @StreamEventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
     fun pipelineBuildMeasureListener(
         @Autowired listener: MeasurePipelineBuildFinishListener
     ): Consumer<Message<PipelineBuildFinishBroadCastEvent>> {
