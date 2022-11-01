@@ -98,4 +98,13 @@ interface OpUserResource {
         @ApiParam("用户ID", required = true)
         userId: String
     ): Result<UserDeptDetail?>
+
+    @ApiOperation("测试刷新接口")
+    @GET
+    @Path("/testRefresh")
+    fun testRefresh(
+        @QueryParam("userId")
+        @ApiParam("用户ID", required = true)
+        userId: String
+    ): Result<Boolean>
 }

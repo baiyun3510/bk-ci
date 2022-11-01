@@ -47,6 +47,7 @@ import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.Arrays
 import java.util.concurrent.Executors
 
 @Service
@@ -72,6 +73,12 @@ class ProjectUserRefreshService @Autowired constructor(
         }
     }
 
+    fun testRefresh(userId: String): Boolean {
+        val byUserId = projectUserDao.getByUserId(dslContext, userId)
+        updateInfoByTof(listOf(byUserId) as List<TUserRecord>)
+        return true
+    }
+
     fun refreshAllUser(): Boolean {
         executorService.execute {
             val startTime = System.currentTimeMillis()
@@ -81,8 +88,10 @@ class ProjectUserRefreshService @Autowired constructor(
             var continueFlag = true
             while (continueFlag) {
                 val pageLimit = PageUtil.convertPageSizeToSQLLimit(page, pageSize)
-                logger.info("refreshAllUser page: $page , pageSize: $pageSize, " +
-                    "limit: ${pageLimit.limit}, offset: ${pageLimit.offset}")
+                logger.info(
+                    "refreshAllUser page: $page , pageSize: $pageSize, " +
+                        "limit: ${pageLimit.limit}, offset: ${pageLimit.offset}"
+                )
                 val userList = projectUserService.listUser(pageLimit.limit, pageLimit.offset)
                 if (userList == null) {
                     continueFlag = false
@@ -111,7 +120,8 @@ class ProjectUserRefreshService @Autowired constructor(
                     if (tofDeptInfo == null) {
                         projectUserDao.delete(dslContext, it.userId)
                         logger.info("user ${it.userId} is level office, delete t_user info")
-                    } else if (tofDeptInfo.centerId.toInt() != it.centerId || tofDeptInfo.deptId.toInt() != it.deptId) {
+                    } else if (tofDeptInfo.centerId.toInt() != it.centerId
+                        || tofDeptInfo.deptId.toInt() != it.deptId) {
                         logger.info(
                             "${it.userId} cent id is diff, " +
                                 "tof ${tofDeptInfo.centerId} ${tofDeptInfo.centerName}, " +
@@ -249,10 +259,12 @@ class ProjectUserRefreshService @Autowired constructor(
                             )
                         )
                     } else {
-                        logger.info("[${it.creator}] fixGitCIProjectInfo getDevopsUserInfo: " +
-                            "creatorBgId=${devopsUser.bgId}, creatorBgName=${devopsUser.bgName}" +
-                            "creatorDeptId=${devopsUser.deptId}, creatorDeptName=${devopsUser.deptName}" +
-                            "creatorCenterId=${devopsUser.centerId}, creatorCenterName=${devopsUser.centerName}")
+                        logger.info(
+                            "[${it.creator}] fixGitCIProjectInfo getDevopsUserInfo: " +
+                                "creatorBgId=${devopsUser.bgId}, creatorBgName=${devopsUser.bgName}" +
+                                "creatorDeptId=${devopsUser.deptId}, creatorDeptName=${devopsUser.deptName}" +
+                                "creatorCenterId=${devopsUser.centerId}, creatorCenterName=${devopsUser.centerName}"
+                        )
                         count += projectFreshDao.fixProjectInfo(
                             dslContext = dslContext,
                             id = it.id,

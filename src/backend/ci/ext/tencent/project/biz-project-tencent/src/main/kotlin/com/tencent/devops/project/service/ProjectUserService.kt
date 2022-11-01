@@ -45,14 +45,14 @@ class ProjectUserService @Autowired constructor(
     fun getUserDept(userId: String): UserDeptDetail? {
         val userRecord = userDao.get(dslContext, userId) ?: return null
         return UserDeptDetail(
-                bgName = userRecord!!.bgName,
-                bgId = userRecord!!.bgId?.toString() ?: "",
-                centerName = userRecord.centerName,
-                centerId = userRecord!!.centerId?.toString() ?: "",
-                deptName = userRecord.deptName,
-                deptId = userRecord.deptId?.toString() ?: "",
-                groupName = userRecord.groupName,
-                groupId = userRecord.groypId?.toString() ?: ""
+            bgName = userRecord!!.bgName,
+            bgId = userRecord!!.bgId?.toString() ?: "",
+            centerName = userRecord.centerName,
+            centerId = userRecord!!.centerId?.toString() ?: "",
+            deptName = userRecord.deptName,
+            deptId = userRecord.deptId?.toString() ?: "",
+            groupName = userRecord.groupName,
+            groupId = userRecord.groypId?.toString() ?: ""
         )
     }
 

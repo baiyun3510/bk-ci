@@ -69,4 +69,8 @@ class OpUserResourceImpl @Autowired constructor(
     override fun getDeptFromTof(userId: String): Result<UserDeptDetail?> {
         return Result(tofService.getDeptFromTof(operator = null, userId = userId, bkTicket = ""))
     }
+
+    override fun testRefresh(userId: String): Result<Boolean> {
+        return Result(projectUserRefreshService.testRefresh(userId))
+    }
 }

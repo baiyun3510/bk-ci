@@ -82,4 +82,12 @@ class ProjectUserDao {
                 .execute()
         }
     }
+
+    fun getByUserId(dslContext: DSLContext, userId: String): TUserRecord? {
+        return with(TUser.T_USER) {
+            dslContext.selectFrom(this)
+                .where(USER_ID.eq(userId))
+                .fetchOne()
+        }
+    }
 }
