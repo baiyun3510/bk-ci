@@ -654,28 +654,29 @@ open class MarketAtomTask : ITask() {
         }
         // 添加插件对接平台错误码信息
         val platformCode = atomResult?.platformCode
-        if (!platformCode.isNullOrBlank()) {
-            val isPlatformCodeRegistered = atomApi.isPlatformCodeRegistered(platformCode)
-            if (isPlatformCodeRegistered) {
-                addPlatformCode(platformCode)
-                atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
-                val platformErrorCode = atomResult?.platformErrorCode
-                if (platformErrorCode != null) {
-                    addPlatformErrorCode(platformErrorCode)
-                }
-            } else {
-                logger.warn("the platformCode:$platformCode Not registered")
-            }
-        }
-
 //        if (!platformCode.isNullOrBlank()) {
-//            addPlatformCode(platformCode)
-//            atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
+//            val isPlatformCodeRegistered = atomApi.isPlatformCodeRegistered(platformCode).data ?: false
+//            if (isPlatformCodeRegistered) {
+//                addPlatformCode(platformCode)
+//                atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
+//                val platformErrorCode = atomResult?.platformErrorCode
+//                if (platformErrorCode != null) {
+//                    addPlatformErrorCode(platformErrorCode)
+//                }
+//            } else {
+//                logger.warn("PlatformCode:$platformCode has not been registered and failed to enter " +
+//                        "the library. Please contact Devops-helper to register first")
+//            }
 //        }
-//        val platformErrorCode = atomResult?.platformErrorCode
-//        if (platformErrorCode != null) {
-//            addPlatformErrorCode(platformErrorCode)
-//        }
+
+        if (!platformCode.isNullOrBlank()) {
+            addPlatformCode(platformCode)
+            atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
+        }
+        val platformErrorCode = atomResult?.platformErrorCode
+        if (platformErrorCode != null) {
+            addPlatformErrorCode(platformErrorCode)
+        }
         deletePluginFile(atomTmpSpace)
         val success: Boolean
         if (atomResult == null) {
