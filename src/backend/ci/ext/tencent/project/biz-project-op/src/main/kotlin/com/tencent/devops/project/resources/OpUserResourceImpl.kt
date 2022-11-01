@@ -38,8 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class OpUserResourceImpl @Autowired constructor(
-    val projectUserRefreshService: ProjectUserRefreshService,
-    val tofService: TOFService
+    val projectUserRefreshService: ProjectUserRefreshService
 ) : OpUserResource {
 
     override fun refreshUserGroup(userId: String): Result<UserDeptDetail?> {
@@ -55,22 +54,16 @@ class OpUserResourceImpl @Autowired constructor(
     }
 
     override fun fixGitCIProjectInfo(start: Long?, limit: Int?, sleep: Long?): Result<Int> {
-        return Result(projectUserRefreshService.fixGitCIProjectInfo(
-            start = start ?: 0L,
-            limitCount = limit ?: 5,
-            sleepTime = sleep ?: 500
-        ))
+        return Result(
+            projectUserRefreshService.fixGitCIProjectInfo(
+                start = start ?: 0L,
+                limitCount = limit ?: 5,
+                sleepTime = sleep ?: 500
+            )
+        )
     }
 
     override fun createPublicAccount(userInfo: UserInfo): Result<Boolean> {
         return Result(projectUserRefreshService.createPublicAccount(userInfo))
-    }
-
-    override fun getDeptFromTof(userId: String): Result<UserDeptDetail?> {
-        return Result(tofService.getDeptFromTof(operator = null, userId = userId, bkTicket = ""))
-    }
-
-    override fun testRefresh(userId: String): Result<Boolean> {
-        return Result(projectUserRefreshService.testRefresh(userId))
     }
 }

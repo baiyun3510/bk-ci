@@ -47,7 +47,6 @@ import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.Arrays
 import java.util.concurrent.Executors
 
 @Service
@@ -71,12 +70,6 @@ class ProjectUserRefreshService @Autowired constructor(
         } else {
             synUserInfo(userRecord, userId)
         }
-    }
-
-    fun testRefresh(userId: String): Boolean {
-        val byUserId = projectUserDao.getByUserId(dslContext, userId)
-        updateInfoByTof(listOf(byUserId) as List<TUserRecord>)
-        return true
     }
 
     fun refreshAllUser(): Boolean {
@@ -120,9 +113,13 @@ class ProjectUserRefreshService @Autowired constructor(
                     if (tofDeptInfo == null) {
                         projectUserDao.delete(dslContext, it.userId)
                         logger.info("user ${it.userId} is level office, delete t_user info")
-                    } else if (tofDeptInfo.centerId.toInt() != it.centerId
-                        || tofDeptInfo.deptId.toInt() != it.deptId
-                        || tofDeptInfo.centerName != it.centerName) {
+                    } else if (
+                        tofDeptInfo.bgId.toInt() != it.bgId ||
+                        tofDeptInfo.bgName != it.bgName ||
+                        tofDeptInfo.deptId.toInt() != it.deptId ||
+                        tofDeptInfo.deptName != it.deptName ||
+                        tofDeptInfo.centerId.toInt() != it.centerId ||
+                        tofDeptInfo.centerName != it.centerName) {
                         logger.info(
                             "${it.userId} cent id is diff, " +
                                 "tof ${tofDeptInfo.centerId} ${tofDeptInfo.centerName}, " +

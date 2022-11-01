@@ -89,22 +89,4 @@ interface OpUserResource {
     fun createPublicAccount(
         userInfo: UserInfo
     ): Result<Boolean>
-
-    @ApiOperation("获取用户组织架构信息")
-    @GET
-    @Path("/getDeptFromTof")
-    fun getDeptFromTof(
-        @QueryParam("userId")
-        @ApiParam("用户ID", required = true)
-        userId: String
-    ): Result<UserDeptDetail?>
-
-    @ApiOperation("测试刷新接口")
-    @POST
-    @Path("/testRefresh")
-    fun testRefresh(
-        @QueryParam("userId")
-        @ApiParam("用户ID", required = true)
-        userId: String
-    ): Result<Boolean>
 }
