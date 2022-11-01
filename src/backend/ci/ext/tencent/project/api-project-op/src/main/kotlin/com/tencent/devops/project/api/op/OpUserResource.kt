@@ -94,6 +94,8 @@ interface OpUserResource {
     @GET
     @Path("/getDeptFromTof")
     fun getDeptFromTof(
+        @QueryParam("userId")
+        @ApiParam("用户ID", required = true)
         userId: String
     ): Result<UserDeptDetail?>
 }
