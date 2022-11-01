@@ -100,7 +100,7 @@ interface OpUserResource {
     ): Result<UserDeptDetail?>
 
     @ApiOperation("测试刷新接口")
-    @GET
+    @POST
     @Path("/testRefresh")
     fun testRefresh(
         @QueryParam("userId")
