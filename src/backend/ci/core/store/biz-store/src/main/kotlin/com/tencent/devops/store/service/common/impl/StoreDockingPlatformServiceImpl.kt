@@ -36,6 +36,7 @@ import com.tencent.devops.store.pojo.common.StoreDockingPlatformInfo
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import com.tencent.devops.store.service.common.StoreDockingPlatformService
 import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -145,6 +146,12 @@ class StoreDockingPlatformServiceImpl @Autowired constructor(
     }
 
     override fun isPlatformCodeRegistered(platformCode: String): Boolean {
-        return storeDockingPlatformDao.isPlatformCodeRegistered(dslContext, platformCode)
+        val isPlatformCodeRegistered = storeDockingPlatformDao.isPlatformCodeRegistered(dslContext, platformCode)
+        logger.debug("platformCode isPlatformCodeRegistered:$isPlatformCodeRegistered")
+        return isPlatformCodeRegistered
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(StoreDockingPlatformServiceImpl::class.java)
     }
 }
