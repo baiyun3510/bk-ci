@@ -25,18 +25,44 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.stream.common
+package com.tencent.devops.stream.service
 
-enum class StreamPipelineBadgeType(val labelColor: String, val text: String, val color: String, val logo: String) {
-    // 没有找到
-    NOT_FOUND("#182132", "not found", "#FF9C01", "stream"),
+import com.tencent.devops.stream.dao.StreamRepositoryConfDao
+import org.jooq.DSLContext
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Primary
+import org.springframework.stereotype.Service
 
-    // 从来没有构建
-    NEVER_BUILD("#182132", "never build", "#FF9C01", "stream"),
+@Primary
+@Service
+class TXStreamRepositoryConfService @Autowired constructor(
+    private val dslContext: DSLContext,
+    private val streamRepositoryConfDao: StreamRepositoryConfDao
+) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(TXStreamRepositoryConfService::class.java)
+    }
 
-    // 构建成功
-    SUCCEEDED("#182132", "succeeded", "#2DCB56", "stream"),
-
-    // 构建失败
-    FAILED("#182132", "failed", "#EA3636", "stream");
+    fun updateGitDomain(
+        oldGitDomain: String,
+        newGitDomain: String,
+        limitNumber: Int
+    ): Int {
+        logger.info(
+            "TXStreamRepositoryConfService|updateGitDomain|oldGitDomain|$oldGitDomain" +
+                "|newGitDomain|$newGitDomain|limitNumber|$limitNumber"
+        )
+        val idList = streamRepositoryConfDao.getRepoByGitDomain(
+            dslContext = dslContext,
+            gitDomain = oldGitDomain,
+            limit = limitNumber
+        ).map { it.value1() }
+        return streamRepositoryConfDao.updateGitDomainByIds(
+            dslContext = dslContext,
+            oldGitDomain = oldGitDomain,
+            newGitDomain = newGitDomain,
+            idList = idList
+        )
+    }
 }

@@ -25,22 +25,39 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.process.pojo.pipeline
+package com.tencent.devops.stream.resources
 
-import com.tencent.devops.store.pojo.dto.ExtServiceBaseInfoDTO
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.web.RestResource
+import com.tencent.devops.repository.api.ServiceOauthResource
+import com.tencent.devops.stream.api.TXExternalStreamResource
+import com.tencent.devops.stream.service.TXStreamBasicSettingService
+import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriBuilder
 
-@ApiModel("扩展服务构建初始化流水线请求报文体")
-data class ExtServiceBuildInitPipelineReq(
-    @ApiModelProperty("代码仓库hashId", required = true)
-    val repositoryHashId: String,
-    @ApiModelProperty("代码仓库路径", required = true)
-    val repositoryPath: String?,
-    @ApiModelProperty("脚本任务插件Shell执行脚本", required = true)
-    val script: String,
-    @ApiModelProperty("扩展服务基本信息", required = true)
-    val extServiceBaseInfo: ExtServiceBaseInfoDTO,
-    @ApiModelProperty("构建环境依赖环境变量", required = false)
-    val buildEnv: Map<String, String>?
-)
+@RestResource
+class TXExternalStreamResourceImpl(
+    private val basicSettingService: TXStreamBasicSettingService,
+    private val client: Client
+) : TXExternalStreamResource {
+
+    override fun gitCallback(code: String, state: String): Response {
+        val gitOauthCallback = client.get(ServiceOauthResource::class).gitCallback(code = code, state = state).data!!
+        with(gitOauthCallback) {
+            if (gitOauthCallback.gitProjectId != null) {
+                basicSettingService.updateOauthSetting(
+                    gitProjectId = gitProjectId!!,
+                    userId = userId,
+                    oauthUserId = oauthUserId
+                )
+
+                // 更新项目信息
+                basicSettingService.updateProjectOrganizationInfo(
+                    projectId = gitProjectId!!.toString(),
+                    userId = oauthUserId
+                )
+            }
+            return Response.temporaryRedirect(UriBuilder.fromUri(gitOauthCallback.redirectUrl).build()).build()
+        }
+    }
+}

@@ -25,10 +25,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":core:dispatch-bcs:biz-dispatch-bcs"))
-    api(project(":ext:tencent:common:common-digest-tencent"))
-    api(project(":ext:tencent:common:common-auth:common-auth-tencent"))
-}
+package com.tencent.devops.repository.pojo.git
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.tencent.devops.repository.pojo.enums.GitCodeFileEncoding
+import io.swagger.annotations.ApiModelProperty
 
+data class GitOperationFile(
+    @JsonProperty("file_path")
+    @ApiModelProperty(name = "file_path")
+    val filePath: String,
+    @JsonProperty("branch_name")
+    @ApiModelProperty(name = "branch_name")
+    val branch: String,
+    @JsonProperty("encoding")
+    @ApiModelProperty(name = "encoding")
+    val encoding: GitCodeFileEncoding = GitCodeFileEncoding.TEXT,
+    @JsonProperty("content")
+    @ApiModelProperty(name = "content")
+    val content: String,
+    @JsonProperty("commit_message")
+    @ApiModelProperty(name = "commit_message")
+    val commitMessage: String
+)
