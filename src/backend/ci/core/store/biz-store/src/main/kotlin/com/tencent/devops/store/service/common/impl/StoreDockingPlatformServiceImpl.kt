@@ -147,7 +147,6 @@ class StoreDockingPlatformServiceImpl @Autowired constructor(
 
     override fun isPlatformCodeRegistered(platformCode: String): Boolean {
         val isPlatformCodeRegistered = storeDockingPlatformDao.isPlatformCodeRegistered(dslContext, platformCode)
-        logger.debug("platformCode isPlatformCodeRegistered:$isPlatformCodeRegistered")
         return isPlatformCodeRegistered
     }
 

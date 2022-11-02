@@ -658,6 +658,7 @@ open class MarketAtomTask : ITask() {
             val isPlatformCodeRegistered = atomApi.isPlatformCodeRegistered(platformCode).data ?: false
             if (isPlatformCodeRegistered) {
                 addPlatformCode(platformCode)
+                atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
                 val platformErrorCode = atomResult.platformErrorCode
                 if (platformErrorCode != null) {
                     addPlatformErrorCode(platformErrorCode)
@@ -667,15 +668,6 @@ open class MarketAtomTask : ITask() {
                         "the library. Please contact Devops-helper to register first")
             }
         }
-
-//        if (!platformCode.isNullOrBlank()) {
-//            addPlatformCode(platformCode)
-//            atomApi.addAtomDockingPlatforms(atomCode, setOf(platformCode))
-//        }
-//        val platformErrorCode = atomResult?.platformErrorCode
-//        if (platformErrorCode != null) {
-//            addPlatformErrorCode(platformErrorCode)
-//        }
         deletePluginFile(atomTmpSpace)
         val success: Boolean
         if (atomResult == null) {
