@@ -119,6 +119,15 @@ class ExtServiceDao {
         }
     }
 
+    fun deleteServiceById(
+        dslContext: DSLContext,
+        serviceId: String
+    ) {
+        with(TExtensionService.T_EXTENSION_SERVICE) {
+            dslContext.deleteFrom(this).where(ID.eq(serviceId)).execute()
+        }
+    }
+
     /**
      * 清空LATEST_FLAG
      */
@@ -297,19 +306,17 @@ class ExtServiceDao {
     fun getServiceByCode(
         dslContext: DSLContext,
         serviceCode: String,
-        page: Int?,
-        pageSize: Int?
+        page: Int,
+        pageSize: Int
     ): Result<TExtensionServiceRecord>? {
-        val a = TExtensionService.T_EXTENSION_SERVICE.`as`("a")
+        val tExtensionService = TExtensionService.T_EXTENSION_SERVICE
         val conditions = mutableListOf<Condition>()
-        conditions.add(a.SERVICE_CODE.eq(serviceCode))
-        conditions.add(a.DELETE_FLAG.eq(false))
-        val whereStep = dslContext.selectFrom(a).where(conditions).orderBy(a.CREATE_TIME.desc())
-        return if (null != page && null != pageSize) {
-            whereStep.limit((page - 1) * pageSize, pageSize).fetch()
-        } else {
-            whereStep.fetch()
-        }
+        conditions.add(tExtensionService.SERVICE_CODE.eq(serviceCode))
+        conditions.add(tExtensionService.DELETE_FLAG.eq(false))
+        return dslContext.selectFrom(tExtensionService)
+            .where(conditions)
+            .orderBy(tExtensionService.CREATE_TIME.desc()).limit((page - 1) * pageSize, pageSize)
+            .fetch()
     }
 
     fun countByCode(dslContext: DSLContext, serviceCode: String): Int {

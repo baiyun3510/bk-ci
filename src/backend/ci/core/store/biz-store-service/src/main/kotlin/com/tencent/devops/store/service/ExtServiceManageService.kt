@@ -27,6 +27,7 @@
 
 package com.tencent.devops.store.service
 
+import com.tencent.devops.artifactory.api.ServiceArchiveServicePkgResource
 import com.tencent.devops.common.api.constant.CommonMessageCode
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.pojo.Page
@@ -293,6 +294,12 @@ abstract class ExtServiceManageService {
             serviceName = "$serviceCode-service"
         )
         logger.info("serviceStopAppResult is :$serviceStopAppResult")
+        // 删除仓库微扩展包文件
+        val deleteServiceFileResult =
+            client.get(ServiceArchiveServicePkgResource::class).deleteServiceFile(userId, serviceCode)
+        if (deleteServiceFileResult.isNotOk()) {
+            return deleteServiceFileResult
+        }
         doServiceDeleteBus(
             userId = userId,
             serviceId = extServiceId!!,

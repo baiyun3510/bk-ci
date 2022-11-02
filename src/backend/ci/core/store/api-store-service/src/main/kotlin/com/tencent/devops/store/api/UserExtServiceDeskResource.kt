@@ -162,7 +162,6 @@ interface UserExtServiceDeskResource {
     fun listLanguage(): Result<List<String?>>
 
     @ApiOperation("微扩展取消发布")
-    @PathParam("serviceId")
     @PUT
     @Path("/release/cancel/{serviceId}")
     fun cancelRelease(
@@ -175,13 +174,27 @@ interface UserExtServiceDeskResource {
     ): Result<Boolean>
 
     @ApiOperation("微扩展确认通过测试")
-    @PathParam("serviceId")
     @PUT
     @Path("/release/passTest/{serviceId}")
     fun passTest(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
+        @ApiParam("serviceId", required = true)
+        @PathParam("serviceId")
+        serviceId: String
+    ): Result<Boolean>
+
+    @ApiOperation("重新构建")
+    @PUT
+    @Path("/release/rebuild/{serviceId}")
+    fun rebuild(
+        @ApiParam("userId", required = true)
+        @HeaderParam(AUTH_HEADER_USER_ID)
+        userId: String,
+        @ApiParam("项目代码", required = true)
+        @QueryParam("projectCode")
+        projectCode: String,
         @ApiParam("serviceId", required = true)
         @PathParam("serviceId")
         serviceId: String

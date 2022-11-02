@@ -126,7 +126,6 @@ class OpExtServiceService @Autowired constructor(
         val count = extServiceDao.countByCode(dslContext, serviceCode)
         val extensionServiceInfoList = mutableListOf<ExtensionServiceVO>()
         serviceRecord?.forEach {
-            logger.info("listServiceByCode serviceCode[$serviceCode] record[$it]")
             extensionServiceInfoList.add(
                 ExtensionServiceVO(
                     serviceId = it.id,
@@ -238,7 +237,7 @@ class OpExtServiceService @Autowired constructor(
         logger.info("deleteService userId: $userId , serviceId: $serviceId , checkPermissionFlag: $checkPermissionFlag")
         dslContext.transaction { t ->
             val context = DSL.using(t)
-            extServiceDao.deleteExtServiceData(context, serviceId)
+            extServiceDao.deleteServiceById(context, serviceId)
         }
         return Result(true)
     }

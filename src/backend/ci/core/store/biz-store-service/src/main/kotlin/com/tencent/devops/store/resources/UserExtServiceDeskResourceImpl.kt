@@ -117,4 +117,8 @@ class UserExtServiceDeskResourceImpl @Autowired constructor(
     override fun passTest(userId: String, serviceId: String): Result<Boolean> {
         return extServiceReleaseService.passTest(userId, serviceId)
     }
+
+    override fun rebuild(userId: String, projectCode: String, serviceId: String): Result<Boolean> {
+        return extServiceReleaseService.rebuild(projectCode, userId, serviceId)
+    }
 }
