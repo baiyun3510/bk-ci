@@ -41,7 +41,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
-class ServiceBcsResourceImpl @Autowired constructor(
+class ServiceKubernetesResourceImpl @Autowired constructor(
     private val kubernetesDeployService: KubernetesDeployService,
     private val kubernetesQueryService: KubernetesQueryService
 ) : ServiceKubernetesResource {

@@ -57,7 +57,7 @@ class ExtServiceCronService @Autowired constructor(
     private val extServiceDao: ExtServiceDao,
     private val extServiceFeatureDao: ExtServiceFeatureDao,
     private val extServiceKubernetesConfig: ExtServiceKubernetesConfig,
-    private val serviceNotifyService: ExtServiceNotifyService,
+    private val extServiceNotifyService: ExtServiceNotifyService,
     private val extServiceKubernetesService: ExtServiceKubernetesService,
     private val storeReleaseDao: StoreReleaseDao,
     private val extServiceKubernetesNameSpaceConfig: ExtServiceKubernetesNameSpaceConfig
@@ -112,7 +112,7 @@ class ExtServiceCronService @Autowired constructor(
                         it.latestFlag = true
                         redisOperation.delete(kubernetesDeployRedisKey)
                         // 发送版本发布通知消息
-                        serviceNotifyService.sendServiceReleaseNotifyMessage(
+                        extServiceNotifyService.sendServiceReleaseNotifyMessage(
                             serviceId = it.id,
                             sendAllAdminFlag = true,
                             templateCode = EXTENSION_RELEASE_SUCCESS_TEMPLATE
@@ -126,7 +126,7 @@ class ExtServiceCronService @Autowired constructor(
                                 it.serviceStatus = ExtServiceStatusEnum.RELEASE_DEPLOY_FAIL.status.toByte()
                                 redisOperation.delete(kubernetesDeployRedisKey)
                                 // 发送版本发布邮件
-                                serviceNotifyService.sendServiceReleaseNotifyMessage(
+                                extServiceNotifyService.sendServiceReleaseNotifyMessage(
                                     serviceId = it.id,
                                     sendAllAdminFlag = false,
                                     templateCode = EXTENSION_RELEASE_FAIL_TEMPLATE
