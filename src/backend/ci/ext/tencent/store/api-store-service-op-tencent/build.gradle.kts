@@ -27,9 +27,9 @@
 
 dependencies {
     api(project(":core:store:api-store"))
-    api(project(":ext:tencent:store:api-store-service"))
     api(project(":ext:tencent:store:api-store-op"))
     api(project(":ext:tencent:project:api-project-tencent"))
+    api(project(":ext:tencent:store:api-store-service-tencent"))
 }
 
 plugins {

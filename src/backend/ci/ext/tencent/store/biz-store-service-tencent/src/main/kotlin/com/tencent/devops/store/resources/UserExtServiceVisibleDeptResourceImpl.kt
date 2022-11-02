@@ -25,33 +25,44 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.process.api.service
+package com.tencent.devops.store.resources
 
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.process.pojo.pipeline.ExtServiceBuildInitPipelineReq
-import com.tencent.devops.process.pojo.pipeline.ExtServiceBuildInitPipelineResp
-import com.tencent.devops.process.service.ExtServiceBuildInitPipelineService
+import com.tencent.devops.store.api.UserExtServiceVisibleDeptResource
+import com.tencent.devops.store.pojo.ExtServiceVisibleDeptReq
+import com.tencent.devops.store.pojo.common.StoreVisibleDeptResp
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import com.tencent.devops.store.service.common.StoreVisibleDeptService
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
-class ServiceExtServiceBuildPipelineInitResourceImpl @Autowired constructor(
-    private val extServiceBuildInitPipelineService: ExtServiceBuildInitPipelineService
-) : ServiceExtServiceBuildPipelineInitResource {
+class UserExtServiceVisibleDeptResourceImpl @Autowired constructor(
+    val storeVisibleDeptService: StoreVisibleDeptService
+) : UserExtServiceVisibleDeptResource {
 
-    override fun initExtServiceBuildPipeline(
+    override fun addVisibleDept(
         userId: String,
-        projectCode: String,
-        extServiceBuildInitPipelineReq: ExtServiceBuildInitPipelineReq
-    ): Result<ExtServiceBuildInitPipelineResp> {
-        return extServiceBuildInitPipelineService.initPipeline(
+        serviceVisibleDeptRequest: ExtServiceVisibleDeptReq
+    ): Result<Boolean> {
+        return storeVisibleDeptService.addVisibleDept(
             userId = userId,
-            projectCode = projectCode,
-            extServiceBaseInfo = extServiceBuildInitPipelineReq.extServiceBaseInfo,
-            repositoryHashId = extServiceBuildInitPipelineReq.repositoryHashId,
-            repositoryPath = extServiceBuildInitPipelineReq.repositoryPath,
-            script = extServiceBuildInitPipelineReq.script,
-            buildEnv = extServiceBuildInitPipelineReq.buildEnv
+            storeCode = serviceVisibleDeptRequest.serviceCode,
+            deptInfos = serviceVisibleDeptRequest.deptInfos,
+            storeType = StoreTypeEnum.SERVICE
         )
+    }
+
+    override fun deleteVisibleDept(userId: String, serviceCode: String, deptIds: String): Result<Boolean> {
+        return storeVisibleDeptService.deleteVisibleDept(
+            userId = userId,
+            storeCode = serviceCode,
+            deptIds = deptIds,
+            storeType = StoreTypeEnum.SERVICE
+        )
+    }
+
+    override fun getVisibleDept(serviceCode: String): Result<StoreVisibleDeptResp?> {
+        return storeVisibleDeptService.getVisibleDept(serviceCode, StoreTypeEnum.SERVICE, null)
     }
 }

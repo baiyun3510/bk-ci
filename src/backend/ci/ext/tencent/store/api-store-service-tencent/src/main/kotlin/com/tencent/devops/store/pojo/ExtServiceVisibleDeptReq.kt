@@ -25,9 +25,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":core:store:biz-store"))
-    api(project(":ext:tencent:store:api-store-op"))
-    api(project(":ext:tencent:store:biz-store-service-tencent"))
-    api(project(":core:repository:api-repository"))
-}
+package com.tencent.devops.store.pojo
+
+import com.tencent.devops.store.pojo.common.DeptInfo
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+
+@ApiModel("微扩展可见范围")
+data class ExtServiceVisibleDeptReq(
+    @ApiModelProperty("微扩展编码", required = true)
+    val serviceCode: String,
+    @ApiModelProperty("机构列表", required = true)
+    val deptInfos: List<DeptInfo>
+)

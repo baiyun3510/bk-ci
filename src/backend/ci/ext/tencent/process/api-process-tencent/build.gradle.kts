@@ -32,7 +32,7 @@ dependencies {
     api(project(":core:common:common-scm"))
     api(project(":core:process:api-process"))
     api(project(":ext:tencent:scm:api-scm-tencent"))
-    api(project(":ext:tencent:store:api-store-service"))
+    api(project(":ext:tencent:store:api-store-service-tencent"))
     api(project(":ext:tencent:process:common-pipeline-yaml-tencent"))
 }
 

@@ -30,7 +30,7 @@ dependencies {
     api(project(":core:common:common-web"))
     api(project(":core:store:api-store"))
     api(project(":core:artifactory:api-artifactory"))
-    api(project(":ext:tencent:store:api-store-service"))
+    api(project(":ext:tencent:store:api-store-service-tencent"))
 }
 
 plugins {

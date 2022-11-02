@@ -26,8 +26,10 @@
  */
 
 dependencies {
-    api(project(":core:store:biz-store"))
-    api(project(":ext:tencent:store:api-store-op"))
-    api(project(":ext:tencent:store:biz-store-service-tencent"))
-    api(project(":core:repository:api-repository"))
+    api(project(":core:store:api-store"))
+    api(project(":core:store:api-store-service"))
+}
+
+plugins {
+    `task-deploy-to-maven`
 }

@@ -25,9 +25,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":core:store:biz-store"))
-    api(project(":ext:tencent:store:api-store-op"))
-    api(project(":ext:tencent:store:biz-store-service-tencent"))
-    api(project(":core:repository:api-repository"))
+package com.tencent.devops.store.resources
+
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.web.RestResource
+import com.tencent.devops.store.api.UserExtServiceRepositoryResource
+import com.tencent.devops.store.service.ServiceRepositoryService
+import org.springframework.beans.factory.annotation.Autowired
+
+@RestResource
+class UserExtServiceRepositoryResourceImpl @Autowired constructor(
+    val serviceRepositoryService: ServiceRepositoryService
+) : UserExtServiceRepositoryResource {
+
+    override fun changeServiceRepositoryUserInfo(
+        userId: String,
+        projectCode: String,
+        serviceCode: String
+    ): Result<Boolean> {
+        return serviceRepositoryService.updateServiceRepositoryUserInfo(userId, projectCode, serviceCode)
+    }
 }
