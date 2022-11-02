@@ -32,7 +32,7 @@ enum class StoreTypeEnum(val type: Int) {
     TEMPLATE(1), // 模板
     IMAGE(2), // 镜像
     IDE_ATOM(3), // IDE插件
-    SERVICE(4); // 扩展服务
+    SERVICE(4); // 微扩展
 
     companion object {
         fun getStoreType(type: Int): String {

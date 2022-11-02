@@ -76,11 +76,11 @@ class ArchiveAtomToBkRepoServiceImpl : ArchiveAtomServiceImpl() {
                 destFile = tmpFile
             )
             tmpFile.readText(Charsets.UTF_8)
-        } catch (e: NotFoundException) {
+        } catch (ignored: NotFoundException) {
             logger.warn("file[$filePath] not exists")
             ""
-        } catch (e: RemoteServiceException) {
-            logger.warn("download file[$filePath] error: $e")
+        } catch (ignored: RemoteServiceException) {
+            logger.warn("download file[$filePath] error: $ignored")
             ""
         } finally {
             tmpFile.delete()

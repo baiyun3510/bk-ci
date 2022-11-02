@@ -55,17 +55,17 @@ import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["OP_PIPELINE_SERVICE"], description = "OP-流水线-扩展服务")
+@Api(tags = ["OP_PIPELINE_SERVICE"], description = "OP-流水线-微扩展")
 @Path("/op/pipeline/service")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 interface OpServiceResource {
 
-    @ApiOperation("获取扩展服务信息")
+    @ApiOperation("获取微扩展信息")
     @GET
     @Path("/")
-    fun listAllExtsionServices(
-        @ApiParam("扩展服务名称", required = false)
+    fun listAllServices(
+        @ApiParam("微扩展名称", required = false)
         @QueryParam("serviceName")
         serviceName: String?,
         @ApiParam("扩展点ID", required = false)
@@ -91,72 +91,72 @@ interface OpServiceResource {
         desc: Boolean?,
         @ApiParam("页码", required = false)
         @QueryParam("page")
-        page: Int?,
+        page: Int,
         @ApiParam("每页数量", required = false)
         @QueryParam("pageSize")
-        pageSize: Int?
+        pageSize: Int
     ): Result<ExtServiceInfoResp?>
 
-    @ApiOperation("根据ID获取扩展服务信息")
+    @ApiOperation("根据ID获取微扩展信息")
     @GET
     @Path("/serviceIds/{serviceId}")
-    fun getExtsionServiceById(
+    fun getServiceById(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("扩展服务ID", required = true)
+        @ApiParam("微扩展ID", required = true)
         @PathParam("serviceId")
         serviceId: String
     ): Result<ServiceVersionVO?>
 
-    @ApiOperation("根据Code获取扩展服务版本列表")
+    @ApiOperation("根据Code获取微扩展版本列表")
     @GET
     @Path("/serviceCodes/{serviceCode}/version/list")
     fun listServiceVersionListByCode(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("扩展服务Code", required = true)
+        @ApiParam("微扩展Code", required = true)
         @PathParam("serviceCode")
         serviceCode: String,
         @ApiParam("页码", required = false)
         @QueryParam("page")
-        page: Int?,
+        page: Int,
         @ApiParam("每页数量", required = false)
         @QueryParam("pageSize")
-        pageSize: Int?
+        pageSize: Int
     ): Result<Page<ExtensionServiceVO>?>
 
-    @ApiOperation("编辑扩展服务")
+    @ApiOperation("编辑微扩展")
     @POST
     @Path("/serviceIds/{serviceId}/serviceCodes/{serviceCode}")
     fun editExtService(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("扩展服务ID", required = true)
+        @ApiParam("微扩展ID", required = true)
         @PathParam("serviceId")
         serviceId: String,
-        @ApiParam("扩展服务Code", required = true)
+        @ApiParam("微扩展Code", required = true)
         @PathParam("serviceCode")
         serviceCode: String,
         @ApiParam("修改信息", required = true)
         updateInfo: EditInfoDTO
     ): Result<Boolean>
 
-    @ApiOperation("根据ID获取扩展服务信息")
+    @ApiOperation("根据ID获取微扩展信息")
     @GET
     @Path("/serviceCodes/{serviceCode}")
-    fun getExtsionServiceByCode(
+    fun getServiceByCode(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("扩展服务ID", required = true)
+        @ApiParam("微扩展ID", required = true)
         @PathParam("serviceCode")
         serviceCode: String
     ): Result<ServiceVersionVO?>
 
-    @ApiOperation("审核扩展服务")
+    @ApiOperation("审核微扩展")
     @Path("/{serviceId}/approve")
     @PUT
     fun approveService(
@@ -166,11 +166,11 @@ interface OpServiceResource {
         @ApiParam("扩展ID", required = true)
         @PathParam("serviceId")
         serviceId: String,
-        @ApiParam("审核扩展服务请求报文")
+        @ApiParam("审核微扩展请求报文")
         approveReq: ServiceApproveReq
     ): Result<Boolean>
 
-    @ApiOperation("下架扩展服务")
+    @ApiOperation("下架微扩展")
     @PUT
     @Path("/{serviceCode}/offline/")
     fun offlineService(
@@ -198,10 +198,10 @@ interface OpServiceResource {
         visibleApproveReq: VisibleApproveReq
     ): Result<Boolean>
 
-    @ApiOperation("删除扩展服务")
+    @ApiOperation("删除微扩展")
     @DELETE
     @Path("/serviceIds/{serviceId}")
-    fun deleteAtom(
+    fun deleteService(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
@@ -222,14 +222,14 @@ interface OpServiceResource {
         serviceCode: String
     ): Result<StoreVisibleDeptResp?>
 
-    @ApiOperation("删除扩展服务可见范围")
+    @ApiOperation("删除微扩展可见范围")
     @DELETE
     @Path("/{serviceCode}")
     fun deleteVisibleDept(
         @ApiParam("userId", required = true)
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
-        @ApiParam("扩展服务Code", required = true)
+        @ApiParam("微扩展Code", required = true)
         @PathParam("serviceCode")
         serviceCode: String,
         @ApiParam("机构Id集合，用\",\"分隔进行拼接（如1,2,3）", required = true)

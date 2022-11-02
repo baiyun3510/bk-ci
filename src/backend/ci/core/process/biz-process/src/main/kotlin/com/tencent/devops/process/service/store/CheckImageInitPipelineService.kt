@@ -89,9 +89,8 @@ class CheckImageInitPipelineService @Autowired constructor(
                 isMobile = false,
                 startByMessage = null
             )
-            logger.info("buildManualStartup result is:$buildId")
-        } catch (t: Throwable) {
-            logger.error("$pipelineId buildManualStartup error:", t)
+        } catch (ignored: Throwable) {
+            logger.error("BKSystemErrorMonitor|buildManualStartup|$pipelineId|error=${ignored.message}", ignored)
             imageCheckStatus = ImageStatusEnum.CHECK_FAIL
         }
         return Result(CheckImageInitPipelineResp(pipelineId, buildId, imageCheckStatus))

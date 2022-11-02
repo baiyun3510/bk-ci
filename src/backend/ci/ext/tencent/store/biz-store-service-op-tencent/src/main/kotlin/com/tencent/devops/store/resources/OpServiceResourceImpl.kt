@@ -41,7 +41,8 @@ import com.tencent.devops.store.pojo.dto.ServiceOfflineDTO
 import com.tencent.devops.store.pojo.vo.ExtServiceInfoResp
 import com.tencent.devops.store.pojo.vo.ExtensionServiceVO
 import com.tencent.devops.store.pojo.vo.ServiceVersionVO
-import com.tencent.devops.store.service.ExtServiceBaseService
+import com.tencent.devops.store.service.ExtServiceManageService
+import com.tencent.devops.store.service.ExtServiceReleaseService
 import com.tencent.devops.store.service.OpExtServiceService
 import com.tencent.devops.store.service.common.StoreVisibleDeptService
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,11 +50,12 @@ import org.springframework.beans.factory.annotation.Autowired
 @RestResource
 class OpServiceResourceImpl @Autowired constructor(
     private val opExtServiceService: OpExtServiceService,
-    private val extServiceBaseService: ExtServiceBaseService,
+    private val extServiceManageService: ExtServiceManageService,
+    private val extServiceReleaseService: ExtServiceReleaseService,
     private val storeVisibleDeptService: StoreVisibleDeptService
 ) : OpServiceResource {
 
-    override fun listAllExtsionServices(
+    override fun listAllServices(
         serviceName: String?,
         itemId: String?,
         lableId: String?,
@@ -62,13 +64,13 @@ class OpServiceResourceImpl @Autowired constructor(
         isPublic: Boolean?,
         sortType: OpSortTypeEnum?,
         desc: Boolean?,
-        page: Int?,
-        pageSize: Int?
+        page: Int,
+        pageSize: Int
     ): Result<ExtServiceInfoResp?> {
         return opExtServiceService.queryServiceList(
             serviceName = serviceName,
             itemId = itemId,
-            lableId = lableId,
+            labelId = lableId,
             isRecommend = isRecommend,
             isPublic = isPublic,
             isApprove = isApprove,
@@ -79,8 +81,8 @@ class OpServiceResourceImpl @Autowired constructor(
         )
     }
 
-    override fun getExtsionServiceById(userId: String, serviceId: String): Result<ServiceVersionVO?> {
-        return extServiceBaseService.getServiceById(serviceId, userId)
+    override fun getServiceById(userId: String, serviceId: String): Result<ServiceVersionVO?> {
+        return extServiceManageService.getServiceById(serviceId, userId)
     }
 
     override fun editExtService(
@@ -89,7 +91,7 @@ class OpServiceResourceImpl @Autowired constructor(
         serviceCode: String,
         updateInfo: EditInfoDTO
     ): Result<Boolean> {
-        return extServiceBaseService.updateExtInfo(
+        return extServiceManageService.updateExtInfo(
             userId = userId,
             serviceId = serviceId,
             serviceCode = serviceCode,
@@ -101,14 +103,14 @@ class OpServiceResourceImpl @Autowired constructor(
     override fun listServiceVersionListByCode(
         userId: String,
         serviceCode: String,
-        page: Int?,
-        pageSize: Int?
+        page: Int,
+        pageSize: Int
     ): Result<Page<ExtensionServiceVO>?> {
         return opExtServiceService.listServiceVersionListByCode(serviceCode, page, pageSize)
     }
 
-    override fun getExtsionServiceByCode(userId: String, serviceCode: String): Result<ServiceVersionVO?> {
-        return extServiceBaseService.getServiceByCode(userId, serviceCode)
+    override fun getServiceByCode(userId: String, serviceCode: String): Result<ServiceVersionVO?> {
+        return extServiceManageService.getServiceByCode(userId, serviceCode)
     }
 
     override fun approveService(userId: String, serviceId: String, approveReq: ServiceApproveReq): Result<Boolean> {
@@ -120,7 +122,7 @@ class OpServiceResourceImpl @Autowired constructor(
         serviceCode: String,
         serviceOffline: ServiceOfflineDTO
     ): Result<Boolean> {
-        return extServiceBaseService.offlineService(
+        return extServiceReleaseService.offlineService(
             userId = userId,
             serviceCode = serviceCode,
             serviceOfflineDTO = serviceOffline
@@ -132,10 +134,15 @@ class OpServiceResourceImpl @Autowired constructor(
         serviceCode: String,
         visibleApproveReq: VisibleApproveReq
     ): Result<Boolean> {
-        return storeVisibleDeptService.approveVisibleDept(userId, serviceCode, visibleApproveReq, StoreTypeEnum.SERVICE)
+        return storeVisibleDeptService.approveVisibleDept(
+            userId = userId,
+            storeCode = serviceCode,
+            visibleApproveReq = visibleApproveReq,
+            storeType = StoreTypeEnum.SERVICE
+        )
     }
 
-    override fun deleteAtom(userId: String, serviceId: String): Result<Boolean> {
+    override fun deleteService(userId: String, serviceId: String): Result<Boolean> {
         return opExtServiceService.deleteService(userId, serviceId)
     }
 
@@ -144,6 +151,11 @@ class OpServiceResourceImpl @Autowired constructor(
     }
 
     override fun deleteVisibleDept(userId: String, serviceCode: String, deptIds: String): Result<Boolean> {
-        return storeVisibleDeptService.deleteVisibleDept(userId, serviceCode, deptIds, StoreTypeEnum.SERVICE)
+        return storeVisibleDeptService.deleteVisibleDept(
+            userId = userId,
+            storeCode = serviceCode,
+            deptIds = deptIds,
+            storeType = StoreTypeEnum.SERVICE
+        )
     }
 }
