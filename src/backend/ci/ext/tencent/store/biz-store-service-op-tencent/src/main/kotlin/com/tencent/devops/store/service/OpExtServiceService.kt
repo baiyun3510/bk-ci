@@ -58,7 +58,7 @@ class OpExtServiceService @Autowired constructor(
     private val extServiceDao: ExtServiceDao,
     private val extServiceFeatureDao: ExtServiceFeatureDao,
     private val dslContext: DefaultDSLContext,
-    private val serviceNotifyService: TxExtServiceNotifyService,
+    private val extServiceNotifyService: ExtServiceNotifyService,
     private val extServiceKubernetesService: ExtServiceKubernetesService
 ) {
 
@@ -220,7 +220,7 @@ class OpExtServiceService @Autowired constructor(
         }
         // 审核失败通知发布者
         if (!auditFlag) {
-            serviceNotifyService.sendServiceReleaseNotifyMessage(
+            extServiceNotifyService.sendServiceReleaseNotifyMessage(
                 serviceId = serviceId,
                 sendAllAdminFlag = false,
                 templateCode = EXTENSION_RELEASE_AUDIT_REFUSE_TEMPLATE
