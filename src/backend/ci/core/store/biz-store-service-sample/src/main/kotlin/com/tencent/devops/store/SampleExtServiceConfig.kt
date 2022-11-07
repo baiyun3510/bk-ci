@@ -25,33 +25,27 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.service
+package com.tencent.devops.store
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.store.pojo.common.StoreMemberReq
-import com.tencent.devops.store.service.common.TxStoreGitRepositoryService
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
+import com.tencent.devops.store.service.SampleExtServiceManageService
+import com.tencent.devops.store.service.SampleExtServiceMemberServiceServiceImpl
+import com.tencent.devops.store.service.SampleExtServiceNotifyService
+import com.tencent.devops.store.service.SampleExtServiceReleaseService
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-@Service
-class TxExtServiceMemberServiceImpl : ExtServiceMemberServiceImpl() {
+@Configuration
+class SampleExtServiceConfig {
 
-    @Autowired
-    private lateinit var txStoreGitRepositoryService: TxStoreGitRepositoryService
+    @Bean
+    fun extServiceManageService() = SampleExtServiceManageService()
 
-    override fun addRepoMember(
-        storeMemberReq: StoreMemberReq,
-        userId: String,
-        repositoryHashId: String
-    ): Result<Boolean> {
-        return txStoreGitRepositoryService.addRepoMember(storeMemberReq, userId, repositoryHashId)
-    }
+    @Bean
+    fun serviceMemberService() = SampleExtServiceMemberServiceServiceImpl()
 
-    override fun deleteRepoMember(
-        userId: String,
-        username: String,
-        repositoryHashId: String
-    ): Result<Boolean> {
-        return txStoreGitRepositoryService.deleteRepoMember(userId, username, repositoryHashId)
-    }
+    @Bean
+    fun extServiceNotifyService() = SampleExtServiceNotifyService()
+
+    @Bean
+    fun extServiceReleaseService() = SampleExtServiceReleaseService()
 }
