@@ -201,12 +201,12 @@ class ExtServiceKubernetesService {
             version = version,
             checkPermissionFlag = checkPermissionFlag
         )
-        val bcsDeployAppResult = client.get(ServiceKubernetesResource::class).deployApp(
+        val kubernetesDeployAppResult = client.get(ServiceKubernetesResource::class).deployApp(
             userId = userId,
             deployApp = deployApp
         )
-        logger.info("bcsDeployAppResult is :$bcsDeployAppResult")
-        if (bcsDeployAppResult.isOk() && !grayFlag) {
+        logger.info("kubernetesDeployAppResult is :$kubernetesDeployAppResult")
+        if (kubernetesDeployAppResult.isOk() && !grayFlag) {
             // 当微扩展正式发布后，需针对灰度环境部署的扩展应用标记停止部署，如果一段时间内还没有处于测试或审核中的版本则停掉灰度环境的应用
             extServiceFeatureDao.updateExtServiceFeatureBaseInfo(
                 dslContext = dslContext,
@@ -218,7 +218,7 @@ class ExtServiceKubernetesService {
                 )
             )
         }
-        return bcsDeployAppResult
+        return kubernetesDeployAppResult
     }
 
     /**
@@ -269,7 +269,7 @@ class ExtServiceKubernetesService {
             }
         }
         // 停止微扩展部署
-        val bcsStopAppResult = client.get(ServiceKubernetesResource::class).stopApp(
+        val kubernetesStopAppResult = client.get(ServiceKubernetesResource::class).stopApp(
             userId = userId,
             stopApp = StopApp(
                 apiUrl = extServiceKubernetesConfig.masterUrl,
@@ -282,8 +282,8 @@ class ExtServiceKubernetesService {
                 serviceName = "$serviceCode-service"
             )
         )
-        logger.info("the bcsStopAppResult is :$bcsStopAppResult")
-        return bcsStopAppResult
+        logger.info("kubernetesStopAppResult is :$kubernetesStopAppResult")
+        return kubernetesStopAppResult
     }
 
     fun getExtServiceDeployStatus(

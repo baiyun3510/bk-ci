@@ -25,21 +25,35 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.worker.common.api.utils
+package com.tencent.devops.common.pipeline.pojo.element.market
 
-import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import com.tencent.devops.common.pipeline.pojo.element.Element
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-object ApiUrlUtils {
+@ApiModel("微扩展构建部署", description = ExtServiceBuildDeployElement.classType)
+data class ExtServiceBuildDeployElement(
+    @ApiModelProperty("任务名称", required = true)
+    override val name: String = "微扩展发布归档",
+    @ApiModelProperty("id", required = false)
+    override var id: String? = null,
+    @ApiModelProperty("状态", required = false)
+    override var status: String? = null,
+    @ApiModelProperty("微扩展标识", required = true)
+    val serviceCode: String = "\${serviceCode}",
+    @ApiModelProperty("微扩展版本号", required = true)
+    val serviceVersion: String = "\${version}",
+    @ApiModelProperty("微扩展发布包名称", required = true)
+    val packageName: String = "\${packageName}",
+    @ApiModelProperty("微扩展发布包所在相对路径", required = true)
+    val filePath: String = "\${filePath}",
+    @ApiModelProperty("目标", required = false)
+    val destPath: String = "\${serviceCode}/\${version}/\${packageName}"
+) : Element(name, id, status) {
 
-    fun generateStoreUploadFileUrl(
-        repoName: String,
-        projectId: String,
-        storeType: StoreTypeEnum,
-        storeCode: String,
-        version: String,
-        destPath: String
-    ): String {
-        return "/ms/artifactory/api/build/artifactories/store/file/repos/$repoName/projects/$projectId/types" +
-            "/$storeType/codes/$storeCode/versions/$version/archive?destPath=$destPath"
+    companion object {
+        const val classType = "extServiceBuildDeploy"
     }
+
+    override fun getClassType() = classType
 }

@@ -25,20 +25,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.dispatch.pojo
+package com.tencent.devops.worker.common.api.store
 
-import io.fabric8.kubernetes.api.model.EnvVar
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.worker.common.api.WorkerRestApiSDK
 
-data class AppDeployment(
-    @ApiModelProperty("期望的pod数量", required = true)
-    val replicas: Int,
-    @ApiModelProperty("镜像", required = true)
-    val image: String,
-    @ApiModelProperty(value = "拉取镜像秘钥名称", required = false)
-    val pullImageSecretName: String?,
-    @ApiModelProperty("容器端口", required = true)
-    val containerPort: Int,
-    @ApiModelProperty("环境变量列表", required = false)
-    val envVarList: List<EnvVar>? = null
-)
+interface ExtServiceSDKApi : WorkerRestApiSDK {
+
+    fun updateExtServiceEnv(
+        projectCode: String,
+        serviceCode: String,
+        version: String,
+        updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
+    ): Result<Boolean>
+}

@@ -25,21 +25,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.dispatch.pojo
+package com.tencent.devops.worker.common.api.store
 
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.worker.common.api.AbstractBuildResourceApi
+import okhttp3.MediaType
+import okhttp3.RequestBody
 
-@ApiModel("k8s资源限制信息")
-data class KubernetesLimitRange(
-    @ApiModelProperty("默认cpu限额", required = true)
-    val defaultCpu: String,
-    @ApiModelProperty("默认内存限额", required = true)
-    val defaultMemory: String,
-    @ApiModelProperty("默认请求cpu限额", required = true)
-    val defaultRequestCpu: String,
-    @ApiModelProperty("默认请求内存限额", required = true)
-    val defaultRequestMemory: String,
-    @ApiModelProperty("限制资源类型", required = true)
-    val limitType: String
-)
+class ExtServiceResourceApi : AbstractBuildResourceApi(), ExtServiceSDKApi {
+
+    override fun updateExtServiceEnv(
+        projectCode: String,
+        serviceCode: String,
+        version: String,
+        updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
+    ): Result<Boolean> {
+        val path = "/ms/store/api/build/ext/services/env/projects/$projectCode/services/$serviceCode/versions/$version"
+        val body = RequestBody.create(
+            MediaType.parse("application/json; charset=utf-8"),
+            objectMapper.writeValueAsString(updateExtServiceEnvInfo)
+        )
+        val request = buildPut(path, body)
+        val responseContent = request(request, "updateExtServiceEnv fail")
+        return objectMapper.readValue(responseContent)
+    }
+}

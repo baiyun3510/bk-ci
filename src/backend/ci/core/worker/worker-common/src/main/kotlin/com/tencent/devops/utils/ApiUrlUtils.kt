@@ -25,11 +25,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":core:dispatch:api-dispatch"))
-    api("io.fabric8:kubernetes-client")
-}
+package com.tencent.devops.utils
 
-plugins {
-    `task-deploy-to-maven`
+import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+
+object ApiUrlUtils {
+
+    fun generateStoreUploadFileUrl(
+        repoName: String,
+        projectId: String,
+        storeType: StoreTypeEnum,
+        storeCode: String,
+        version: String,
+        destPath: String
+    ): String {
+        return "/ms/artifactory/api/build/artifactories/store/file/repos/$repoName/projects/$projectId/types" +
+            "/$storeType/codes/$storeCode/versions/$version/archive?destPath=$destPath"
+    }
 }

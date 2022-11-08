@@ -25,30 +25,42 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.worker.common.api.store
+package com.tencent.devops.worker.common.api.dispatch
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
 import com.tencent.devops.worker.common.api.AbstractBuildResourceApi
+import io.fabric8.kubernetes.api.model.apps.Deployment
 import okhttp3.MediaType
 import okhttp3.RequestBody
 
-class ExtServiceResourceApi : AbstractBuildResourceApi() {
+class KubernetesResourceApi : AbstractBuildResourceApi(), KubernetesSDKApi {
 
-    fun updateExtServiceEnv(
-        projectCode: String,
-        serviceCode: String,
-        version: String,
-        updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
-    ): Result<Boolean> {
-        val path = "/ms/store/api/build/ext/services/env/projects/$projectCode/services/$serviceCode/versions/$version"
+    override fun deployApp(userId: String, deployAppJsonStr: String): Result<Boolean> {
+        val path = "/ms/dispatch/api/build/kubernetes/deploy/app"
         val body = RequestBody.create(
             MediaType.parse("application/json; charset=utf-8"),
-            objectMapper.writeValueAsString(updateExtServiceEnvInfo)
+            deployAppJsonStr
         )
-        val request = buildPut(path, body)
-        val responseContent = request(request, "updateExtServiceEnv fail")
+        val headMap = mapOf(AUTH_HEADER_USER_ID to userId)
+        val request = buildPost(path, body, headMap)
+        val responseContent = request(request, "deploy app fail")
+        return objectMapper.readValue(responseContent)
+    }
+
+    override fun getKubernetesDeploymentInfo(
+        userId: String,
+        namespaceName: String,
+        deploymentName: String,
+        apiUrl: String,
+        token: String
+    ): Result<Deployment> {
+        val path = "/ms/dispatch/api/build/kubernetes/namespaces/$namespaceName/deployments/$deploymentName?" +
+            "apiUrl=$apiUrl&token=$token"
+        val headMap = mapOf(AUTH_HEADER_USER_ID to userId)
+        val request = buildGet(path, headMap)
+        val responseContent = request(request, "get deployment info fail")
         return objectMapper.readValue(responseContent)
     }
 }

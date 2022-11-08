@@ -25,7 +25,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.worker.common.api.atom
+package com.tencent.devops.worker.common.api.store
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.gson.JsonParser

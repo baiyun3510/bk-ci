@@ -46,12 +46,11 @@ import com.tencent.devops.store.pojo.atom.AtomEnvRequest
 import com.tencent.devops.store.pojo.common.SensitiveConfResp
 import com.tencent.devops.store.pojo.common.StorePkgRunEnvInfo
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
+import com.tencent.devops.utils.ApiUrlUtils
 import com.tencent.devops.worker.common.api.AbstractBuildResourceApi
 import com.tencent.devops.worker.common.api.ApiFactory
 import com.tencent.devops.worker.common.api.ApiPriority
 import com.tencent.devops.worker.common.api.archive.ArchiveSDKApi
-import com.tencent.devops.worker.common.api.atom.AtomArchiveSDKApi
-import com.tencent.devops.worker.common.api.utils.ApiUrlUtils
 import com.tencent.devops.worker.common.env.AgentEnv
 import com.tencent.devops.worker.common.logger.LoggerService
 import okhttp3.MediaType
@@ -59,8 +58,7 @@ import okhttp3.RequestBody
 import java.io.File
 
 @ApiPriority(priority = 9)
-class TencentAtomArchiveResourceApi : AbstractBuildResourceApi(),
-    AtomArchiveSDKApi {
+class TencentAtomArchiveResourceApi : AbstractBuildResourceApi(), AtomArchiveSDKApi {
 
     companion object {
         private const val AGENT_PROPERTIES_FILE_NAME = "/.agent.properties"

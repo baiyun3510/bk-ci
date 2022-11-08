@@ -25,17 +25,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.dispatch.pojo
+package com.tencent.devops.worker.common.api.dispatch
 
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.worker.common.api.WorkerRestApiSDK
+import io.fabric8.kubernetes.api.model.apps.Deployment
 
-data class CreateBcsNameSpaceRequest(
-    @ApiModelProperty("bcs请求路径", required = true)
-    val bcsUrl: String,
-    @ApiModelProperty("请求token", required = true)
-    val token: String,
-    @ApiModelProperty("命名空间标签信息", required = true)
-    val kubernetesLabel: KubernetesLabel,
-    @ApiModelProperty("k8s资源限制信息", required = false)
-    val limitRangeInfo: KubernetesLimitRange? = null
-)
+interface KubernetesSDKApi : WorkerRestApiSDK {
+
+    fun deployApp(userId: String, deployAppJsonStr: String): Result<Boolean>
+
+    fun getKubernetesDeploymentInfo(
+        userId: String,
+        namespaceName: String,
+        deploymentName: String,
+        apiUrl: String,
+        token: String
+    ): Result<Deployment>
+}
