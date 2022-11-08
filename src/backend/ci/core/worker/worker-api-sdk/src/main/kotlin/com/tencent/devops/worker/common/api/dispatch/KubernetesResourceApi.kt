@@ -38,7 +38,7 @@ import okhttp3.RequestBody
 class KubernetesResourceApi : AbstractBuildResourceApi(), KubernetesSDKApi {
 
     override fun deployApp(userId: String, deployAppJsonStr: String): Result<Boolean> {
-        val path = "/ms/dispatch/api/build/kubernetes/deploy/app"
+        val path = "/ms/dispatch-kubernetes/api/build/kubernetes/deploy/app"
         val body = RequestBody.create(
             MediaType.parse("application/json; charset=utf-8"),
             deployAppJsonStr
@@ -56,8 +56,8 @@ class KubernetesResourceApi : AbstractBuildResourceApi(), KubernetesSDKApi {
         apiUrl: String,
         token: String
     ): Result<Deployment> {
-        val path = "/ms/dispatch/api/build/kubernetes/namespaces/$namespaceName/deployments/$deploymentName?" +
-            "apiUrl=$apiUrl&token=$token"
+        val path = "/ms/dispatch-kubernetes/api/build/kubernetes/namespaces/$namespaceName/" +
+            "deployments/$deploymentName?apiUrl=$apiUrl&token=$token"
         val headMap = mapOf(AUTH_HEADER_USER_ID to userId)
         val request = buildGet(path, headMap)
         val responseContent = request(request, "get deployment info fail")
