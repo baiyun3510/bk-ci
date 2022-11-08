@@ -33,7 +33,6 @@ dependencies {
     api(project(":ext:tencent:artifactory:api-artifactory-tencent"))
     api(project(":ext:tencent:store:api-store-tencent"))
     api(project(":ext:tencent:store:api-store-service-tencent"))
-    api(project(":ext:tencent:dispatch:api-dispatch-bcs"))
 }
 
 plugins {

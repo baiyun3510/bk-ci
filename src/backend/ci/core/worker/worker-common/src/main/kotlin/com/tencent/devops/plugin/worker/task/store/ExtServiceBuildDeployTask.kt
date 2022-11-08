@@ -37,20 +37,20 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.OkhttpUtils
 import com.tencent.devops.common.api.util.ShaUtils
-import com.tencent.devops.common.pipeline.element.store.ExtServiceBuildDeployElement
+import com.tencent.devops.common.pipeline.pojo.element.market.ExtServiceBuildDeployElement
 import com.tencent.devops.common.pipeline.utils.ParameterUtils
-import com.tencent.devops.dispatch.pojo.DeployApp
+import com.tencent.devops.dispatch.kubernetes.pojo.DeployApp
 import com.tencent.devops.dockerhost.pojo.DockerBuildParam
 import com.tencent.devops.process.pojo.BuildTask
 import com.tencent.devops.process.pojo.BuildVariables
 import com.tencent.devops.process.utils.PIPELINE_START_USER_ID
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.utils.ApiUrlUtils
 import com.tencent.devops.worker.common.api.ApiFactory
 import com.tencent.devops.worker.common.api.archive.ArchiveSDKApi
-import com.tencent.devops.worker.common.api.dispatch.BcsResourceApi
-import com.tencent.devops.worker.common.api.store.ExtServiceResourceApi
-import com.tencent.devops.worker.common.api.utils.ApiUrlUtils
+import com.tencent.devops.worker.common.api.dispatch.KubernetesSDKApi
+import com.tencent.devops.worker.common.api.store.ExtServiceSDKApi
 import com.tencent.devops.worker.common.logger.LoggerService
 import com.tencent.devops.worker.common.task.ITask
 import com.tencent.devops.worker.common.task.TaskClassType
@@ -66,6 +66,10 @@ import java.io.File
 class ExtServiceBuildDeployTask : ITask() {
 
     private val archiveApi = ApiFactory.create(ArchiveSDKApi::class)
+
+    private val extServiceApi = ApiFactory.create(ExtServiceSDKApi::class)
+
+    private val kubernetesApi = ApiFactory.create(KubernetesSDKApi::class)
 
     private val logger = LoggerFactory.getLogger(ExtServiceBuildDeployTask::class.java)
 
@@ -100,49 +104,45 @@ class ExtServiceBuildDeployTask : ITask() {
             errorType = ErrorType.USER,
             errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
         )
-        val filePath = taskParams["filePath"] ?: throw TaskExecuteException(
-            errorMsg = "param [filePath] is empty",
-            errorType = ErrorType.USER,
-            errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
-        )
-        val destPath = taskParams["destPath"] ?: throw TaskExecuteException(
-            errorMsg = "param [destPath] is empty",
-            errorType = ErrorType.USER,
-            errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
-        )
-        //  开始上传扩展服务执行包到蓝盾新仓库
-        val file = File(workspace, filePath)
-        val uploadFileUrl = ApiUrlUtils.generateStoreUploadFileUrl(
-            repoName = BkRepoEnum.GENERIC.repoName,
-            projectId = buildVariables.projectId,
-            storeType = StoreTypeEnum.SERVICE,
-            storeCode = serviceCode,
-            version = serviceVersion,
-            destPath = destPath
-        )
         val userId = ParameterUtils.getListValueByKey(buildVariables.variablesWithType, PIPELINE_START_USER_ID)
             ?: throw TaskExecuteException(
                 errorMsg = "user basic info error, please check environment.",
                 errorType = ErrorType.USER,
                 errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
             )
-        val headers = mapOf(AUTH_HEADER_USER_ID to userId)
-        val uploadResult = archiveApi.uploadFile(
-            url = uploadFileUrl,
-            file = file,
-            headers = headers,
-            isVmBuildEnv = TaskUtil.isVmBuildEnv(buildVariables.containerType)
-        )
-        logger.info("ExtServiceBuildDeployTask uploadResult: $uploadResult")
-        val uploadFlag = uploadResult.data
-        if (uploadFlag == null || !uploadFlag) {
-            throw TaskExecuteException(
-                errorMsg = "upload file:${file.name} fail",
-                errorType = ErrorType.USER,
-                errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
+        val filePath = taskParams["filePath"]
+        val destPath = taskParams["destPath"]
+        var pkgShaContent: String? = null
+        if (!filePath.isNullOrBlank() && !destPath.isNullOrBlank()) {
+            //  开始上传微扩展执行包到蓝盾新仓库
+            val file = File(workspace, filePath)
+            val uploadFileUrl = ApiUrlUtils.generateStoreUploadFileUrl(
+                repoName = BkRepoEnum.GENERIC.repoName,
+                projectId = buildVariables.projectId,
+                storeType = StoreTypeEnum.SERVICE,
+                storeCode = serviceCode,
+                version = serviceVersion,
+                destPath = destPath
             )
+            val headers = mapOf(AUTH_HEADER_USER_ID to userId)
+            val uploadResult = archiveApi.uploadFile(
+                url = uploadFileUrl,
+                file = file,
+                headers = headers,
+                isVmBuildEnv = TaskUtil.isVmBuildEnv(buildVariables.containerType)
+            )
+            logger.info("ExtServiceBuildDeployTask uploadResult: $uploadResult")
+            val uploadFlag = uploadResult.data
+            if (uploadFlag == null || !uploadFlag) {
+                throw TaskExecuteException(
+                    errorMsg = "upload file:${file.name} fail",
+                    errorType = ErrorType.USER,
+                    errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
+                )
+            }
+            pkgShaContent = file.inputStream().use { ShaUtils.sha1InputStream(it) }
         }
-        // 开始构建扩展服务的镜像并把镜像推送到新仓库
+        // 开始构建微扩展的镜像并把镜像推送到新仓库
         val extServiceImageInfoMap = JsonUtil.toMap(extServiceImageInfo)
         val repoAddr = extServiceImageInfoMap["repoAddr"] as String
         val imageName = extServiceImageInfoMap["imageName"] as String
@@ -163,7 +163,7 @@ class ExtServiceBuildDeployTask : ITask() {
         val pipelineId = buildVariables.pipelineId
         val vmSeqId = buildVariables.vmSeqId
         val dockerBuildAndPushImagePath =
-            "/api/dockernew/build/$projectId/$pipelineId/$vmSeqId/$buildId?elementId=${buildTask.elementId}&syncFlag=true"
+            "/api/dockernew/build/$projectId/$pipelineId/$vmSeqId/$buildId?elementId=${buildTask.taskId}&syncFlag=true"
         val dockerBuildAndPushImageBody = RequestBody.create(
             MediaType.parse("application/json; charset=utf-8"),
             JsonUtil.toJson(dockerBuildParam)
@@ -176,10 +176,11 @@ class ExtServiceBuildDeployTask : ITask() {
         val response = OkhttpUtils.doLongHttp(request)
         val responseContent = response.body()?.string()
         if (!response.isSuccessful) {
-            logger.warn("Fail to request($request) with code ${response.code()} , message ${response.message()} and response ($responseContent)")
+            logger.warn("Fail to request($request) with code ${response.code()} , message ${response.message()} and " +
+                "response ($responseContent)")
             LoggerService.addErrorLine(response.message())
             throw TaskExecuteException(
-                errorMsg = "dockerBuildAndPushImage fail: message ${response.message()} and response ($responseContent)",
+                errorMsg = "dockerBuildAndPushImage fail:message ${response.message()} and response ($responseContent)",
                 errorType = ErrorType.USER,
                 errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
             )
@@ -209,15 +210,15 @@ class ExtServiceBuildDeployTask : ITask() {
         val updateExtServiceEnvInfo = UpdateExtServiceEnvInfoDTO(
             userId = userId,
             pkgPath = destPath,
-            pkgShaContent = ShaUtils.sha1(file.readBytes()),
+            pkgShaContent = pkgShaContent,
             dockerFileContent = dockerfile.readText(),
             imagePath = "$repoAddr/$imageName:$imageTag"
         )
-        val updateExtServiceEnvInfoResult = ExtServiceResourceApi().updateExtServiceEnv(
-            buildVariables.projectId,
-            serviceCode,
-            serviceVersion,
-            updateExtServiceEnvInfo
+        val updateExtServiceEnvInfoResult = extServiceApi.updateExtServiceEnv(
+            projectCode = buildVariables.projectId,
+            serviceCode = serviceCode,
+            version = serviceVersion,
+            updateExtServiceEnvInfo = updateExtServiceEnvInfo
         )
         if (updateExtServiceEnvInfoResult.isOk()) {
             LoggerService.addNormalLine("update extService env ok!")
@@ -228,10 +229,9 @@ class ExtServiceBuildDeployTask : ITask() {
                 errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
             )
         }
-        // 开始部署扩展服务
+        // 开始部署微扩展
         LoggerService.addNormalLine("start deploy extService:$serviceCode(version:$serviceVersion)")
-        val bcsResourceApi = BcsResourceApi()
-        val deployAppResult = bcsResourceApi.deployApp(
+        val deployAppResult = kubernetesApi.deployApp(
             userId = userId,
             deployAppJsonStr = extServiceDeployInfo
         )
@@ -245,13 +245,12 @@ class ExtServiceBuildDeployTask : ITask() {
             )
         }
         val deployApp = JsonUtil.to(extServiceDeployInfo, DeployApp::class.java)
-        // 轮询扩展任务部署的deployment状态
-        syncDeploymentStatus(bcsResourceApi, userId, deployApp, serviceCode)
+        // 轮询微扩展任务部署的deployment状态
+        syncDeploymentStatus(userId, deployApp, serviceCode)
         LoggerService.addNormalLine("deploy extService:$serviceCode(version:$serviceVersion) success")
     }
 
     private fun syncDeploymentStatus(
-        bcsResourceApi: BcsResourceApi,
         userId: String,
         deployApp: DeployApp,
         serviceCode: String
@@ -260,11 +259,11 @@ class ExtServiceBuildDeployTask : ITask() {
         loop@ while (true) {
             // 睡眠3秒再轮询去查
             Thread.sleep(3000)
-            val deployment = bcsResourceApi.getBcsDeploymentInfo(
+            val deployment = kubernetesApi.getKubernetesDeploymentInfo(
                 userId = userId,
                 namespaceName = deployApp.namespaceName,
                 deploymentName = serviceCode,
-                bcsUrl = deployApp.bcsUrl,
+                apiUrl = deployApp.apiUrl,
                 token = deployApp.token
             ).data
             logger.info("ExtServiceBuildDeployTask deployment: $deployment")
@@ -284,7 +283,8 @@ class ExtServiceBuildDeployTask : ITask() {
                     val deploymentStatus = deployment.status
                     val conditions = deploymentStatus.conditions
                     throw TaskExecuteException(
-                        errorMsg = "deployApp fail: deploy timeout($deployTimeOut minutes),conditions is:${JsonUtil.toJson(conditions)}",
+                        errorMsg = "deployApp fail: deploy timeout($deployTimeOut minutes)," +
+                            "conditions is:${JsonUtil.toJson(conditions)}",
                         errorType = ErrorType.USER,
                         errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
                     )

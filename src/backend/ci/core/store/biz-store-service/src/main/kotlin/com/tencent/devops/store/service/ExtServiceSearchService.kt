@@ -47,6 +47,7 @@ import com.tencent.devops.store.pojo.vo.ExtServiceMainItemVo
 import com.tencent.devops.store.pojo.vo.SearchExtServiceVO
 import com.tencent.devops.store.service.common.ClassifyService
 import com.tencent.devops.store.service.common.StoreCommonService
+import com.tencent.devops.store.service.common.StoreMemberService
 import com.tencent.devops.store.service.common.StoreTotalStatisticService
 import com.tencent.devops.store.service.common.StoreUserService
 import org.jooq.DSLContext
@@ -62,7 +63,7 @@ class ExtServiceSearchService @Autowired constructor(
     val extServiceDao: ExtServiceDao,
     val extServiceItemRelDao: ExtServiceItemRelDao,
     val storeUserService: StoreUserService,
-    val extServiceMemberService: ExtServiceMemberServiceImpl,
+    val serviceMemberService: StoreMemberService,
     val classifyService: ClassifyService,
     val storeCommonService: StoreCommonService,
     val storeTotalStatisticService: StoreTotalStatisticService
@@ -231,7 +232,7 @@ class ExtServiceSearchService @Autowired constructor(
             storeCodeList = serviceCodeList
         )
         // 获取用户
-        val memberData = extServiceMemberService.batchListMember(serviceCodeList, storeType).data
+        val memberData = serviceMemberService.batchListMember(serviceCodeList, storeType).data
 
         // 获取分类
         val classifyList = classifyService.getAllClassify(storeType.type.toByte()).data
