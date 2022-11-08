@@ -27,6 +27,7 @@
 
 package com.tencent.devops.dispatch.kubernetes.api.service
 
+import com.tencent.devops.common.api.annotation.ServiceInterface
 import com.tencent.devops.common.api.auth.AUTH_HEADER_USER_ID
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.dispatch.kubernetes.pojo.CreateKubernetesNameSpaceRequest
@@ -50,6 +51,7 @@ import javax.ws.rs.core.MediaType
 
 @Api(tags = ["SERVICE_KUBERNETES"], description = "SERVICE_Kubernetes服务")
 @Path("/service/kubernetes")
+@ServiceInterface("dispatch-kubernetes") // 指明接入到哪个微服务
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 interface ServiceKubernetesResource {
