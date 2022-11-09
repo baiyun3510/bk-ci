@@ -25,13 +25,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.project.api.pojo
+package com.tencent.devops.store.service
 
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.store.pojo.common.StoreMemberReq
+import org.springframework.stereotype.Service
 
-data class ExtItemDTO(
-    @ApiModelProperty("")
-    val extServiceItem: ExtServiceEntity,
-    @ApiModelProperty("项目子集")
-    val childItem: List<ExtServiceEntity>
-)
+@Service
+class SampleExtServiceMemberServiceImpl : ExtServiceMemberServiceImpl() {
+
+    override fun addRepoMember(
+        storeMemberReq: StoreMemberReq,
+        userId: String,
+        repositoryHashId: String
+    ): Result<Boolean> {
+        // 开源版暂不支持按代码库打成可执行包的方式
+        return Result(true)
+    }
+
+    override fun deleteRepoMember(userId: String, username: String, repositoryHashId: String): Result<Boolean> {
+        // 开源版暂不支持按代码库打成可执行包的方式
+        return Result(true)
+    }
+}

@@ -29,11 +29,13 @@ package com.tencent.devops.store.api
 
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
+import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import javax.ws.rs.Consumes
 import javax.ws.rs.GET
+import javax.ws.rs.PUT
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
@@ -44,7 +46,7 @@ import javax.ws.rs.core.MediaType
 @Path("/service/market/services/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface ServiceExtServiceArchiveResource {
+interface ServiceExtServiceResource {
 
     @ApiOperation("校验用户上传的微扩展包是否合法")
     @GET
@@ -62,5 +64,19 @@ interface ServiceExtServiceArchiveResource {
         @ApiParam("发布类型", required = false)
         @QueryParam("releaseType")
         releaseType: ReleaseTypeEnum?
+    ): Result<Boolean>
+
+    @ApiOperation("更新微扩展环境信息")
+    @PUT
+    @Path("/env/services/{serviceCode}/versions/{version}")
+    fun updateExtServiceEnv(
+        @ApiParam("微扩展代码", required = true)
+        @PathParam("serviceCode")
+        serviceCode: String,
+        @ApiParam("版本号", required = true)
+        @PathParam("version")
+        version: String,
+        @ApiParam(value = "更新微扩展环境信息请求报文体", required = true)
+        updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
     ): Result<Boolean>
 }

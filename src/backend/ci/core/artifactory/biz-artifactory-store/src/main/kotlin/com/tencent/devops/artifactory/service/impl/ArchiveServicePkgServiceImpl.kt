@@ -32,14 +32,19 @@ import com.tencent.devops.artifactory.dao.FileDao
 import com.tencent.devops.artifactory.pojo.ArchiveServicePkgRequest
 import com.tencent.devops.artifactory.service.ArchiveServicePkgService
 import com.tencent.devops.common.api.exception.ErrorCodeException
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.api.util.ShaUtils
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.utils.ZipUtil
-import com.tencent.devops.store.api.ServiceExtServiceArchiveResource
+import com.tencent.devops.store.api.ServiceExtServiceResource
+import com.tencent.devops.store.pojo.common.EXTENSION_JSON_NAME
+import com.tencent.devops.store.pojo.common.KEY_PACKAGE_PATH
 import com.tencent.devops.store.pojo.common.SERVICE_UPLOAD_ID_KEY_PREFIX
 import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
+import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
@@ -79,7 +84,7 @@ abstract class ArchiveServicePkgServiceImpl : ArchiveServicePkgService {
         val version = archiveServicePkgRequest.version
         val releaseType = archiveServicePkgRequest.releaseType
         // 校验上传的包是否合法
-        val verifyServicePackageResult = client.get(ServiceExtServiceArchiveResource::class)
+        val verifyServicePackageResult = client.get(ServiceExtServiceResource::class)
             .verifyExtServicePackageByUserId(
                 userId = userId,
                 serviceCode = serviceCode,
@@ -106,10 +111,28 @@ abstract class ArchiveServicePkgServiceImpl : ArchiveServicePkgService {
                 value = finalServiceId,
                 expiredInSecond = TimeUnit.DAYS.toSeconds(1)
             )
-            val fileName = disposition.fileName
             val serviceArchivePath = buildServiceArchivePath(serviceCode, version)
-            val file = File(serviceArchivePath, fileName)
+            val extensionJsonFileStr = File(serviceArchivePath, EXTENSION_JSON_NAME)
+            val extensionJsonMap = JsonUtil.toMap(extensionJsonFileStr)
+            val pkgLocalPath = extensionJsonMap[KEY_PACKAGE_PATH] as? String ?: ""
+            val file = File(serviceArchivePath, pkgLocalPath)
             val shaContent = file.inputStream().use { ShaUtils.sha1InputStream(it) }
+            val updateServiceInfoResult = client.get(ServiceExtServiceResource::class)
+                .updateExtServiceEnv(
+                    serviceCode = serviceCode,
+                    version = version,
+                    updateExtServiceEnvInfo = UpdateExtServiceEnvInfoDTO(
+                        userId = userId,
+                        pkgPath = "$serviceCode/$version/$pkgLocalPath",
+                        pkgShaContent = shaContent
+                    )
+                )
+            if (updateServiceInfoResult.isNotOk()) {
+                throw ErrorCodeException(
+                    errorCode = updateServiceInfoResult.status.toString(),
+                    defaultMessage = updateServiceInfoResult.message
+                )
+            }
             dslContext.transaction { t ->
                 val context = DSL.using(t)
                 val fileId = UUIDUtil.generate()
@@ -120,7 +143,7 @@ abstract class ArchiveServicePkgServiceImpl : ArchiveServicePkgService {
                     projectId = "",
                     fileType = BK_CI_SERVICE_DIR,
                     filePath = file.absolutePath,
-                    fileName = fileName,
+                    fileName = file.name,
                     fileSize = file.length()
                 )
                 fileDao.batchAddFileProps(

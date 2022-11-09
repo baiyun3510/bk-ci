@@ -110,12 +110,11 @@ class ExtServiceBuildDeployTask : ITask() {
                 errorType = ErrorType.USER,
                 errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
             )
-        val filePath = taskParams["filePath"]
+        var filePath = taskParams["filePath"] ?: ""
         val destPath = taskParams["destPath"]
-        var pkgShaContent: String? = null
-        if (!filePath.isNullOrBlank() && !destPath.isNullOrBlank()) {
+        var file = File(workspace, filePath)
+        if (file.isFile && !destPath.isNullOrBlank()) {
             //  开始上传微扩展执行包到蓝盾新仓库
-            val file = File(workspace, filePath)
             val uploadFileUrl = ApiUrlUtils.generateStoreUploadFileUrl(
                 repoName = BkRepoEnum.GENERIC.repoName,
                 projectId = buildVariables.projectId,
@@ -140,8 +139,21 @@ class ExtServiceBuildDeployTask : ITask() {
                     errorCode = ErrorCode.USER_TASK_OPERATE_FAIL
                 )
             }
-            pkgShaContent = file.inputStream().use { ShaUtils.sha1InputStream(it) }
+        } else {
+            val serviceEnvResult = extServiceApi.getExtServiceEnv(serviceCode, serviceVersion)
+            logger.info("serviceEnvResult is:$serviceEnvResult")
+            val serviceEnvData = serviceEnvResult.data ?: throw TaskExecuteException(
+                errorMsg = "can not found $serviceCode: ${serviceEnvResult.message}",
+                errorType = ErrorType.SYSTEM,
+                errorCode = ErrorCode.SYSTEM_WORKER_LOADING_ERROR
+            )
+            val pkgPath = serviceEnvData.pkgPath!!
+            file = File(workspace, pkgPath)
+            filePath = pkgPath
+            // 把仓库的包下载到本地
+            extServiceApi.downloadServicePkg(serviceFilePath = pkgPath, file = file, isVmBuildEnv = true)
         }
+        val pkgShaContent = file.inputStream().use { ShaUtils.sha1InputStream(it) }
         // 开始构建微扩展的镜像并把镜像推送到新仓库
         val extServiceImageInfoMap = JsonUtil.toMap(extServiceImageInfo)
         val repoAddr = extServiceImageInfoMap["repoAddr"] as String
@@ -215,7 +227,7 @@ class ExtServiceBuildDeployTask : ITask() {
             imagePath = "$repoAddr/$imageName:$imageTag"
         )
         val updateExtServiceEnvInfoResult = extServiceApi.updateExtServiceEnv(
-            projectCode = buildVariables.projectId,
+            projectId = buildVariables.projectId,
             serviceCode = serviceCode,
             version = serviceVersion,
             updateExtServiceEnvInfo = updateExtServiceEnvInfo

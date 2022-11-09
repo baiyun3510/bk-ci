@@ -28,27 +28,63 @@
 package com.tencent.devops.worker.common.api.store
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.tencent.devops.artifactory.constant.BK_CI_SERVICE_DIR
+import com.tencent.devops.artifactory.constant.REALM_BK_REPO
+import com.tencent.devops.artifactory.constant.REALM_LOCAL
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.store.pojo.vo.ServiceEnvVO
 import com.tencent.devops.worker.common.api.AbstractBuildResourceApi
+import com.tencent.devops.worker.common.api.archive.ArtifactoryBuildResourceApi
 import okhttp3.MediaType
 import okhttp3.RequestBody
+import java.io.File
+import java.net.URLEncoder
 
 class ExtServiceResourceApi : AbstractBuildResourceApi(), ExtServiceSDKApi {
 
+    private val realm = ArtifactoryBuildResourceApi().getRealm()
+
     override fun updateExtServiceEnv(
-        projectCode: String,
+        projectId: String,
         serviceCode: String,
         version: String,
         updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
     ): Result<Boolean> {
-        val path = "/ms/store/api/build/ext/services/env/projects/$projectCode/services/$serviceCode/versions/$version"
+        val path = "/ms/store/api/build/ext/services/env/projects/$projectId/services/$serviceCode/versions/$version"
         val body = RequestBody.create(
             MediaType.parse("application/json; charset=utf-8"),
             objectMapper.writeValueAsString(updateExtServiceEnvInfo)
         )
         val request = buildPut(path, body)
         val responseContent = request(request, "updateExtServiceEnv fail")
+        return objectMapper.readValue(responseContent)
+    }
+
+    override fun downloadServicePkg(
+        serviceFilePath: String,
+        file: File,
+        isVmBuildEnv: Boolean
+    ) {
+        val filePath = when (realm) {
+            REALM_LOCAL -> "$BK_CI_SERVICE_DIR/$serviceFilePath"
+            REALM_BK_REPO -> "/bk-store/service/$serviceFilePath"
+            else -> throw IllegalArgumentException("unknown artifactory realm")
+        }
+        val path = "/ms/artifactory/api/build/artifactories/file/download?filePath=${
+            URLEncoder.encode(
+                filePath,
+                "UTF-8"
+            )
+        }"
+        val request = buildGet(path = path, useFileDevnetGateway = isVmBuildEnv)
+        download(request, file)
+    }
+
+    override fun getExtServiceEnv(serviceCode: String, version: String): Result<ServiceEnvVO> {
+        val path = "/ms/store/api/build/ext/services/env/services/$serviceCode/versions/$version"
+        val request = buildGet(path)
+        val responseContent = request(request, "get service env fail")
         return objectMapper.readValue(responseContent)
     }
 }

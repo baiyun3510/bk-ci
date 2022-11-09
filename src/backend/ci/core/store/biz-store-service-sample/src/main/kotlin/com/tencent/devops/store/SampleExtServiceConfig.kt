@@ -28,7 +28,7 @@
 package com.tencent.devops.store
 
 import com.tencent.devops.store.service.SampleExtServiceManageService
-import com.tencent.devops.store.service.SampleExtServiceMemberServiceServiceImpl
+import com.tencent.devops.store.service.SampleExtServiceMemberServiceImpl
 import com.tencent.devops.store.service.SampleExtServiceNotifyService
 import com.tencent.devops.store.service.SampleExtServiceReleaseService
 import org.springframework.context.annotation.Bean
@@ -41,7 +41,7 @@ class SampleExtServiceConfig {
     fun extServiceManageService() = SampleExtServiceManageService()
 
     @Bean
-    fun serviceMemberService() = SampleExtServiceMemberServiceServiceImpl()
+    fun serviceMemberService() = SampleExtServiceMemberServiceImpl()
 
     @Bean
     fun extServiceNotifyService() = SampleExtServiceNotifyService()

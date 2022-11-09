@@ -89,7 +89,7 @@ class ServiceKubernetesResourceImpl @Autowired constructor(
         apiUrl: String,
         token: String
     ): Result<Deployment> {
-        return kubernetesQueryService.getBcsDeploymentInfo("", namespaceName, deploymentName, apiUrl, token)
+        return kubernetesQueryService.getKubernetesDeploymentInfo("", namespaceName, deploymentName, apiUrl, token)
     }
 
     override fun getDeploymentInfos(
@@ -98,6 +98,6 @@ class ServiceKubernetesResourceImpl @Autowired constructor(
         apiUrl: String,
         token: String
     ): Result<Map<String, Deployment>> {
-        return kubernetesQueryService.getBcsDeploymentInfos("", namespaceName, deploymentNames, apiUrl, token)
+        return kubernetesQueryService.getKubernetesDeploymentInfos("", namespaceName, deploymentNames, apiUrl, token)
     }
 }
