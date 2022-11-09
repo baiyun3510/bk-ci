@@ -27,6 +27,8 @@
 package com.tencent.devops.lambda.config
 
 import com.tencent.devops.common.event.annotation.EventConsumer
+import com.tencent.devops.common.event.dispatcher.mq.MQEventDispatcher
+import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildCommitFinishEvent
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildFinishBroadCastEvent
 import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildTaskFinishBroadCastEvent
@@ -36,11 +38,15 @@ import com.tencent.devops.lambda.listener.LambdaBuildCommitFinishListener
 import com.tencent.devops.lambda.listener.LambdaBuildTaskFinishListener
 import com.tencent.devops.lambda.listener.LambdaBuildFinishListener
 import com.tencent.devops.lambda.listener.LambdaPipelineModelListener
+import com.tencent.devops.lambda.service.process.LambdaDataService
+import com.tencent.devops.lambda.service.process.LambdaPipelineModelService
 import com.tencent.devops.lambda.service.project.LambdaProjectService
 import com.tencent.devops.project.pojo.mq.ProjectCreateBroadCastEvent
 import com.tencent.devops.project.pojo.mq.ProjectUpdateBroadCastEvent
 import java.util.function.Consumer
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cloud.stream.function.StreamBridge
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.Message
 
@@ -50,6 +56,18 @@ class LambdaMQConfiguration {
     companion object {
         const val STREAM_CONSUMER_GROUP = "lambda-service"
     }
+
+    @Bean
+    fun pipelineEventDispatcher(streamBridge: StreamBridge) = MQEventDispatcher(streamBridge)
+
+    @Bean
+    fun lambdaBuildFinishListener(
+        @Autowired lambdaDataService: LambdaDataService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaBuildFinishListener(
+        lambdaDataService = lambdaDataService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
      * 构建结束广播交换机
@@ -62,6 +80,15 @@ class LambdaMQConfiguration {
             lambdaBuildFinishListener.execute(event.payload)
         }
     }
+
+    @Bean
+    fun lambdaBuildTaskFinishListener(
+        @Autowired lambdaDataService: LambdaDataService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaBuildTaskFinishListener(
+        lambdaDataService = lambdaDataService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
      * 任务结束广播交换机
@@ -99,6 +126,15 @@ class LambdaMQConfiguration {
         }
     }
 
+    @Bean
+    fun lambdaPipelineModelListener(
+        @Autowired lambdaPipelineModelService: LambdaPipelineModelService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaPipelineModelListener(
+        lambdaPipelineModelService = lambdaPipelineModelService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
+
     /**
      * 构建model更新广播交换机
      */
@@ -110,6 +146,15 @@ class LambdaMQConfiguration {
             lambdaPipelineModelListener.run(event.payload)
         }
     }
+
+    @Bean
+    fun lambdaBuildCommitFinishListener(
+        @Autowired lambdaDataService: LambdaDataService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaBuildCommitFinishListener(
+        lambdaDataService = lambdaDataService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
      * webhook commits完成事件交换机
