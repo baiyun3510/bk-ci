@@ -31,8 +31,10 @@ import com.tencent.devops.common.event.annotation.EventConsumer
 import com.tencent.devops.common.stream.constants.StreamBinding
 import com.tencent.devops.plugin.api.pojo.GitWebhookUnlockEvent
 import com.tencent.devops.plugin.listener.git.GitWebhookUnlockListener
+import com.tencent.devops.plugin.service.git.GitWebhookUnlockService
 import java.util.function.Consumer
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.Message
 
@@ -42,6 +44,13 @@ class GitWebhookUnlockConfiguration {
     companion object {
         const val STREAM_CONSUMER_GROUP = "plugin-service"
     }
+
+    @Bean
+    fun gitUnlockListener(
+        @Autowired gitWebhookUnlockService: GitWebhookUnlockService
+    ) = GitWebhookUnlockListener(
+        gitWebhookUnlockService = gitWebhookUnlockService
+    )
 
     @EventConsumer(StreamBinding.QUEUE_GIT_WEBHOOK_UNLOCK_EVENT, STREAM_CONSUMER_GROUP)
     fun gitWebhookUnlockListener(
