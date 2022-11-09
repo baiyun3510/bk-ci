@@ -44,7 +44,7 @@ class GitWebhookUnlockConfiguration {
     }
 
     @EventConsumer(StreamBinding.QUEUE_GIT_WEBHOOK_UNLOCK_EVENT, STREAM_CONSUMER_GROUP)
-    fun metricsQualityDailyReportListener(
+    fun gitWebhookUnlockListener(
         @Autowired listener: GitWebhookUnlockListener
     ): Consumer<Message<GitWebhookUnlockEvent>> {
         return Consumer { event: Message<GitWebhookUnlockEvent> ->
