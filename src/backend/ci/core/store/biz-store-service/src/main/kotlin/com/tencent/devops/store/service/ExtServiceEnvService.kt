@@ -28,14 +28,15 @@
 package com.tencent.devops.store.service
 
 import com.tencent.devops.common.api.constant.CommonMessageCode
+import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.DateTimeUtil
 import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.store.dao.ExtServiceDao
 import com.tencent.devops.store.dao.ExtServiceEnvDao
-import com.tencent.devops.store.dao.ExtServiceFeatureDao
-import com.tencent.devops.store.dao.common.StoreProjectRelDao
-import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.store.pojo.enums.ExtServiceStatusEnum
+import com.tencent.devops.store.pojo.vo.ServiceEnvVO
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,9 +46,7 @@ import org.springframework.stereotype.Service
 class ExtServiceEnvService @Autowired constructor(
     private val dslContext: DSLContext,
     private val extServiceDao: ExtServiceDao,
-    private val extServiceFeatureDao: ExtServiceFeatureDao,
-    private val extServiceEnvDao: ExtServiceEnvDao,
-    private val storeProjectRelDao: StoreProjectRelDao
+    private val extServiceEnvDao: ExtServiceEnvDao
 ) {
 
     private val logger = LoggerFactory.getLogger(ExtServiceEnvService::class.java)
@@ -56,12 +55,11 @@ class ExtServiceEnvService @Autowired constructor(
      * 更新微扩展执行环境信息
      */
     fun updateExtServiceEnvInfo(
-        projectCode: String,
         serviceCode: String,
         version: String,
         updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
     ): Result<Boolean> {
-        logger.info("updateExtServiceEnvInfo params:[$projectCode|$serviceCode|$version|$updateExtServiceEnvInfo")
+        logger.info("updateExtServiceEnvInfo params:[$serviceCode|$version|$updateExtServiceEnvInfo")
         val extServiceRecord = extServiceDao.getExtService(dslContext, serviceCode, version)
         if (null == extServiceRecord || extServiceRecord.deleteFlag) {
             return MessageCodeUtil.generateResponseDataObject(
@@ -70,24 +68,42 @@ class ExtServiceEnvService @Autowired constructor(
                 false
             )
         }
-        // 判断用户的项目是否安装了该微扩展
-        val extServiceFeatureRecord = extServiceFeatureDao.getServiceByCode(dslContext, serviceCode)!!
-        if (!extServiceFeatureRecord.publicFlag) {
-            val flag = storeProjectRelDao.isInstalledByProject(
-                dslContext = dslContext,
-                projectCode = projectCode,
-                storeCode = serviceCode,
-                storeType = StoreTypeEnum.SERVICE.type.toByte()
-            )
-            if (!flag) {
-                return MessageCodeUtil.generateResponseDataObject(
-                    messageCode = CommonMessageCode.PARAMETER_IS_INVALID,
-                    params = arrayOf("$serviceCode+$version"),
-                    data = false
-                )
-            }
-        }
         extServiceEnvDao.updateExtServiceEnvInfo(dslContext, extServiceRecord.id, updateExtServiceEnvInfo)
         return Result(true)
+    }
+
+    /**
+     * 查询微扩展执行环境信息
+     */
+    fun getExtServiceEnvInfo(
+        serviceCode: String,
+        version: String
+    ): ServiceEnvVO {
+        val extServiceRecord = extServiceDao.getExtService(dslContext, serviceCode, version)
+        if (null == extServiceRecord || extServiceRecord.deleteFlag) {
+            throw ErrorCodeException(
+                errorCode = CommonMessageCode.PARAMETER_IS_INVALID,
+                params = arrayOf("$serviceCode+$version")
+            )
+        }
+        val extServiceEnvRecord = extServiceEnvDao.getMarketServiceEnvInfoByServiceId(dslContext, extServiceRecord.id)
+        return ServiceEnvVO(
+            serviceId = extServiceRecord.id,
+            serviceCode = serviceCode,
+            serviceName = extServiceRecord.serviceName,
+            summary = extServiceRecord.summary,
+            version = extServiceRecord.version,
+            serviceStatus = ExtServiceStatusEnum.getServiceStatus(extServiceRecord.serviceStatus.toInt()),
+            language = extServiceEnvRecord?.language,
+            pkgPath = extServiceEnvRecord?.pkgPath,
+            pkgShaContent = extServiceEnvRecord?.pkgShaContent,
+            dockerfileContent = extServiceEnvRecord?.dockerFileContent,
+            imagePath = extServiceEnvRecord?.imagePath,
+            publisher = extServiceRecord.publisher,
+            creator = extServiceRecord.creator,
+            modifier = extServiceRecord.modifier,
+            createTime = DateTimeUtil.toDateTime(extServiceRecord.createTime),
+            updateTime = DateTimeUtil.toDateTime(extServiceRecord.updateTime)
+        )
     }
 }

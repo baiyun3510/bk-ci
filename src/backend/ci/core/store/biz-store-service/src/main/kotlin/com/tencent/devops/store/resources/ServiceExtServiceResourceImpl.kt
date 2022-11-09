@@ -25,26 +25,44 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.service
+package com.tencent.devops.store.resources
 
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.store.pojo.common.StoreMemberReq
-import org.springframework.stereotype.Service
+import com.tencent.devops.common.web.RestResource
+import com.tencent.devops.store.api.ServiceExtServiceResource
+import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
+import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.store.service.ExtServiceArchiveService
+import com.tencent.devops.store.service.ExtServiceEnvService
+import org.springframework.beans.factory.annotation.Autowired
 
-@Service
-class SampleExtServiceMemberServiceServiceImpl : ExtServiceMemberServiceImpl() {
+@RestResource
+class ServiceExtServiceResourceImpl @Autowired constructor(
+    private val extServiceArchiveService: ExtServiceArchiveService,
+    private val extServiceEnvService: ExtServiceEnvService
+) : ServiceExtServiceResource {
 
-    override fun addRepoMember(
-        storeMemberReq: StoreMemberReq,
+    override fun verifyExtServicePackageByUserId(
         userId: String,
-        repositoryHashId: String
+        serviceCode: String,
+        version: String,
+        releaseType: ReleaseTypeEnum?
     ): Result<Boolean> {
-        // 开源版暂不支持按代码库打成可执行包的方式
-        return Result(true)
+        return Result(
+            extServiceArchiveService.verifyExtServicePackageByUserId(
+                userId = userId,
+                serviceCode = serviceCode,
+                version = version,
+                releaseType = releaseType
+            )
+        )
     }
 
-    override fun deleteRepoMember(userId: String, username: String, repositoryHashId: String): Result<Boolean> {
-        // 开源版暂不支持按代码库打成可执行包的方式
-        return Result(true)
+    override fun updateExtServiceEnv(
+        serviceCode: String,
+        version: String,
+        updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
+    ): Result<Boolean> {
+        return extServiceEnvService.updateExtServiceEnvInfo(serviceCode, version, updateExtServiceEnvInfo)
     }
 }

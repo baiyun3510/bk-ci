@@ -29,10 +29,12 @@ package com.tencent.devops.store.api
 
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.store.pojo.vo.ServiceEnvVO
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import javax.ws.rs.Consumes
+import javax.ws.rs.GET
 import javax.ws.rs.PUT
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
@@ -61,4 +63,16 @@ interface BuildExtServiceEnvResource {
         @ApiParam(value = "更新微扩展环境信息请求报文体", required = true)
         updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
     ): Result<Boolean>
+
+    @ApiOperation("查询微扩展环境信息")
+    @GET
+    @Path("/services/{serviceCode}/versions/{version}")
+    fun getExtServiceEnv(
+        @ApiParam("微扩展代码", required = true)
+        @PathParam("serviceCode")
+        serviceCode: String,
+        @ApiParam("版本号", required = true)
+        @PathParam("version")
+        version: String
+    ): Result<ServiceEnvVO>
 }

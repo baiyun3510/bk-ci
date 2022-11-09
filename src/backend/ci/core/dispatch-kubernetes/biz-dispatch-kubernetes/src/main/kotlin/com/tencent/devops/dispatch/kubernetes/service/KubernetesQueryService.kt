@@ -39,33 +39,33 @@ class KubernetesQueryService @Autowired constructor() {
 
     private val logger = LoggerFactory.getLogger(KubernetesQueryService::class.java)
 
-    fun getBcsDeploymentInfo(
+    fun getKubernetesDeploymentInfo(
         userId: String,
         namespaceName: String,
         deploymentName: String,
         apiUrl: String,
         token: String
     ): Result<Deployment> {
-        logger.info("getBcsDeploymentInfo params: [$userId|$namespaceName|$deploymentName|$apiUrl")
-        val bcsKubernetesClient = KubernetesApiUtils.getBcsKubernetesClient(apiUrl, token)
-        val deployment = bcsKubernetesClient.apps().deployments().inNamespace(namespaceName)
+        logger.info("getKubernetesDeploymentInfo params: [$userId|$namespaceName|$deploymentName|$apiUrl")
+        val kubernetesClient = KubernetesApiUtils.getKubernetesClient(apiUrl, token)
+        val deployment = kubernetesClient.apps().deployments().inNamespace(namespaceName)
             .withName(deploymentName).get()
         return Result(deployment)
     }
 
-    fun getBcsDeploymentInfos(
+    fun getKubernetesDeploymentInfos(
         userId: String,
         namespaceName: String,
         deploymentNames: String,
         apiUrl: String,
         token: String
     ): Result<Map<String, Deployment>> {
-        logger.info("getBcsDeploymentInfo params: [$userId|$namespaceName|$deploymentNames|$apiUrl")
-        val bcsKubernetesClient = KubernetesApiUtils.getBcsKubernetesClient(apiUrl, token)
+        logger.info("getKubernetesDeploymentInfos params: [$userId|$namespaceName|$deploymentNames|$apiUrl")
+        val kubernetesClient = KubernetesApiUtils.getKubernetesClient(apiUrl, token)
         val deploymentNameList = deploymentNames.split(",")
         val deploymentMap = mutableMapOf<String, Deployment>()
         deploymentNameList.forEach {
-            val deployment = bcsKubernetesClient.apps().deployments().inNamespace(namespaceName).withName(it).get()
+            val deployment = kubernetesClient.apps().deployments().inNamespace(namespaceName).withName(it).get()
             deploymentMap[it] = deployment
         }
         return Result(deploymentMap)

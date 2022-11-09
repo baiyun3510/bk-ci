@@ -33,15 +33,15 @@ import org.springframework.stereotype.Component
 @Component
 class ExtServiceKubernetesConfig {
 
-    @Value("\${store.extService.kubernetes.masterUrl}")
+    @Value("\${store.extService.kubernetes.masterUrl:}")
     val masterUrl: String = ""
 
-    @Value("\${store.extService.kubernetes.token}")
+    @Value("\${store.extService.kubernetes.token:}")
     val token: String = ""
 
-    @Value("\${store.extService.kubernetes.deployTimeOut}")
+    @Value("\${store.extService.kubernetes.deployTimeOut:}")
     val deployTimeOut: String = ""
 
-    @Value("\${store.extService.kubernetes.killGrayAppIntervalTime}")
+    @Value("\${store.extService.kubernetes.killGrayAppIntervalTime:}")
     val killGrayAppIntervalTime: String = ""
 }

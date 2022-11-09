@@ -25,33 +25,41 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.store.resources
+package com.tencent.devops.store.pojo.vo
 
-import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.store.api.ServiceExtServiceArchiveResource
-import com.tencent.devops.store.pojo.common.enums.ReleaseTypeEnum
-import com.tencent.devops.store.service.ExtServiceArchiveService
-import org.springframework.beans.factory.annotation.Autowired
+import io.swagger.annotations.ApiModelProperty
 
-@RestResource
-class ServiceExtServiceArchiveResourceImpl @Autowired constructor(
-    private val extServiceArchiveService: ExtServiceArchiveService
-) : ServiceExtServiceArchiveResource {
-
-    override fun verifyExtServicePackageByUserId(
-        userId: String,
-        serviceCode: String,
-        version: String,
-        releaseType: ReleaseTypeEnum?
-    ): Result<Boolean> {
-        return Result(
-            extServiceArchiveService.verifyExtServicePackageByUserId(
-                userId = userId,
-                serviceCode = serviceCode,
-                version = version,
-                releaseType = releaseType
-            )
-        )
-    }
-}
+data class ServiceEnvVO(
+    @ApiModelProperty("微扩展ID")
+    val serviceId: String,
+    @ApiModelProperty("微扩展标识")
+    val serviceCode: String,
+    @ApiModelProperty("微扩展名称")
+    val serviceName: String,
+    @ApiModelProperty("微扩展简介")
+    val summary: String?,
+    @ApiModelProperty("版本号")
+    val version: String,
+    @ApiModelProperty("微扩展状态")
+    val serviceStatus: String,
+    @ApiModelProperty("开发语言")
+    val language: String?,
+    @ApiModelProperty("安装包路径")
+    val pkgPath: String? = null,
+    @ApiModelProperty("安装包SHA签名串")
+    val pkgShaContent: String? = null,
+    @ApiModelProperty("dockerfile内容")
+    val dockerfileContent: String? = null,
+    @ApiModelProperty("镜像路径")
+    val imagePath: String? = null,
+    @ApiModelProperty("发布者")
+    val publisher: String?,
+    @ApiModelProperty("创建人")
+    val creator: String,
+    @ApiModelProperty("修改人")
+    val modifier: String,
+    @ApiModelProperty("创建时间")
+    val createTime: String,
+    @ApiModelProperty("修改时间")
+    val updateTime: String
+)
