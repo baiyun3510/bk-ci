@@ -1133,7 +1133,8 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                     AgentProps(
                         arch = newHeartbeatInfo.props!!.arch,
                         jdkVersion = newHeartbeatInfo.props!!.jdkVersion ?: listOf(),
-                        userProps = oldUserProps
+                        userProps = oldUserProps,
+                        dockerInitFileInfo = newHeartbeatInfo.props?.dockerInitFileInfo
                     ),
                     false
                 )
@@ -1142,7 +1143,7 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                     agentChanged = true
                 }
             }
-            if (newHeartbeatInfo.dockerParallelTaskCount != null && agentRecord.dockerParallelTaskCount == null){
+            if (newHeartbeatInfo.dockerParallelTaskCount != null && agentRecord.dockerParallelTaskCount == null) {
                 agentRecord.dockerParallelTaskCount = newHeartbeatInfo.dockerParallelTaskCount
                 agentChanged = true
             }
@@ -1235,7 +1236,7 @@ class ThirdPartyAgentMgrService @Autowired(required = false) constructor(
                 gateway = agentRecord.gateway,
                 fileGateway = agentRecord.fileGateway,
                 props = oldUserProps,
-                dockerParallelTaskCount = agentRecord.dockerParallelTaskCount
+                dockerParallelTaskCount = agentRecord.dockerParallelTaskCount ?: 0
             )
         }
     }

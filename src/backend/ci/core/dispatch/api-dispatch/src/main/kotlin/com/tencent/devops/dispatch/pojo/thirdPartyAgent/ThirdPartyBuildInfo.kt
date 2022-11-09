@@ -27,7 +27,6 @@
 
 package com.tencent.devops.dispatch.pojo.thirdPartyAgent
 
-import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentDockerInfo
 import com.tencent.devops.common.pipeline.type.agent.ThirdPartyAgentDockerInfoDispatch
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -43,7 +42,7 @@ data class ThirdPartyBuildInfo(
     @ApiModelProperty("工作空间")
     val workspace: String,
     @ApiModelProperty("流水线ID")
-    val pipelineId: String,
+    val pipelineId: String?,
     @ApiModelProperty("docker构建相关信息")
     val dockerBuildInfo: ThirdPartyAgentDockerInfoDispatch?,
     @ApiModelProperty("流水线执行次数")
