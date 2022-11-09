@@ -31,11 +31,13 @@ import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.event.annotation.Event
 import com.tencent.devops.common.event.annotation.EventConsumer
 import com.tencent.devops.common.stream.utils.DefaultBindingUtils
+import org.apache.pulsar.client.api.SubscriptionMode
 import org.reflections.Reflections
 import org.reflections.scanners.Scanners
 import org.reflections.util.ClasspathHelper
 import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
+import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor
 import org.springframework.boot.env.EnvironmentPostProcessor
@@ -55,14 +57,14 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered 
 
     private fun createPropertySource(environment: ConfigurableEnvironment): PropertiesPropertySource {
         with(Properties()) {
-            val hostName = if (environment is StandardEnvironment) {
-                val springCloudClientHostInfo = environment.propertySources.find {
-                    it.name == "springCloudClientHostInfo"
-                }?.source as LinkedHashMap<*, *>
-                springCloudClientHostInfo["spring.cloud.client.hostname"].toString()
-            } else {
-                UUIDUtil.generate().substring(0, 8)
-            }
+//            val hostName = if (environment is StandardEnvironment) {
+//                val springCloudClientHostInfo = environment.propertySources.find {
+//                    it.name == "springCloudClientHostInfo"
+//                }?.source as LinkedHashMap<*, *>
+//                springCloudClientHostInfo["spring.cloud.client.hostname"].toString()
+//            } else {
+//                "anonymous.${UUIDUtil.generate().substring(0, 8)}"
+//            }
 
             // 如果未配置服务使用的binder类型，则使用全局默认binder类型
             // 如果均未配置则不进行注解的反射解析
@@ -105,7 +107,7 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered 
                 definition.add(bindingName)
                 // 如果注解中指定了订阅组，则直接设置
                 // 如果未指定则取当前服务名作为订阅组，保证所有分布式服务再同一个组内
-                setBindings(bindingName, consumer, hostName)
+                setBindings(bindingName, consumer)
             }
 
             // 反射扫描所有带有 StreamConsumer 注解的bean类型
@@ -121,12 +123,12 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered 
                 logger.info(
                     "Found StreamConsumer class: ${clazz.name}, bindingName[$bindingName], " +
                         "with destination[${consumer.destination}], " +
-                        "group[${consumer.group}], separately[${consumer.separately}]"
+                        "group[${consumer.group}], anonymous[${consumer.anonymous}]"
                 )
                 definition.add(bindingName)
                 // 如果注解中指定了订阅组，则直接设置
                 // 如果未指定则取当前服务名作为订阅组，保证所有分布式服务再同一个组内
-                setBindings(bindingName, consumer, hostName)
+                setBindings(bindingName, consumer)
             }
 
             // 声明所有扫描结果的函数式声明
@@ -137,15 +139,23 @@ class StreamBindingEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered 
 
     private fun Properties.setBindings(
         bindingName: String,
-        consumer: EventConsumer,
-        hostName: String
+        consumer: EventConsumer
     ) {
+        // TODO Kafka 场景缺少特定配置
         val bindingPrefix = "spring.cloud.stream.bindings.$bindingName-in-0"
         val rabbitPropPrefix = "spring.cloud.stream.rabbit.bindings.$bindingName-in-0"
+        val pulsarPropPrefix = "spring.cloud.stream.pulsar.bindings.$bindingName-in-0"
         setProperty("$bindingPrefix.destination", consumer.destination)
-        setProperty("$bindingPrefix.group", if (consumer.separately) hostName else consumer.group)
+        if (consumer.anonymous) {
+            // 如果队列匿名则在消费者销毁后删除该队列
+            setProperty("$rabbitPropPrefix.consumer.durableSubscription", "true")
+            setProperty("$pulsarPropPrefix.consumer.subscriptionMode", SubscriptionMode.NonDurable.name)
+        } else {
+            setProperty("$bindingPrefix.group",  consumer.group)
+        }
+
         setProperty("$rabbitPropPrefix.consumer.delayedExchange", "true")
-        setProperty("$rabbitPropPrefix.consumer.exchangeType", "topic")
+        setProperty("$rabbitPropPrefix.consumer.exchangeType", ExchangeTypes.TOPIC)
     }
 
     override fun getOrder(): Int {

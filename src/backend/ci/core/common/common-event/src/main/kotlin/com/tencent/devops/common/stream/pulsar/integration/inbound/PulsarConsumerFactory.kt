@@ -27,6 +27,7 @@
 
 package com.tencent.devops.common.stream.pulsar.integration.inbound
 
+import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.stream.pulsar.constant.Serialization
 import com.tencent.devops.common.stream.pulsar.properties.PulsarConsumerProperties
 import com.tencent.devops.common.stream.pulsar.properties.PulsarProperties
@@ -38,6 +39,7 @@ import org.apache.pulsar.client.api.Message
 import org.apache.pulsar.client.api.PulsarClient
 import org.apache.pulsar.client.api.RegexSubscriptionMode
 import org.apache.pulsar.client.api.SubscriptionInitialPosition
+import org.apache.pulsar.client.api.SubscriptionMode
 import org.apache.pulsar.client.api.SubscriptionType
 import org.springframework.cloud.stream.binder.ExtendedConsumerProperties
 import java.util.concurrent.TimeUnit
@@ -50,7 +52,7 @@ object PulsarConsumerFactory {
      * @param consumerProperties consumerProperties
      * @return DefaultMQConsumer
      */
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "LongMethod", "MagicNumber")
     fun initPulsarConsumer(
         topic: String,
         group: String? = null,
@@ -65,18 +67,28 @@ object PulsarConsumerFactory {
             topics.addAll(topicNames)
             topics.add(topic)
             val client = pulsarClient ?: PulsarClientUtils.pulsarClient(pulsarProperties, concurrency)
+            val serialType = runCatching {
+                Serialization.valueOf(serialType)
+            }.getOrNull() ?: Serialization.BYTE
             val consumer = client.newConsumer(
-                PulsarSchemaUtils.getSchema(Serialization.valueOf(serialType), serialClass)
+                PulsarSchemaUtils.getSchema(serialType, serialClass)
             ).topics(topics)
             if (!topicsPattern.isNullOrEmpty()) {
                 consumer.topicsPattern(topicsPattern)
             }
             if (group.isNullOrEmpty()) {
-                consumer.subscriptionName(subscriptionName)
+                consumer.subscriptionName("$subscriptionName-anonymous-${UUIDUtil.generate().substring(0, 8)}")
             } else {
                 consumer.subscriptionName(group)
             }
-            consumer.subscriptionType(SubscriptionType.valueOf(subscriptionType))
+            val subscriptionType = runCatching {
+                SubscriptionType.valueOf(subscriptionType)
+            }.getOrNull() ?: SubscriptionType.Shared
+            val subscriptionMode = runCatching {
+                SubscriptionMode.valueOf(subscriptionMode)
+            }.getOrNull() ?: SubscriptionMode.Durable
+            consumer.subscriptionType(subscriptionType)
+                .subscriptionMode(subscriptionMode)
                 .receiverQueueSize(receiverQueueSize)
                 .acknowledgmentGroupTime(acknowledgementsGroupTimeMicros, TimeUnit.MILLISECONDS)
                 .negativeAckRedeliveryDelay(negativeAckRedeliveryDelayMicros, TimeUnit.MILLISECONDS)
@@ -84,17 +96,26 @@ object PulsarConsumerFactory {
             if (!consumerName.isNullOrBlank()) {
                 consumer.consumerName(consumerName)
             }
+            val cryptoFailureAction = runCatching {
+                ConsumerCryptoFailureAction.valueOf(cryptoFailureAction)
+            }.getOrNull() ?: ConsumerCryptoFailureAction.FAIL
             consumer.ackTimeout(ackTimeoutMillis, TimeUnit.MILLISECONDS)
                 .ackTimeoutTickTime(tickDurationMillis, TimeUnit.MILLISECONDS)
                 .priorityLevel(priorityLevel)
-                .cryptoFailureAction(ConsumerCryptoFailureAction.valueOf(cryptoFailureAction))
+                .cryptoFailureAction(cryptoFailureAction)
             if (properties.isNotEmpty()) {
                 consumer.properties(properties)
             }
+            val subscriptionInitialPosition = runCatching {
+                SubscriptionInitialPosition.valueOf(subscriptionInitialPosition)
+            }.getOrNull() ?: SubscriptionInitialPosition.Latest
+            val regexSubscriptionMode = runCatching {
+                RegexSubscriptionMode.valueOf(regexSubscriptionMode)
+            }.getOrNull() ?: RegexSubscriptionMode.PersistentOnly
             consumer.readCompacted(readCompacted)
-                .subscriptionInitialPosition(SubscriptionInitialPosition.valueOf(subscriptionInitialPosition))
+                .subscriptionInitialPosition(subscriptionInitialPosition)
                 .patternAutoDiscoveryPeriod(patternAutoDiscoveryPeriod)
-                .subscriptionTopicsMode(RegexSubscriptionMode.valueOf(regexSubscriptionMode))
+                .subscriptionTopicsMode(regexSubscriptionMode)
                 .autoUpdatePartitions(autoUpdatePartitions)
                 .replicateSubscriptionState(replicateSubscriptionState)
             consumer.messageListener(messageListener)
