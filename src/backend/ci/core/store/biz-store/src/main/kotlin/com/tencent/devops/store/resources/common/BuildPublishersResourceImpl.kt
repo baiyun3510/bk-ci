@@ -28,7 +28,7 @@
 package com.tencent.devops.store.resources.common
 
 import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.store.api.common.ServicePublishersResource
+import com.tencent.devops.store.api.common.BuildPublishersResource
 import com.tencent.devops.store.pojo.common.PublishersRequest
 import com.tencent.devops.store.pojo.common.StoreDockingPlatformRequest
 import com.tencent.devops.store.service.common.PublishersDataService
@@ -37,26 +37,26 @@ import com.tencent.devops.common.web.annotation.SensitiveApiPermission
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
-class ServicePublishersResourceImpl @Autowired constructor(
+class BuildPublishersResourceImpl @Autowired constructor(
     private val publishersDataService: PublishersDataService
-) : ServicePublishersResource {
+) : BuildPublishersResource {
 
-    @SensitiveApiPermission("syn_add_publisher_data")
+    @SensitiveApiPermission("syn_publisher_data")
     override fun synAddPublisherData(userId: String, publishers: List<PublishersRequest>): Result<Int> {
         return Result(publishersDataService.createPublisherData(userId, publishers))
     }
 
-    @SensitiveApiPermission("syn_delete_publisher_data")
+    @SensitiveApiPermission("syn_publisher_data")
     override fun synDeletePublisherData(userId: String, publishers: List<PublishersRequest>): Result<Int> {
         return Result(publishersDataService.deletePublisherData(userId, publishers))
     }
 
-    @SensitiveApiPermission("syn_update_publisher_data")
+    @SensitiveApiPermission("syn_publisher_data")
     override fun synUpdatePublisherData(userId: String, publishers: List<PublishersRequest>): Result<Int> {
         return Result(publishersDataService.updatePublisherData(userId, publishers))
     }
 
-    @SensitiveApiPermission("syn_add_platforms_data")
+    @SensitiveApiPermission("syn_platforms_data")
     override fun synAddPlatformsData(
         userId: String,
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
@@ -64,7 +64,7 @@ class ServicePublishersResourceImpl @Autowired constructor(
         return Result(publishersDataService.createPlatformsData(userId, storeDockingPlatformRequests))
     }
 
-    @SensitiveApiPermission("syn_delete_platforms_data")
+    @SensitiveApiPermission("syn_platforms_data")
     override fun synDeletePlatformsData(
         userId: String,
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
@@ -72,7 +72,7 @@ class ServicePublishersResourceImpl @Autowired constructor(
         return Result(publishersDataService.deletePlatformsData(userId, storeDockingPlatformRequests))
     }
 
-    @SensitiveApiPermission("syn_update_platforms_data")
+    @SensitiveApiPermission("syn_platforms_data")
     override fun synUpdatePlatformsData(
         userId: String,
         storeDockingPlatformRequests: List<StoreDockingPlatformRequest>
@@ -80,7 +80,7 @@ class ServicePublishersResourceImpl @Autowired constructor(
         return Result(publishersDataService.updatePlatformsData(userId, storeDockingPlatformRequests))
     }
 
-    @SensitiveApiPermission("syn_update_platforms_logo_info")
+    @SensitiveApiPermission("syn_platforms_data")
     override fun synUpdatePlatformsLogoInfo(userId: String, platformCode: String, logoUrl: String): Result<Boolean> {
         return Result(publishersDataService.updatePlatformsLogoInfo(userId, platformCode, logoUrl))
     }
