@@ -59,13 +59,6 @@ class MetricsThirdPartyListenerConfiguration {
         }
     }
 
-    @Bean
-    fun qualityDailyReportListener(
-        @Autowired thirdPlatformDataReportFacadeService: MetricsThirdPlatformDataReportFacadeService
-    ) = QualityReportDailyMessageListener(
-        metricsThirdPlatformDataReportFacadeService = thirdPlatformDataReportFacadeService
-    )
-
     @EventConsumer(StreamBinding.EXCHANGE_QUALITY_DAILY_FANOUT, STREAM_CONSUMER_GROUP)
     fun metricsQualityDailyReportListener(
         @Autowired listener: QualityReportDailyMessageListener
@@ -74,13 +67,6 @@ class MetricsThirdPartyListenerConfiguration {
             listener.execute(event.payload)
         }
     }
-
-    @Bean
-    fun dailyReportMessageListener(
-        @Autowired thirdPlatformDataReportFacadeService: MetricsThirdPlatformDataReportFacadeService
-    ) = TurboDailyReportMessageListener(
-        metricsThirdPlatformDataReportFacadeService = thirdPlatformDataReportFacadeService
-    )
 
     @EventConsumer(EXCHANGE_METRICS_STATISTIC_TURBO_DAILY, STREAM_CONSUMER_GROUP)
     fun metricsTurboDailyReportListener(
