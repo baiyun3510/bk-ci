@@ -1,8 +1,8 @@
 package com.tencent.devops.log.util
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.tencent.devops.common.stream.annotation.StreamEventConsumer
-import com.tencent.devops.common.stream.annotation.StreamEvent
+import com.tencent.devops.common.event.annotation.EventConsumer
+import com.tencent.devops.common.event.annotation.Event
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.reflections.Reflections
@@ -46,12 +46,12 @@ class IndexNameUtilsTest {
             ConfigurationBuilder()
                 .addUrls(ClasspathHelper.forPackage("com.tencent.devops"))
                 .setExpandSuperTypes(true)
-        ).getTypesAnnotatedWith(StreamEvent::class.java)
+        ).getTypesAnnotatedWith(Event::class.java)
         eventClasses.forEach { clazz ->
-            val streamEvent = clazz.getAnnotation(StreamEvent::class.java)
+            val event = clazz.getAnnotation(Event::class.java)
             println(
                 "Found StreamEvent class: ${clazz.name}, " +
-                    "with destination[${streamEvent.destination}]"
+                    "with destination[${event.destination}]"
             )
             val bindingName = "${clazz.simpleName.decapitalize()}Out"
             definition.add(bindingName)
@@ -61,12 +61,12 @@ class IndexNameUtilsTest {
                 .addUrls(ClasspathHelper.forPackage("com.tencent.devops"))
                 .setExpandSuperTypes(true)
                 .setScanners(Scanners.MethodsAnnotated)
-        ).getMethodsAnnotatedWith(StreamEventConsumer::class.java)
+        ).getMethodsAnnotatedWith(EventConsumer::class.java)
         consumerBeans.forEach { method ->
-            val streamEventConsumer = method.getAnnotation(StreamEventConsumer::class.java)
+            val eventConsumer = method.getAnnotation(EventConsumer::class.java)
             println(
                 "Found StreamConsumer class: ${method.name}, " +
-                    "with destination[${streamEventConsumer.destination}] group[${streamEventConsumer.group}]"
+                    "with destination[${eventConsumer.destination}] group[${eventConsumer.group}]"
             )
             definition.add("${method.name}In")
             // 如果注解中指定了订阅组，则直接设置

@@ -46,7 +46,6 @@ import com.tencent.devops.common.pipeline.element.JobDevOpsFastPushFileElement
 import com.tencent.devops.common.pipeline.enums.BuildStatus
 import com.tencent.devops.environment.api.ServiceEnvironmentResource
 import com.tencent.devops.environment.api.ServiceNodeResource
-import com.tencent.devops.process.bkjob.ClearJobTempFileEvent
 import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_BUILD_TASK_ENV_ID_IS_NULL
 import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_BUILD_TASK_ENV_NAME_IS_NULL
 import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_BUILD_TASK_ENV_NAME_NOT_EXISTS
@@ -57,7 +56,6 @@ import com.tencent.devops.process.engine.atom.AtomResponse
 import com.tencent.devops.process.engine.atom.IAtomTask
 import com.tencent.devops.process.engine.atom.defaultFailAtomResponse
 import com.tencent.devops.process.engine.common.BS_ATOM_START_TIME_MILLS
-import com.tencent.devops.process.engine.common.BS_TASK_HOST
 import com.tencent.devops.process.engine.exception.BuildTaskException
 import com.tencent.devops.process.engine.pojo.PipelineBuildTask
 import com.tencent.devops.process.engine.service.PipelineRepositoryService
@@ -215,23 +213,8 @@ class JobDevOpsFastPushFileTaskAtom @Autowired constructor(
         )
 
         val localIp = CommonUtils.getInnerIP()
-        task.taskParams[BS_TASK_HOST] = localIp
         task.taskParams[TMP_HOST] = localIp
         task.taskParams[TEMP_DEST_PATH] = destPath
-        // 执行超时后的保底清理事件
-        pipelineEventDispatcher.dispatch(
-            ClearJobTempFileEvent(
-                source = "archive",
-                pipelineId = pipelineId,
-                buildId = buildId,
-                projectId = projectId,
-                userId = task.starter,
-                clearFileSet = setOf(destPath),
-                taskId = taskId,
-                routeKeySuffix = task.taskParams[TMP_HOST] as String,
-                delayMills = (param.timeout ?: 600) * 60000 // 分钟 * 60  * 1000 = X毫秒
-            )
-        )
         return distribute(task, param, runVariables, fileSource)
     }
 
@@ -437,19 +420,6 @@ class JobDevOpsFastPushFileTaskAtom @Autowired constructor(
             logger.info("[$buildId]|clearTempFile| no file need clear")
             return
         }
-
-        pipelineEventDispatcher.dispatch(
-            ClearJobTempFileEvent(
-                source = "clearTempFile",
-                pipelineId = task.pipelineId,
-                buildId = buildId,
-                projectId = task.projectId,
-                userId = starter!!,
-                clearFileSet = clearFileSet,
-                taskId = taskId,
-                routeKeySuffix = task.taskParams[TMP_HOST] as String
-            )
-        )
     }
 
     private fun checkAuth(

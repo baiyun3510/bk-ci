@@ -33,20 +33,20 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.common.redis.RedisOperation
-import com.tencent.devops.project.pojo.ServiceItem
-import com.tencent.devops.project.pojo.ServiceItemInfoVO
 import com.tencent.devops.project.constant.ProjectConstant.ITEM_BK_SERVICE_REDIS_KEY
-import com.tencent.devops.project.dao.ServiceDao
-import com.tencent.devops.project.dao.ServiceItemDao
 import com.tencent.devops.project.pojo.ExtItemDTO
 import com.tencent.devops.project.pojo.ExtServiceEntity
-import com.tencent.devops.project.pojo.ItemCreateInfo
 import com.tencent.devops.project.pojo.ItemInfoResponse
 import com.tencent.devops.project.pojo.ItemListVO
-import com.tencent.devops.project.pojo.ItemQueryInfo
-import com.tencent.devops.project.pojo.ItemUpdateInfo
+import com.tencent.devops.project.pojo.ServiceItem
+import com.tencent.devops.project.pojo.ServiceItemInfoVO
 import com.tencent.devops.project.pojo.enums.HtmlComponentTypeEnum
 import com.tencent.devops.project.pojo.enums.ServiceItemStatusEnum
+import com.tencent.devops.project.dao.ServiceDao
+import com.tencent.devops.project.dao.ServiceItemDao
+import com.tencent.devops.project.pojo.ItemCreateInfo
+import com.tencent.devops.project.pojo.ItemQueryInfo
+import com.tencent.devops.project.pojo.ItemUpdateInfo
 import com.tencent.devops.store.api.ServiceItemRelResource
 import com.tencent.devops.store.constant.StoreMessageCode
 import org.jooq.DSLContext
@@ -70,8 +70,16 @@ class ServiceItemService @Autowired constructor(
     @PostConstruct
     fun init() {
         // 初始化projectServiceMap
-        getServiceList()
-        logger.info("projectServiceMap: $projectServiceMap")
+        try {
+            getServiceList()
+            logger.info("projectServiceMap: $projectServiceMap")
+        } catch (t: Throwable) {
+            logger.warn("init ServiceList fail", t)
+            throw ErrorCodeException(
+                errorCode = CommonMessageCode.INIT_SERVICE_LIST_ERROR,
+                defaultMessage = t.toString()
+            )
+        }
     }
 
     fun getServiceList(itemStatusList: List<ServiceItemStatusEnum>? = null): List<ExtItemDTO> {
@@ -99,7 +107,7 @@ class ServiceItemService @Autowired constructor(
         }
 
         parentIndexMap.forEach { (parentId, list) ->
-            val parentInfo = getProjectService(parentId)
+            val parentInfo = getProjectService(parentId) ?: return@forEach
             val childList = mutableListOf<ExtServiceEntity>()
             list.forEach {
                 val itemInfo = allItemMap[it]
@@ -119,6 +127,8 @@ class ServiceItemService @Autowired constructor(
             )
             itemList.add(extItem)
         }
+        logger.info("getServiceItem itemList:${itemList.toList()}")
+
         return itemList.toList()
     }
 
@@ -192,7 +202,7 @@ class ServiceItemService @Autowired constructor(
     fun getItemByIds(itemIds: Set<String>): List<ExtItemDTO> {
         logger.info("getItemByIds: itemIds[$itemIds]")
         val itemList = mutableListOf<ExtItemDTO>()
-        serviceItemDao.getItemByIds(dslContext, itemIds).forEach {
+        serviceItemDao.getItemByIds(dslContext, itemIds)?.forEach {
             val serviceItem = ServiceItem(
                 itemId = it!!.id,
                 itemCode = it.itemCode,
@@ -208,7 +218,7 @@ class ServiceItemService @Autowired constructor(
     fun getItemInfoByCodes(itemCodes: Set<String>): List<ServiceItem> {
         logger.info("getItemInfoByCodes: itemCodes[$itemCodes]")
         val itemList = mutableListOf<ServiceItem>()
-        serviceItemDao.getItemByCodes(dslContext, itemCodes).forEach {
+        serviceItemDao.getItemByCodes(dslContext, itemCodes)?.forEach {
             val serviceItem = ServiceItem(
                 itemId = it!!.id,
                 itemCode = it.itemCode,
@@ -224,7 +234,7 @@ class ServiceItemService @Autowired constructor(
     fun getItemInfoByIds(itemIds: Set<String>): List<ServiceItem> {
         logger.info("getItemInfoByIds: itemIds[$itemIds]")
         val itemList = mutableListOf<ServiceItem>()
-        serviceItemDao.getItemByIds(dslContext, itemIds).forEach {
+        serviceItemDao.getItemByIds(dslContext, itemIds)?.forEach {
             val serviceItem = ServiceItem(
                 itemId = it!!.id,
                 itemCode = it.itemCode,
@@ -241,7 +251,7 @@ class ServiceItemService @Autowired constructor(
 
     fun addServiceNum(itemIds: Set<String>): Boolean {
         logger.info("addServiceNum: itemIds[$itemIds]")
-        serviceItemDao.getItemByIds(dslContext, itemIds).forEach {
+        serviceItemDao.getItemByIds(dslContext, itemIds)?.forEach {
             val serviceNum = it!!.serviceNum + 1
             serviceItemDao.addCount(dslContext, it.id, serviceNum)
         }
@@ -269,17 +279,22 @@ class ServiceItemService @Autowired constructor(
         return result
     }
 
-    fun getProjectService(serviceId: String): ExtServiceEntity {
+    fun getProjectService(serviceId: String): ExtServiceEntity? {
         return if (!projectServiceMap.containsKey(serviceId)) {
             val serviceRecord = projectServiceDao.select(dslContext, serviceId.toLong())
-            val serviceEntity = ExtServiceEntity(
-                id = serviceRecord!!.id.toString(),
-                name = serviceRecord.name.substringBefore("("),
-                code = serviceRecord.englishName
-            )
-            projectServiceMap[serviceId] = serviceEntity
-            logger.info("set bkServiceId to map: servcieId[$serviceId], entity[$serviceEntity]")
-            serviceEntity
+            if (serviceRecord == null) {
+                logger.warn("getProjectService : Service ($serviceId) is not exist")
+                null
+            } else {
+                val serviceEntity = ExtServiceEntity(
+                    id = serviceRecord!!.id.toString(),
+                    name = serviceRecord.name.substringBefore("("),
+                    code = serviceRecord.englishName
+                )
+                projectServiceMap[serviceId] = serviceEntity
+                logger.info("set bkServiceId to map: servcieId[$serviceId], entity[$serviceEntity]")
+                serviceEntity
+            }
         } else {
             projectServiceMap[serviceId]!!
         }
@@ -322,8 +337,12 @@ class ServiceItemService @Autowired constructor(
             logger.warn("createItem itemCode is exist, itemCode[$itemCode]")
             throw ErrorCodeException(errorCode = CommonMessageCode.PARAMETER_IS_EXIST, params = arrayOf(itemCode))
         }
+        // 检验增加扩展点时，父服务是否存在
+        if (projectServiceMap[itemInfo.pid] == null && getProjectService(itemInfo.pid) == null) {
+            logger.warn("createItem :Parent service is not exist, service[${itemInfo.pid}]")
+            throw ErrorCodeException(errorCode = CommonMessageCode.SERVICE_NOT_EXIST, params = arrayOf(itemInfo.pid))
+        }
         validArgs(itemInfo)
-
         val createInfo = ItemCreateInfo(
             itemCode = itemInfo.itemCode,
             itemName = itemInfo.itemName,
@@ -403,7 +422,7 @@ class ServiceItemService @Autowired constructor(
         }
 
         try {
-            JsonUtil.toJson(props)
+            JsonUtil.toJson(props!!)
         } catch (e: Exception) {
             throw ErrorCodeException(errorCode = CommonMessageCode.ERROR_INVALID_PARAM_, params = arrayOf("props"))
         }

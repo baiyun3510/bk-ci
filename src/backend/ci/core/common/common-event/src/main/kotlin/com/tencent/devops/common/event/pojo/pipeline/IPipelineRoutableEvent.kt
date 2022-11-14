@@ -32,13 +32,14 @@ import com.tencent.devops.common.event.enums.ActionType
 /**
  * 可指定路由key后续的流水线事件
  */
+@Suppress("LongParameterList")
 abstract class IPipelineRoutableEvent(
     open var routeKeySuffix: String? = null, // 路由后缀Key
-    override var actionType: ActionType,
-    override val source: String,
-    override val projectId: String,
-    override val pipelineId: String,
-    override val userId: String,
-    override var delayMills: Int,
-    override var retryTime: Int = 1
-) : IPipelineEvent(actionType, source, projectId, pipelineId, userId, delayMills, retryTime)
+    open var actionType: ActionType,
+    open val source: String,
+    open val projectId: String,
+    open val pipelineId: String,
+    open val userId: String,
+    open var delayMills: Int,
+    open var retryTime: Int = 1
+)

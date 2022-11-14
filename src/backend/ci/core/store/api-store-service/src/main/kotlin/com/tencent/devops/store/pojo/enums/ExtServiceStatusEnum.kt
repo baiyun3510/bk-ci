@@ -47,15 +47,6 @@ enum class ExtServiceStatusEnum(val status: Int) {
 
     companion object {
 
-        fun getServiceStatus(name: String): ExtServiceStatusEnum? {
-            values().forEach { enumObj ->
-                if (enumObj.name == name) {
-                    return enumObj
-                }
-            }
-            return null
-        }
-
         fun getServiceStatus(status: Int): String {
             return when (status) {
                 0 -> INIT.name

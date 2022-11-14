@@ -26,292 +26,145 @@
  */
 package com.tencent.devops.lambda.config
 
-import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQ
-import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQEventDispatcher
+import com.tencent.devops.common.event.annotation.EventConsumer
+import com.tencent.devops.common.event.dispatcher.mq.MQEventDispatcher
+import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
+import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildCommitFinishEvent
+import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildFinishBroadCastEvent
+import com.tencent.devops.common.event.pojo.pipeline.PipelineBuildTaskFinishBroadCastEvent
+import com.tencent.devops.common.event.pojo.pipeline.PipelineModelAnalysisEvent
+import com.tencent.devops.common.stream.constants.StreamBinding
 import com.tencent.devops.lambda.listener.LambdaBuildCommitFinishListener
 import com.tencent.devops.lambda.listener.LambdaBuildTaskFinishListener
 import com.tencent.devops.lambda.listener.LambdaBuildFinishListener
 import com.tencent.devops.lambda.listener.LambdaPipelineModelListener
-import com.tencent.devops.lambda.listener.LambdaProjectListener
-import org.springframework.amqp.core.Binding
-import org.springframework.amqp.core.BindingBuilder
-import org.springframework.amqp.core.FanoutExchange
-import org.springframework.amqp.core.Queue
-import org.springframework.amqp.rabbit.connection.ConnectionFactory
-import org.springframework.amqp.rabbit.core.RabbitAdmin
-import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer
-import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import com.tencent.devops.lambda.service.process.LambdaDataService
+import com.tencent.devops.lambda.service.process.LambdaPipelineModelService
+import com.tencent.devops.lambda.service.project.LambdaProjectService
+import com.tencent.devops.project.pojo.mq.ProjectCreateBroadCastEvent
+import com.tencent.devops.project.pojo.mq.ProjectUpdateBroadCastEvent
+import java.util.function.Consumer
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.messaging.Message
 
 @Configuration
 class LambdaMQConfiguration {
 
-    @Bean
-    fun rabbitAdmin(connectionFactory: ConnectionFactory): RabbitAdmin {
-        return RabbitAdmin(connectionFactory)
+    companion object {
+        const val STREAM_CONSUMER_GROUP = "lambda-service"
     }
 
     @Bean
-    fun pipelineEventDispatcher(rabbitTemplate: RabbitTemplate) = MQEventDispatcher(rabbitTemplate)
+    fun pipelineEventDispatcher(streamBridge: StreamBridge) = MQEventDispatcher(streamBridge)
+
+    @Bean
+    fun lambdaBuildFinishListener(
+        @Autowired lambdaDataService: LambdaDataService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaBuildFinishListener(
+        lambdaDataService = lambdaDataService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
      * 构建结束广播交换机
      */
-    @Bean
-    fun pipelineBuildFinishFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(MQ.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, true, false)
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    fun pipelineBuildFinishListener(
+        @Autowired lambdaBuildFinishListener: LambdaBuildFinishListener
+    ): Consumer<Message<PipelineBuildFinishBroadCastEvent>> {
+        return Consumer { event: Message<PipelineBuildFinishBroadCastEvent> ->
+            lambdaBuildFinishListener.execute(event.payload)
+        }
     }
 
     @Bean
-    fun buildFinishLambdaQueue() = Queue(MQ.QUEUE_PIPELINE_BUILD_FINISH_LAMBDA)
-
-    @Bean
-    fun buildFinishLambdaQueueBind(
-        @Autowired buildFinishLambdaQueue: Queue,
-        @Autowired pipelineBuildFinishFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(buildFinishLambdaQueue).to(pipelineBuildFinishFanoutExchange)
-    }
-
-    @Bean
-    fun pipelineBuildFinishListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired buildFinishLambdaQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired lambdaBuildFinishListener: LambdaBuildFinishListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer(connectionFactory)
-        container.setQueueNames(buildFinishLambdaQueue.name)
-        container.setConcurrentConsumers(30)
-        container.setMaxConcurrentConsumers(30)
-        container.setAmqpAdmin(rabbitAdmin)
-        container.setPrefetchCount(1)
-
-        val adapter = MessageListenerAdapter(lambdaBuildFinishListener, lambdaBuildFinishListener::execute.name)
-        adapter.setMessageConverter(messageConverter)
-        container.setMessageListener(adapter)
-        return container
-    }
+    fun lambdaBuildTaskFinishListener(
+        @Autowired lambdaDataService: LambdaDataService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaBuildTaskFinishListener(
+        lambdaDataService = lambdaDataService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
-     * 构建结束广播交换机
+     * 任务结束广播交换机
      */
-    @Bean
-    fun pipelineBuildElementFinishFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(MQ.EXCHANGE_PIPELINE_BUILD_ELEMENT_FINISH_FANOUT, true, false)
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
-    }
-
-    @Bean
-    fun buildElementFinishLambdaQueue() = Queue(MQ.QUEUE_PIPELINE_BUILD_ELEMENT_FINISH_LAMBDA)
-
-    @Bean
-    fun buildElementFinishLambdaQueueBind(
-        @Autowired buildElementFinishLambdaQueue: Queue,
-        @Autowired pipelineBuildElementFinishFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(buildElementFinishLambdaQueue).to(pipelineBuildElementFinishFanoutExchange)
-    }
-
-    @Bean
-    fun pipelineBuildElementFinishListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired buildElementFinishLambdaQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired lambdaBuildTaskFinishListener: LambdaBuildTaskFinishListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer(connectionFactory)
-        container.setQueueNames(buildElementFinishLambdaQueue.name)
-        container.setConcurrentConsumers(30)
-        container.setMaxConcurrentConsumers(30)
-        container.setAmqpAdmin(rabbitAdmin)
-        container.setPrefetchCount(1)
-
-        val adapter = MessageListenerAdapter(lambdaBuildTaskFinishListener, lambdaBuildTaskFinishListener::execute.name)
-        adapter.setMessageConverter(messageConverter)
-        container.setMessageListener(adapter)
-        return container
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_ELEMENT_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    fun pipelineBuildElementFinishListener(
+        @Autowired lambdaBuildTaskFinishListener: LambdaBuildTaskFinishListener
+    ): Consumer<Message<PipelineBuildTaskFinishBroadCastEvent>> {
+        return Consumer { event: Message<PipelineBuildTaskFinishBroadCastEvent> ->
+            lambdaBuildTaskFinishListener.execute(event.payload)
+        }
     }
 
     /**
      * 构建project创建广播交换机
      */
-    @Bean
-    fun projectCreateFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(MQ.EXCHANGE_PROJECT_CREATE_FANOUT, true, false)
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
-    }
-
-    @Bean
-    fun projectCreateLambdaQueue() = Queue(LambdaMQ.QUEUE_PROJECT_CREATE_LAMBDA_EVENT)
-
-    @Bean
-    fun projectCreateLambdaQueueBind(
-        @Autowired projectCreateLambdaQueue: Queue,
-        @Autowired projectCreateFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(projectCreateLambdaQueue).to(projectCreateFanoutExchange)
-    }
-
-    @Bean
-    fun projectCreateListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired projectCreateLambdaQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired lambdaProjectListener: LambdaProjectListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer(connectionFactory)
-        container.setQueueNames(projectCreateLambdaQueue.name)
-        container.setConcurrentConsumers(5)
-        container.setMaxConcurrentConsumers(10)
-        container.setAmqpAdmin(rabbitAdmin)
-        container.setPrefetchCount(1)
-
-        val adapter = MessageListenerAdapter(lambdaProjectListener, lambdaProjectListener::execute.name)
-        adapter.setMessageConverter(messageConverter)
-        container.setMessageListener(adapter)
-        return container
+    @EventConsumer(StreamBinding.EXCHANGE_PROJECT_CREATE_FANOUT, STREAM_CONSUMER_GROUP)
+    fun projectCreateListener(
+        @Autowired lambdaProjectService: LambdaProjectService
+    ): Consumer<Message<ProjectCreateBroadCastEvent>> {
+        return Consumer { event: Message<ProjectCreateBroadCastEvent> ->
+            lambdaProjectService.onReceiveProjectCreate(event.payload)
+        }
     }
 
     /**
      * 构建project更新广播交换机
      */
-    @Bean
-    fun projectUpdateFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(MQ.EXCHANGE_PROJECT_UPDATE_FANOUT, true, false)
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
+    @EventConsumer(StreamBinding.EXCHANGE_PROJECT_UPDATE_FANOUT, STREAM_CONSUMER_GROUP)
+    fun projectUpdateListener(
+        @Autowired lambdaProjectService: LambdaProjectService
+    ): Consumer<Message<ProjectUpdateBroadCastEvent>> {
+        return Consumer { event: Message<ProjectUpdateBroadCastEvent> ->
+            lambdaProjectService.onReceiveProjectUpdate(event.payload)
+        }
     }
 
     @Bean
-    fun projectUpdateLambdaQueue() = Queue(LambdaMQ.QUEUE_PROJECT_UPDATE_LAMBDA_EVENT)
-
-    @Bean
-    fun projectUpdateLambdaQueueBind(
-        @Autowired projectUpdateLambdaQueue: Queue,
-        @Autowired projectUpdateFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(projectUpdateLambdaQueue).to(projectUpdateFanoutExchange)
-    }
-
-    @Bean
-    fun projectUpdateListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired projectUpdateLambdaQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired lambdaProjectListener: LambdaProjectListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer(connectionFactory)
-        container.setQueueNames(projectUpdateLambdaQueue.name)
-        container.setConcurrentConsumers(5)
-        container.setMaxConcurrentConsumers(10)
-        container.setAmqpAdmin(rabbitAdmin)
-        container.setPrefetchCount(1)
-
-        val adapter = MessageListenerAdapter(lambdaProjectListener, lambdaProjectListener::execute.name)
-        adapter.setMessageConverter(messageConverter)
-        container.setMessageListener(adapter)
-        return container
-    }
+    fun lambdaPipelineModelListener(
+        @Autowired lambdaPipelineModelService: LambdaPipelineModelService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaPipelineModelListener(
+        lambdaPipelineModelService = lambdaPipelineModelService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
      * 构建model更新广播交换机
      */
-    @Bean
-    fun pipelineModelAnalysisFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(MQ.EXCHANGE_PIPELINE_EXTENDS_FANOUT, true, false)
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_EXTENDS_FANOUT, STREAM_CONSUMER_GROUP)
+    fun pipelineModelAnalysisListener(
+        @Autowired lambdaPipelineModelListener: LambdaPipelineModelListener
+    ): Consumer<Message<PipelineModelAnalysisEvent>> {
+        return Consumer { event: Message<PipelineModelAnalysisEvent> ->
+            lambdaPipelineModelListener.run(event.payload)
+        }
     }
 
     @Bean
-    fun pipelineModelAnalysisLambdaQueue() = Queue(LambdaMQ.QUEUE_PIPELINE_EXTENDS_MODEL_LAMBDA)
-
-    @Bean
-    fun pipelineModelAnalysisLambdaQueueBind(
-        @Autowired pipelineModelAnalysisLambdaQueue: Queue,
-        @Autowired pipelineModelAnalysisFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(pipelineModelAnalysisLambdaQueue).to(pipelineModelAnalysisFanoutExchange)
-    }
-
-    @Bean
-    fun pipelineModelAnalysisListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired pipelineModelAnalysisLambdaQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired lambdaPipelineModelListener: LambdaPipelineModelListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer(connectionFactory)
-        container.setQueueNames(pipelineModelAnalysisLambdaQueue.name)
-        container.setConcurrentConsumers(5)
-        container.setMaxConcurrentConsumers(5)
-        container.setAmqpAdmin(rabbitAdmin)
-        container.setPrefetchCount(1)
-
-        val adapter = MessageListenerAdapter(lambdaPipelineModelListener, lambdaPipelineModelListener::execute.name)
-        adapter.setMessageConverter(messageConverter)
-        container.setMessageListener(adapter)
-        return container
-    }
+    fun lambdaBuildCommitFinishListener(
+        @Autowired lambdaDataService: LambdaDataService,
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+    ) = LambdaBuildCommitFinishListener(
+        lambdaDataService = lambdaDataService,
+        pipelineEventDispatcher = pipelineEventDispatcher
+    )
 
     /**
      * webhook commits完成事件交换机
      */
-    @Bean
-    fun pipelineBuildCommitFinishFanoutExchange(): FanoutExchange {
-        val fanoutExchange = FanoutExchange(
-            MQ.EXCHANGE_PIPELINE_BUILD_COMMIT_FINISH_FANOUT, true, false
-        )
-        fanoutExchange.isDelayed = true
-        return fanoutExchange
-    }
-
-    @Bean
-    fun pipelineBuildCommitFinishLambdaQueue() = Queue(LambdaMQ.QUEUE_PIPELINE_BUILD_COMMIT_FINISH_LAMBDA)
-
-    @Bean
-    fun pipelineBuildCommitsFinishQueueBind(
-        @Autowired pipelineBuildCommitFinishLambdaQueue: Queue,
-        @Autowired pipelineBuildCommitFinishFanoutExchange: FanoutExchange
-    ): Binding {
-        return BindingBuilder.bind(pipelineBuildCommitFinishLambdaQueue).to(pipelineBuildCommitFinishFanoutExchange)
-    }
-
-    @Bean
-    fun pipelineBuildCommitsFinishListenerContainer(
-        @Autowired connectionFactory: ConnectionFactory,
-        @Autowired pipelineBuildCommitFinishLambdaQueue: Queue,
-        @Autowired rabbitAdmin: RabbitAdmin,
-        @Autowired lambdaBuildCommitFinishListener: LambdaBuildCommitFinishListener,
-        @Autowired messageConverter: Jackson2JsonMessageConverter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer(connectionFactory)
-        container.setQueueNames(pipelineBuildCommitFinishLambdaQueue.name)
-        container.setConcurrentConsumers(10)
-        container.setMaxConcurrentConsumers(30)
-        container.setAmqpAdmin(rabbitAdmin)
-        container.setPrefetchCount(1)
-
-        val adapter = MessageListenerAdapter(
-            lambdaBuildCommitFinishListener,
-            LambdaBuildCommitFinishListener::execute.name
-        )
-        adapter.setMessageConverter(messageConverter)
-        container.setMessageListener(adapter)
-        return container
+    @EventConsumer(StreamBinding.EXCHANGE_PIPELINE_BUILD_COMMIT_FINISH_FANOUT, STREAM_CONSUMER_GROUP)
+    fun pipelineBuildCommitsFinishListener(
+        @Autowired lambdaBuildCommitFinishListener: LambdaBuildCommitFinishListener
+    ): Consumer<Message<PipelineBuildCommitFinishEvent>> {
+        return Consumer { event: Message<PipelineBuildCommitFinishEvent> ->
+            lambdaBuildCommitFinishListener.run(event.payload)
+        }
     }
 }

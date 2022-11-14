@@ -29,14 +29,24 @@ package com.tencent.devops.worker.common.api.store
 
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.store.pojo.dto.UpdateExtServiceEnvInfoDTO
+import com.tencent.devops.store.pojo.vo.ServiceEnvVO
 import com.tencent.devops.worker.common.api.WorkerRestApiSDK
+import java.io.File
 
 interface ExtServiceSDKApi : WorkerRestApiSDK {
 
     fun updateExtServiceEnv(
-        projectCode: String,
+        projectId: String,
         serviceCode: String,
         version: String,
         updateExtServiceEnvInfo: UpdateExtServiceEnvInfoDTO
     ): Result<Boolean>
+
+    fun downloadServicePkg(
+        serviceFilePath: String,
+        file: File,
+        isVmBuildEnv: Boolean
+    )
+
+    fun getExtServiceEnv(serviceCode: String, version: String): Result<ServiceEnvVO>
 }

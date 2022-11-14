@@ -340,6 +340,7 @@ class ManualTriggerService @Autowired constructor(
                             description = value.props?.description
                         )
                     )
+
                     VariablePropType.VUEX_TEXTAREA -> builder.setProp(
                         InputPropData(
                             id = name,
@@ -351,6 +352,7 @@ class ManualTriggerService @Autowired constructor(
                             inputType = InputPropType.TEXTAREA
                         )
                     )
+
                     VariablePropType.SELECTOR -> {
                         builder.setProp(
                             SelectPropData(
@@ -362,10 +364,19 @@ class ManualTriggerService @Autowired constructor(
                                 },
                                 title = value.props?.label ?: name,
                                 default = if (value.props?.options.isNullOrEmpty()) {
-                                    // 从url拿的转一下类型
-                                    value.value?.split(",")?.map { it.trim().stringToOther() }?.toSet() ?: emptySet()
+                                    // 从url拿的value为了和前端统一转一下类型
+                                    if (value.props?.multiple == true) {
+                                        value.value?.split(",")?.map { it.trim().stringToOther() }?.toSet()
+                                            ?: emptySet<String>()
+                                    } else {
+                                        value.value?.trim()?.stringToOther()
+                                    }
                                 } else {
-                                    value.value?.split(",")?.map { it.trim() }?.toSet() ?: emptySet<String>()
+                                    if (value.props?.multiple == true) {
+                                        value.value?.split(",")?.map { it.trim() }?.toSet() ?: emptySet<String>()
+                                    } else {
+                                        value.value?.trim()
+                                    }
                                 },
                                 required = value.props?.required,
                                 description = value.props?.description,
@@ -397,6 +408,7 @@ class ManualTriggerService @Autowired constructor(
                             )
                         )
                     }
+
                     VariablePropType.CHECKBOX -> builder.setProp(
                         CheckboxPropData(
                             id = name,
@@ -413,6 +425,7 @@ class ManualTriggerService @Autowired constructor(
                             }
                         )
                     )
+
                     VariablePropType.BOOLEAN -> builder.setProp(
                         RadioPropData(
                             id = name,
@@ -427,6 +440,7 @@ class ManualTriggerService @Autowired constructor(
                             )
                         )
                     )
+
                     VariablePropType.TIME_PICKER -> builder.setProp(
                         TimePropData(
                             id = name,
@@ -437,6 +451,7 @@ class ManualTriggerService @Autowired constructor(
                             description = value.props?.description
                         )
                     )
+
                     VariablePropType.COMPANY_STAFF_INPUT -> builder.setProp(
                         CompanyStaffPropData(
                             id = name,
@@ -446,6 +461,7 @@ class ManualTriggerService @Autowired constructor(
                             description = value.props?.description
                         )
                     )
+
                     VariablePropType.TIPS -> builder.setProp(
                         TipPropData(
                             id = name,
@@ -505,6 +521,7 @@ class ManualTriggerService @Autowired constructor(
                                 )
                             )
                         )
+
                     VariablePropType.CHECKBOX ->
                         DynamicParameterInfo(
                             id = name,
@@ -531,6 +548,7 @@ class ManualTriggerService @Autowired constructor(
                                 )
                             )
                         )
+
                     VariablePropType.BOOLEAN ->
                         DynamicParameterInfo(
                             id = name,
@@ -560,6 +578,7 @@ class ManualTriggerService @Autowired constructor(
                                 )
                             )
                         )
+
                     VariablePropType.TIPS ->
                         DynamicParameterInfo(
                             id = name,
@@ -630,6 +649,7 @@ class ManualTriggerService @Autowired constructor(
                             }
                             result[key] = value.joinToString(",")
                         }
+
                         else -> result[key] = value.toString()
                     }
                 }

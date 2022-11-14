@@ -28,6 +28,7 @@
 package com.tencent.devops.process.engine.control
 
 import com.tencent.devops.common.api.util.Watcher
+import com.tencent.devops.common.event.dispatcher.mq.MQRoutableEventDispatcher
 import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.event.enums.ActionType
 import com.tencent.devops.common.log.utils.BuildLogPrinter
@@ -59,6 +60,7 @@ import com.tencent.devops.process.engine.utils.BuildUtils
 import com.tencent.devops.process.pojo.mq.PipelineAgentShutdownEvent
 import com.tencent.devops.process.pojo.mq.PipelineBuildLessShutdownDispatchEvent
 import com.tencent.devops.process.service.BuildVariableService
+import com.tencent.devops.process.util.TaskUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -70,6 +72,7 @@ class BuildCancelControl @Autowired constructor(
     private val mutexControl: MutexControl,
     private val redisOperation: RedisOperation,
     private val pipelineMQEventDispatcher: PipelineEventDispatcher,
+    private val routeEventDispatcher: MQRoutableEventDispatcher,
     private val pipelineRuntimeService: PipelineRuntimeService,
     private val pipelineContainerService: PipelineContainerService,
     private val pipelineStageService: PipelineStageService,
@@ -289,6 +292,10 @@ class BuildCancelControl @Autowired constructor(
                 containerBuildStatus != BuildStatus.RUNNING || // 运行中的返回Stage流程进行闭环处理
                 dependOnControl.dependOnJobStatus(pipelineContainer) != BuildStatus.SUCCEED // 非运行中的判断是否有依赖
             ) {
+                // 删除redis中取消构建操作标识
+                redisOperation.delete(BuildUtils.getCancelActionBuildKey(buildId))
+                redisOperation.delete(TaskUtils.getCancelTaskIdRedisKey(buildId, containerId, false))
+                // 更新job状态
                 val switchedStatus = BuildStatusSwitcher.jobStatusMaker.cancel(containerBuildStatus)
                 pipelineContainerService.updateContainerStatus(
                     projectId = projectId,
@@ -352,7 +359,7 @@ class BuildCancelControl @Autowired constructor(
     }
 
     private fun NormalContainer.shutdown(event: PipelineBuildCancelEvent, executeCount: Int) {
-        pipelineMQEventDispatcher.dispatch(
+        routeEventDispatcher.dispatch(
             PipelineBuildLessShutdownDispatchEvent(
                 source = "BuildCancelControl",
                 projectId = event.projectId,
@@ -367,7 +374,7 @@ class BuildCancelControl @Autowired constructor(
     }
 
     private fun VMBuildContainer.shutdown(event: PipelineBuildCancelEvent, executeCount: Int) {
-        pipelineMQEventDispatcher.dispatch(
+        routeEventDispatcher.dispatch(
             PipelineAgentShutdownEvent(
                 source = "BuildCancelControl",
                 projectId = event.projectId,

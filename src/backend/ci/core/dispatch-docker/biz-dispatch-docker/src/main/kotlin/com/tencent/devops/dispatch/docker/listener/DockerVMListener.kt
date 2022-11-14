@@ -34,7 +34,7 @@ import com.tencent.devops.common.dispatch.sdk.listener.BuildListener
 import com.tencent.devops.common.dispatch.sdk.pojo.DispatchMessage
 import com.tencent.devops.common.dispatch.sdk.pojo.docker.DockerRoutingType
 import com.tencent.devops.common.dispatch.sdk.service.DockerRoutingSdkService
-import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
+import com.tencent.devops.common.event.dispatcher.mq.MQRoutableEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.pipeline.enums.DockerVersion
 import com.tencent.devops.common.pipeline.type.DispatchRouteKeySuffix
@@ -79,7 +79,7 @@ class DockerVMListener @Autowired constructor(
     private val pipelineDockerHostDao: PipelineDockerHostDao,
     private val pipelineDockerBuildDao: PipelineDockerBuildDao,
     private val dockerRoutingSdkService: DockerRoutingSdkService,
-    private val pipelineEventDispatcher: PipelineEventDispatcher
+    private val pipelineEventDispatcher: MQRoutableEventDispatcher
 ) : BuildListener {
 
     companion object {

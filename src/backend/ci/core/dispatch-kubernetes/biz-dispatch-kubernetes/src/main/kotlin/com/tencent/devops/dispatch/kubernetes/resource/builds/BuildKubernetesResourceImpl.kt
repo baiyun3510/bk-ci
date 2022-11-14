@@ -49,7 +49,7 @@ class BuildKubernetesResourceImpl @Autowired constructor(
         apiUrl: String,
         token: String
     ): Result<Deployment> {
-        return kubernetesQueryService.getBcsDeploymentInfo(
+        return kubernetesQueryService.getKubernetesDeploymentInfo(
             userId = userId,
             namespaceName = namespaceName,
             deploymentName = deploymentName,

@@ -180,7 +180,7 @@ class KubernetesDeployService @Autowired constructor(private val redisOperation:
                 ingressRedisKey = ingressRedisKey
             )
         } else {
-            val bcsKubernetesClient = KubernetesApiUtils.getBcsKubernetesClient(apiUrl, token)
+            val bcsKubernetesClient = KubernetesApiUtils.getKubernetesClient(apiUrl, token)
             val ingress =
                 bcsKubernetesClient.extensions().ingresses().inNamespace(namespaceName).withName(ingressName).get()
             if (ingress == null) {
@@ -294,7 +294,7 @@ class KubernetesDeployService @Autowired constructor(private val redisOperation:
         apiUrl: String,
         token: String
     ) {
-        val bcsKubernetesClient = KubernetesApiUtils.getBcsKubernetesClient(apiUrl, token)
+        val bcsKubernetesClient = KubernetesApiUtils.getKubernetesClient(apiUrl, token)
         val deployment = bcsKubernetesClient.apps().deployments().inNamespace(namespaceName)
             .withName(deploymentName).get()
         if (deployment != null) {

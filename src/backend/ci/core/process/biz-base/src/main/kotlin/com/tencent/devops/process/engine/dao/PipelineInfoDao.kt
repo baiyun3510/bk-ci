@@ -247,7 +247,8 @@ class PipelineInfoDao {
         limit: Int,
         offset: Int,
         deleteFlag: Boolean? = false,
-        timeDescFlag: Boolean = true
+        timeDescFlag: Boolean = true,
+        channelCode: ChannelCode? = null
     ): Result<TPipelineInfoRecord>? {
         return with(T_PIPELINE_INFO) {
             val conditions = mutableListOf<Condition>()
@@ -256,6 +257,9 @@ class PipelineInfoDao {
             }
             if (null != deleteFlag) {
                 conditions.add(DELETE.eq(deleteFlag))
+            }
+            if (null != channelCode) {
+                conditions.add(CHANNEL.eq(channelCode.name))
             }
             val baseQuery = dslContext.selectFrom(this).where(conditions)
             if (timeDescFlag) {
@@ -697,13 +701,17 @@ class PipelineInfoDao {
     fun countExcludePipelineIds(
         dslContext: DSLContext,
         projectId: String,
-        excludePipelineIds: List<String>
+        excludePipelineIds: List<String>,
+        channelCode: ChannelCode? = null,
+        includeDelete: Boolean = false
     ): Int {
         with(T_PIPELINE_INFO) {
             return dslContext.selectCount()
                 .from(this)
                 .where(PROJECT_ID.eq(projectId))
                 .and(PIPELINE_ID.notIn(excludePipelineIds))
+                .let { if (channelCode == null) it else it.and(CHANNEL.eq(channelCode.name)) }
+                .let { if (includeDelete) it else it.and(DELETE.eq(false)) }
                 .fetchOne()?.value1() ?: 0
         }
     }

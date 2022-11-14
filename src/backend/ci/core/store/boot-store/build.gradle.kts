@@ -30,5 +30,3 @@ dependencies {
     api(project(":core:store:biz-store-image-sample"))
     api(project(":core:store:biz-store-service-sample"))
 }
-
-

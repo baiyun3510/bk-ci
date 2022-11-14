@@ -35,6 +35,7 @@ import com.tencent.devops.common.api.util.Watcher
 import com.tencent.devops.common.api.util.timestamp
 import com.tencent.devops.common.auth.api.AuthPermission
 import com.tencent.devops.common.client.Client
+import com.tencent.devops.common.pipeline.enums.ChannelCode
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.utils.LogUtils
 import com.tencent.devops.model.process.tables.records.TPipelineInfoRecord
@@ -52,6 +53,7 @@ import com.tencent.devops.process.pojo.classify.PipelineViewBulkRemove
 import com.tencent.devops.process.pojo.classify.PipelineViewDict
 import com.tencent.devops.process.pojo.classify.PipelineViewFilter
 import com.tencent.devops.process.pojo.classify.PipelineViewForm
+import com.tencent.devops.process.pojo.classify.PipelineViewPipelineCount
 import com.tencent.devops.process.pojo.classify.PipelineViewPreview
 import com.tencent.devops.process.pojo.classify.enums.Logic
 import com.tencent.devops.process.service.view.lock.PipelineViewGroupLock
@@ -538,7 +540,8 @@ class PipelineViewGroupService @Autowired constructor(
                 projectId = projectId,
                 offset = offset,
                 limit = step,
-                deleteFlag = if (includeDelete) null else false
+                deleteFlag = if (includeDelete) null else false,
+                channelCode = ChannelCode.BS
             ) ?: emptyList<TPipelineInfoRecord>()
             if (subPipelineInfos.isEmpty()) {
                 break
@@ -637,7 +640,7 @@ class PipelineViewGroupService @Autowired constructor(
         if (projected != false) {
             val classifiedPipelineIds = getClassifiedPipelineIds(projectId)
             val unclassifiedCount =
-                pipelineInfoDao.countExcludePipelineIds(dslContext, projectId, classifiedPipelineIds)
+                pipelineInfoDao.countExcludePipelineIds(dslContext, projectId, classifiedPipelineIds, ChannelCode.BS)
             summaries.add(
                 0, PipelineNewViewSummary(
                     id = PIPELINE_VIEW_UNCLASSIFIED,
@@ -647,7 +650,7 @@ class PipelineViewGroupService @Autowired constructor(
                     createTime = LocalDateTime.now().timestamp(),
                     updateTime = LocalDateTime.now().timestamp(),
                     creator = "admin",
-                    top = true,
+                    top = false,
                     viewType = PipelineViewType.UNCLASSIFIED,
                     pipelineCount = unclassifiedCount
                 )
@@ -706,6 +709,24 @@ class PipelineViewGroupService @Autowired constructor(
             pipelineId = record.pipelineId,
             pipelineName = record.pipelineName,
             delete = record.delete
+        )
+    }
+
+    fun pipelineCount(userId: String, projectId: String, viewId: String): PipelineViewPipelineCount {
+        val viewGroups = pipelineViewGroupDao.listByViewId(dslContext, projectId, HashUtil.decodeIdToLong(viewId))
+        if (viewGroups.isEmpty()) {
+            return PipelineViewPipelineCount.DEFAULT
+        }
+        val pipelineInfos = pipelineInfoDao.listInfoByPipelineIds(
+            dslContext,
+            projectId,
+            viewGroups.map { it.pipelineId }.toSet(),
+            false
+        )
+        val deleteCount = pipelineInfos.count { it.delete }
+        return PipelineViewPipelineCount(
+            normalCount = pipelineInfos.size - deleteCount,
+            deleteCount = deleteCount
         )
     }
 

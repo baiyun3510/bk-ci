@@ -33,15 +33,15 @@ import org.springframework.stereotype.Component
 @Component
 class ExtServiceKubernetesNameSpaceConfig {
 
-    @Value("\${store.extService.kubernetes.namespace.namespaceName}")
+    @Value("\${store.extService.kubernetes.namespace.namespaceName:}")
     val namespaceName: String = ""
 
-    @Value("\${store.extService.kubernetes.namespace.grayNamespaceName}")
+    @Value("\${store.extService.kubernetes.namespace.grayNamespaceName:}")
     val grayNamespaceName: String = ""
 
-    @Value("\${store.extService.kubernetes.namespace.labelKey}")
+    @Value("\${store.extService.kubernetes.namespace.labelKey:}")
     val labelKey: String = ""
 
-    @Value("\${store.extService.kubernetes.namespace.labelValue}")
+    @Value("\${store.extService.kubernetes.namespace.labelValue:}")
     val labelValue: String = ""
 }

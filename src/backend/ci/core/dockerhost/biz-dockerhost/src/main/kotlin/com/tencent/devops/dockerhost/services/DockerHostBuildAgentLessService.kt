@@ -86,7 +86,6 @@ class DockerHostBuildAgentLessService(
             )
         } catch (ignored: Throwable) {
             logger.error("[${dockerHostBuildInfo.buildId}]| create Container failed ", ignored)
-
             throw ContainerException(
                 errorCodeEnum = ErrorCodeEnum.CREATE_CONTAINER_ERROR,
                 message = "[${dockerHostBuildInfo.buildId}]|Create container failed"

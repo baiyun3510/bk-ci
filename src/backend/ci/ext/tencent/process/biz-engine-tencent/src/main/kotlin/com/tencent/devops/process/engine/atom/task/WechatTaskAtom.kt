@@ -31,7 +31,6 @@ import com.tencent.devops.common.api.pojo.ErrorCode
 import com.tencent.devops.common.api.pojo.ErrorType
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
-import com.tencent.devops.common.event.JobWrapper
 import com.tencent.devops.common.pipeline.element.SendWechatNotifyElement
 import com.tencent.devops.common.pipeline.enums.BuildStatus
 import com.tencent.devops.common.service.utils.HomeHostUtil
@@ -101,21 +100,19 @@ class WechatTaskAtom @Autowired constructor(
         buildLogPrinter.addLine(buildId, "发送企业微信内容: (${message.body}) 到 $receiversStr", taskId, task.containerHashId, task.executeCount ?: 1)
 
         message.addAllReceivers(receiversStr.split(",").toSet())
-
-        val success = (object : JobWrapper {
-            override fun doIt(): Boolean {
-                val resp = client.get(ServiceNotifyResource::class).sendWechatNotify(message)
-                if (resp.isOk()) {
-                    if (resp.data!!) {
-                        buildLogPrinter.addLine(buildId, "发送企业微信内容: (${message.body}) 到 [$receiversStr]成功", taskId, task.containerHashId, task.executeCount ?: 1)
-                        return true
-                    }
+        var success = false
+        try {
+            val resp = client.get(ServiceNotifyResource::class).sendWechatNotify(message)
+            if (resp.isOk()) {
+                if (resp.data!!) {
+                    buildLogPrinter.addLine(buildId, "发送企业微信内容: (${message.body}) 到 [$receiversStr]成功", taskId, task.containerHashId, task.executeCount
+                        ?: 1)
+                    success = true
                 }
-                buildLogPrinter.addRedLine(buildId, "发送企业微信内容: (${message.body}) 到 [$receiversStr]失败: ${resp.message}", taskId, task.containerHashId, task.executeCount ?: 1)
-                return false
             }
-        }).tryDoIt()
-
+        } catch (ignore: Throwable) {
+            buildLogPrinter.addRedLine(buildId, "发送企业微信内容: (${message.body}) 到 [$receiversStr]失败: ${ignore.message}", taskId, task.containerHashId, task.executeCount ?: 1)
+        }
         return if (success) AtomResponse(BuildStatus.SUCCEED) else defaultFailAtomResponse
     }
 }

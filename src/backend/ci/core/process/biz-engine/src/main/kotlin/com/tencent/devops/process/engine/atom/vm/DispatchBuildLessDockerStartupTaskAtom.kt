@@ -32,7 +32,6 @@ import com.tencent.devops.common.api.pojo.ErrorType
 import com.tencent.devops.common.api.pojo.Zone
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.client.Client
-import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.pipeline.container.Container
 import com.tencent.devops.common.pipeline.container.NormalContainer
@@ -48,6 +47,7 @@ import com.tencent.devops.process.engine.atom.AtomUtils
 import com.tencent.devops.process.engine.atom.IAtomTask
 import com.tencent.devops.process.engine.atom.defaultFailAtomResponse
 import com.tencent.devops.common.api.check.Preconditions
+import com.tencent.devops.common.event.dispatcher.mq.MQRoutableEventDispatcher
 import com.tencent.devops.process.engine.exception.BuildTaskException
 import com.tencent.devops.process.engine.pojo.PipelineBuildTask
 import com.tencent.devops.process.engine.pojo.PipelineInfo
@@ -72,7 +72,7 @@ class DispatchBuildLessDockerStartupTaskAtom @Autowired constructor(
     private val pipelineRepositoryService: PipelineRepositoryService,
     private val client: Client,
     private val containerBuildDetailService: ContainerBuildDetailService,
-    private val pipelineEventDispatcher: PipelineEventDispatcher,
+    private val pipelineEventDispatcher: MQRoutableEventDispatcher,
     private val buildLogPrinter: BuildLogPrinter
 ) : IAtomTask<NormalContainer> {
     override fun getParamElement(task: PipelineBuildTask): NormalContainer {

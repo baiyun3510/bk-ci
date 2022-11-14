@@ -56,13 +56,13 @@ object KubernetesApiUtils {
 
     private const val memory = "memory"
 
-    private val bcsKubernetesClientMap = ConcurrentHashMap<String, KubernetesClient>()
+    private val kubernetesClientMap = ConcurrentHashMap<String, KubernetesClient>()
 
-    fun getBcsKubernetesClientMap(): ConcurrentHashMap<String, KubernetesClient> {
-        return bcsKubernetesClientMap
+    fun getKubernetesClientMap(): ConcurrentHashMap<String, KubernetesClient> {
+        return kubernetesClientMap
     }
 
-    private fun createBcsKubernetesClient(
+    private fun createKubernetesClient(
         apiUrl: String,
         token: String
     ): KubernetesClient {
@@ -74,19 +74,19 @@ object KubernetesApiUtils {
         return DefaultKubernetesClient(config)
     }
 
-    fun getBcsKubernetesClient(
+    fun getKubernetesClient(
         apiUrl: String,
         token: String
     ): KubernetesClient {
-        val bcsKubernetesClientKey = "$apiUrl;$token"
-        var bcsKubernetesClient = bcsKubernetesClientMap[bcsKubernetesClientKey]
-        if (bcsKubernetesClient == null) {
+        val kubernetesClientKey = "$apiUrl;$token"
+        var kubernetesClient = kubernetesClientMap[kubernetesClientKey]
+        if (kubernetesClient == null) {
             // 删除缓存中bcUrl相同但token因为过期不相同的记录
-            bcsKubernetesClientMap.entries.removeIf { entry -> entry.key.startsWith("$apiUrl;") }
-            bcsKubernetesClient = createBcsKubernetesClient(apiUrl, token)
-            bcsKubernetesClientMap[bcsKubernetesClientKey] = bcsKubernetesClient
+            kubernetesClientMap.entries.removeIf { entry -> entry.key.startsWith("$apiUrl;") }
+            kubernetesClient = createKubernetesClient(apiUrl, token)
+            kubernetesClientMap[kubernetesClientKey] = kubernetesClient
         }
-        return bcsKubernetesClient
+        return kubernetesClient
     }
 
     /**
@@ -105,14 +105,14 @@ object KubernetesApiUtils {
         limitRangeInfo: KubernetesLimitRange? = null
     ): Namespace {
         logger.info("createNamespace params: [$apiUrl|$namespaceName|$labelInfo|$limitRangeInfo]")
-        val bcsKubernetesClient = getBcsKubernetesClient(apiUrl, token)
-        var ns = bcsKubernetesClient.namespaces().withName(namespaceName).get()
+        val kubernetesClient = getKubernetesClient(apiUrl, token)
+        var ns = kubernetesClient.namespaces().withName(namespaceName).get()
         if (ns == null) {
             ns =
                 NamespaceBuilder().withNewMetadata().withName(namespaceName)
                     .addToLabels(labelInfo.labelKey, labelInfo.labelValue).endMetadata()
                     .build()
-            bcsKubernetesClient.namespaces().createOrReplace(ns)
+            kubernetesClient.namespaces().createOrReplace(ns)
         }
         val limitRangeItem = LimitRangeItem()
         if (null != limitRangeInfo) {
@@ -127,7 +127,7 @@ object KubernetesApiUtils {
             limitRangeItem.type = limitRangeInfo.limitType
             val limitRange = LimitRangeBuilder().withNewMetadata().withName("$namespaceName-limit")
                 .endMetadata().withNewSpec().addToLimits(limitRangeItem).endSpec().build()
-            bcsKubernetesClient.limitRanges().inNamespace(namespaceName).createOrReplace(limitRange)
+            kubernetesClient.limitRanges().inNamespace(namespaceName).createOrReplace(limitRange)
         }
         return ns
     }
@@ -148,8 +148,8 @@ object KubernetesApiUtils {
         kubernetesRepoInfo: KubernetesRepo
     ): Secret {
         logger.info("createImagePullSecret params: [$apiUrl|$secretName|$namespaceName|$kubernetesRepoInfo]")
-        val bcsKubernetesClient = getBcsKubernetesClient(apiUrl, token)
-        var secret = bcsKubernetesClient.secrets().inNamespace(namespaceName).withName(secretName).get()
+        val kubernetesClient = getKubernetesClient(apiUrl, token)
+        var secret = kubernetesClient.secrets().inNamespace(namespaceName).withName(secretName).get()
         if (secret == null) {
             val secretData: HashMap<String, String> = HashMap(1)
             val username = kubernetesRepoInfo.username
@@ -181,7 +181,7 @@ object KubernetesApiUtils {
                 .endMetadata()
                 .withData(secretData)
                 .withType("kubernetes.io/dockerconfigjson")
-            secret = bcsKubernetesClient.secrets().inNamespace(namespaceName).createOrReplace(secretBuilder.build())
+            secret = kubernetesClient.secrets().inNamespace(namespaceName).createOrReplace(secretBuilder.build())
         }
         return secret
     }
@@ -199,8 +199,8 @@ object KubernetesApiUtils {
         namespaceName: String,
         deployment: Deployment
     ): Deployment {
-        val bcsKubernetesClient = getBcsKubernetesClient(apiUrl, token)
-        return bcsKubernetesClient.apps().deployments().inNamespace(namespaceName).createOrReplace(deployment)
+        val kubernetesClient = getKubernetesClient(apiUrl, token)
+        return kubernetesClient.apps().deployments().inNamespace(namespaceName).createOrReplace(deployment)
     }
 
     /**
@@ -216,8 +216,8 @@ object KubernetesApiUtils {
         namespaceName: String,
         service: Service
     ): Service {
-        val bcsKubernetesClient = getBcsKubernetesClient(apiUrl, token)
-        return bcsKubernetesClient.services().inNamespace(namespaceName).createOrReplace(service)
+        val kubernetesClient = getKubernetesClient(apiUrl, token)
+        return kubernetesClient.services().inNamespace(namespaceName).createOrReplace(service)
     }
 
     /**
@@ -233,7 +233,7 @@ object KubernetesApiUtils {
         namespaceName: String,
         ingress: Ingress
     ): Ingress {
-        val bcsKubernetesClient = getBcsKubernetesClient(apiUrl, token)
-        return bcsKubernetesClient.extensions().ingresses().inNamespace(namespaceName).createOrReplace(ingress)
+        val kubernetesClient = getKubernetesClient(apiUrl, token)
+        return kubernetesClient.extensions().ingresses().inNamespace(namespaceName).createOrReplace(ingress)
     }
 }
