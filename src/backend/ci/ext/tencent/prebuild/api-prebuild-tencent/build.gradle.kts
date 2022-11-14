@@ -29,7 +29,6 @@ dependencies {
     api(project(":core:plugin:codecc-plugin:common-codecc"))
     api(project(":core:common:common-api"))
     api(project(":core:common:common-api"))
-    api(project(":core:common:common-event"))
     api(project(":ext:tencent:scm:api-scm-tencent"))
     api(project(":core:plugin:api-plugin"))
     api(project(":core:environment:api-environment"))

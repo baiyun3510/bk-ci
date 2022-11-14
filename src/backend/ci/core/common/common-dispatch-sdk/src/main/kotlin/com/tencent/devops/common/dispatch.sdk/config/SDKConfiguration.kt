@@ -28,8 +28,6 @@
 package com.tencent.devops.common.dispatch.sdk.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.tencent.devops.common.event.dispatcher.pipeline.PipelineEventDispatcher
-import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQEventDispatcher
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.dispatch.sdk.service.DispatchService
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -42,6 +40,7 @@ import com.tencent.devops.common.dispatch.sdk.service.DockerRoutingSdkService
 import com.tencent.devops.common.log.utils.BuildLogPrinter
 import com.tencent.devops.common.dispatch.sdk.service.JobQuotaService
 import com.tencent.devops.common.dispatch.sdk.utils.ChannelUtils
+import com.tencent.devops.common.event.dispatcher.mq.MQRoutableEventDispatcher
 
 @Configuration
 class SDKConfiguration {
@@ -51,7 +50,7 @@ class SDKConfiguration {
     @Bean
     fun dispatchService(
         @Autowired redisOperation: RedisOperation,
-        @Autowired pipelineEventDispatcher: PipelineEventDispatcher,
+        @Autowired pipelineEventDispatcher: MQRoutableEventDispatcher,
         @Autowired objectMapper: ObjectMapper,
         @Autowired client: Client,
         @Autowired channelUtils: ChannelUtils,
@@ -74,7 +73,7 @@ class SDKConfiguration {
         DockerRoutingSdkService(redisOperation)
 
     @Bean
-    fun pipelineEventDispatcher(@Autowired rabbitTemplate: RabbitTemplate): PipelineEventDispatcher {
-        return MQEventDispatcher(rabbitTemplate)
+    fun pipelineEventDispatcher(@Autowired rabbitTemplate: RabbitTemplate): MQRoutableEventDispatcher {
+        return MQRoutableEventDispatcher(rabbitTemplate)
     }
 }

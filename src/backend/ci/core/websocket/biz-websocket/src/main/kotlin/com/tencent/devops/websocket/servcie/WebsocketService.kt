@@ -31,16 +31,17 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.redis.RedisLock
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.websocket.dispatch.TransferDispatch
-import com.tencent.devops.websocket.keys.WebsocketKeys
 import com.tencent.devops.common.websocket.utils.RedisUtlis
 import com.tencent.devops.websocket.event.ChangePageTransferEvent
 import com.tencent.devops.websocket.event.ClearSessionEvent
 import com.tencent.devops.websocket.event.ClearUserSessionTransferEvent
 import com.tencent.devops.websocket.event.LoginOutTransferEvent
+import com.tencent.devops.websocket.keys.WebsocketKeys
 import com.tencent.devops.websocket.utils.PageUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
@@ -70,6 +71,7 @@ class WebsocketService @Autowired constructor(
 
     // 用户切换页面，需调整sessionId-page,page-sessionIdList两个map
     fun changePage(
+        streamBridge: StreamBridge,
         userId: String,
         sessionId: String,
         newPage: String,
@@ -106,6 +108,7 @@ class WebsocketService @Autowired constructor(
             logger.info("sessionPage[session:$sessionId,page:$normalPage]")
             if (needTransfer && transferData!!.isNotEmpty()) {
                 transferDispatch.dispatch(
+                    streamBridge,
                     ChangePageTransferEvent(
                         userId = userId,
                         page = newPage,
@@ -119,6 +122,7 @@ class WebsocketService @Autowired constructor(
     }
 
     fun loginOut(
+        streamBridge: StreamBridge,
         userId: String,
         sessionId: String,
         oldPage: String?,
@@ -147,6 +151,7 @@ class WebsocketService @Autowired constructor(
 //            cleanUserSessionBySessionId(redisOperation, userId, sessionId)
             if (needTransfer && transferData!!.isNotEmpty()) {
                 transferDispatch.dispatch(
+                    streamBridge,
                     LoginOutTransferEvent(
                         userId = userId,
                         page = oldPage,
@@ -159,7 +164,12 @@ class WebsocketService @Autowired constructor(
         }
     }
 
-    fun clearUserSession(userId: String, sessionId: String, transferData: Map<String, Any>?) {
+    fun clearUserSession(
+        streamBridge: StreamBridge,
+        userId: String,
+        sessionId: String,
+        transferData: Map<String, Any>?
+    ) {
         val redisLock = lockUser(sessionId)
         try {
             redisLock.lock()
@@ -170,6 +180,7 @@ class WebsocketService @Autowired constructor(
             removeCacheSession(sessionId)
             if (needTransfer && transferData!!.isNotEmpty()) {
                 transferDispatch.dispatch(
+                    streamBridge,
                     ClearUserSessionTransferEvent(
                         userId = userId,
                         page = "",
@@ -182,16 +193,21 @@ class WebsocketService @Autowired constructor(
         }
     }
 
-    fun clearAllBySession(userId: String, sessionId: String): Result<Boolean> {
+    fun clearAllBySession(
+        streamBridge: StreamBridge,
+        userId: String,
+        sessionId: String
+    ): Result<Boolean> {
         logger.info("clearSession| $userId| $sessionId")
         val page = RedisUtlis.getPageFromSessionPageBySession(redisOperation, sessionId)
-        clearUserSession(userId, sessionId, null)
+        clearUserSession(streamBridge, userId, sessionId, null)
         if (page != null) {
             logger.info("$userId| $sessionId|$page clear when disconnection")
-            loginOut(userId, sessionId, page)
+            loginOut(streamBridge, userId, sessionId, page)
         }
         if (!isCacheSession(sessionId)) {
             transferDispatch.dispatch(
+                streamBridge,
                 ClearSessionEvent(
                     userId = userId,
                     sessionId = sessionId,

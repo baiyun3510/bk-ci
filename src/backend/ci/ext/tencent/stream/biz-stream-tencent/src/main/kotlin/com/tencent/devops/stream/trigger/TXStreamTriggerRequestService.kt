@@ -30,6 +30,7 @@ package com.tencent.devops.stream.trigger
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.devops.common.api.enums.ScmType
+import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.webhook.pojo.code.git.GitEvent
 import com.tencent.devops.common.webhook.pojo.code.git.GitPushEvent
 import com.tencent.devops.stream.config.StreamGitConfig
@@ -65,14 +66,14 @@ class TXStreamTriggerRequestService @Autowired constructor(
     gitRequestEventDao: GitRequestEventDao,
     gitPipelineResourceDao: GitPipelineResourceDao,
     streamPipelineTriggerDao: StreamPipelineTriggerDao,
-    rabbitTemplate: RabbitTemplate,
+    eventDispatcher: SampleEventDispatcher,
     streamGitConfig: StreamGitConfig,
     private val objectMapper: ObjectMapper,
     private val txPreTrigger: TXPreTrigger
 ) : StreamTriggerRequestService(
     objectMapper = objectMapper,
     dslContext = dslContext,
-    rabbitTemplate = rabbitTemplate,
+    eventDispatcher = eventDispatcher,
     actionFactory = actionFactory,
     streamTriggerCache = streamTriggerCache,
     exHandler = exHandler,

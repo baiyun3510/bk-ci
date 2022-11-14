@@ -30,6 +30,7 @@ package com.tencent.devops.stream.trigger
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.devops.common.api.enums.ScmType
+import com.tencent.devops.common.event.dispatcher.SampleEventDispatcher
 import com.tencent.devops.common.service.trace.TraceTag
 import com.tencent.devops.common.webhook.pojo.code.CodeWebhookEvent
 import com.tencent.devops.common.webhook.pojo.code.git.GitEvent
@@ -51,7 +52,6 @@ import com.tencent.devops.stream.trigger.actions.data.StreamTriggerSetting
 import com.tencent.devops.stream.trigger.actions.data.context.TriggerCache
 import com.tencent.devops.stream.trigger.exception.StreamTriggerException
 import com.tencent.devops.stream.trigger.exception.handler.StreamTriggerExceptionHandler
-import com.tencent.devops.stream.trigger.mq.streamTrigger.StreamTriggerDispatch
 import com.tencent.devops.stream.trigger.mq.streamTrigger.StreamTriggerEvent
 import com.tencent.devops.stream.trigger.parsers.CheckStreamSetting
 import com.tencent.devops.stream.trigger.parsers.StreamTriggerCache
@@ -62,17 +62,17 @@ import com.tencent.devops.stream.trigger.service.RepoTriggerEventService
 import org.jooq.DSLContext
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.Executors
 
 @Service
+@Suppress("LongParameterList", "ReturnCount")
 class StreamTriggerRequestService @Autowired constructor(
     private val objectMapper: ObjectMapper,
     private val dslContext: DSLContext,
-    private val rabbitTemplate: RabbitTemplate,
+    private val eventDispatcher: SampleEventDispatcher,
     private val actionFactory: EventActionFactory,
     private val streamGitConfig: StreamGitConfig,
     private val streamTriggerCache: StreamTriggerCache,
@@ -366,13 +366,12 @@ class StreamTriggerRequestService @Autowired constructor(
         return true
     }
 
-    protected fun trigger(
+    private fun trigger(
         action: BaseAction,
         trigger: String?
     ) = when (streamGitConfig.getScmType()) {
-        ScmType.CODE_GIT -> StreamTriggerDispatch.dispatch(
-            rabbitTemplate = rabbitTemplate,
-            event = StreamTriggerEvent(
+        ScmType.CODE_GIT -> eventDispatcher.dispatch(
+            StreamTriggerEvent(
                 eventStr = if (action.metaData.streamObjectKind == StreamObjectKind.REVIEW) {
                     objectMapper.writeValueAsString(
                         (action.data.event as GitReviewEvent).copy(
@@ -388,9 +387,8 @@ class StreamTriggerRequestService @Autowired constructor(
                 trigger = trigger
             )
         )
-        ScmType.GITHUB -> StreamTriggerDispatch.dispatch(
-            rabbitTemplate = rabbitTemplate,
-            event = StreamTriggerEvent(
+        ScmType.GITHUB -> eventDispatcher.dispatch(
+            StreamTriggerEvent(
                 eventStr = objectMapper.writeValueAsString(action.data.event as GithubEvent),
                 actionCommonData = action.data.eventCommon,
                 actionContext = action.data.context,
