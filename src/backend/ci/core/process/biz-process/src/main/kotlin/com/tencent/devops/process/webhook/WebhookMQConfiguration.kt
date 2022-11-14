@@ -120,7 +120,7 @@ class WebhookMQConfiguration @Autowired constructor() {
     }
 
     @EventConsumer(StreamBinding.QUEUE_TGIT_BUILD_REQUEST_EVENT, STREAM_CONSUMER_GROUP)
-    fun tgitWebhookListener(
+    fun gitTencentWebhookListener(
         @Autowired webhookEventListener: WebhookEventListener
     ): Consumer<Message<TGitWebhookEvent>> {
         return Consumer { event: Message<TGitWebhookEvent> ->
