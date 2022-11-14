@@ -28,10 +28,13 @@
 package com.tencent.devops.common.stream.config
 
 import com.tencent.devops.common.stream.config.processor.StreamBindingEnvironmentPostProcessor
+import com.tencent.devops.common.stream.pulsar.config.ExtendedBindingHandlerMappingsProviderConfiguration
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@AutoConfigureBefore(ExtendedBindingHandlerMappingsProviderConfiguration::class)
 class StreamBindingConfiguration {
 
     @Bean
