@@ -44,6 +44,7 @@ import com.tencent.devops.process.engine.service.PipelineAtomStatisticsService
 import com.tencent.devops.process.engine.service.PipelineRuntimeService
 import com.tencent.devops.process.engine.service.PipelineWebhookService
 import com.tencent.devops.process.service.label.PipelineGroupService
+import com.tencent.devops.process.service.view.PipelineViewGroupService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -67,13 +68,15 @@ class PipelineBaseConfiguration {
         @Autowired pipelineAtomStatisticsService: PipelineAtomStatisticsService,
         @Autowired callBackControl: CallBackControl,
         @Autowired agentPipelineRefService: AgentPipelineRefService,
-        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher,
+        @Autowired pipelineViewGroupService: PipelineViewGroupService
     ) = MQPipelineCreateListener(
         pipelineWebhookService = pipelineWebhookService,
         pipelineAtomStatisticsService = pipelineAtomStatisticsService,
         callBackControl = callBackControl,
         agentPipelineRefService = agentPipelineRefService,
-        pipelineEventDispatcher = pipelineEventDispatcher
+        pipelineEventDispatcher = pipelineEventDispatcher,
+        pipelineViewGroupService = pipelineViewGroupService
     )
 
     @Bean
@@ -84,7 +87,8 @@ class PipelineBaseConfiguration {
         @Autowired pipelineAtomStatisticsService: PipelineAtomStatisticsService,
         @Autowired callBackControl: CallBackControl,
         @Autowired agentPipelineRefService: AgentPipelineRefService,
-        @Autowired pipelineEventDispatcher: PipelineEventDispatcher
+        @Autowired pipelineEventDispatcher: PipelineEventDispatcher,
+        @Autowired pipelineViewGroupService: PipelineViewGroupService
     ) = MQPipelineDeleteListener(
         pipelineRuntimeService = pipelineRuntimeService,
         pipelineWebhookService = pipelineWebhookService,
@@ -92,7 +96,8 @@ class PipelineBaseConfiguration {
         pipelineAtomStatisticsService = pipelineAtomStatisticsService,
         callBackControl = callBackControl,
         agentPipelineRefService = agentPipelineRefService,
-        pipelineEventDispatcher = pipelineEventDispatcher
+        pipelineEventDispatcher = pipelineEventDispatcher,
+        pipelineViewGroupService = pipelineViewGroupService
     )
 
     @Bean
