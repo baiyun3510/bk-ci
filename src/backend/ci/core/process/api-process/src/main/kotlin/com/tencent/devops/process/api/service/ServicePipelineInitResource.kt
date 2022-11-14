@@ -34,6 +34,8 @@ import com.tencent.devops.common.pipeline.pojo.AtomMarketInitPipelineReq
 import com.tencent.devops.common.pipeline.pojo.CheckImageInitPipelineReq
 import com.tencent.devops.process.pojo.AtomMarketInitPipelineResp
 import com.tencent.devops.process.pojo.CheckImageInitPipelineResp
+import com.tencent.devops.process.pojo.ExtServiceBuildInitPipelineReq
+import com.tencent.devops.process.pojo.ExtServiceBuildInitPipelineResp
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -78,4 +80,18 @@ interface ServicePipelineInitResource {
         @ApiParam("检查镜像合法性初始化流水线请求报文体", required = true)
         checkImageInitPipelineReq: CheckImageInitPipelineReq
     ): Result<CheckImageInitPipelineResp>
+
+    @ApiOperation("微扩展构建部署初始流水线")
+    @POST
+    @Path("/ext/service/build/pipeline/projects/{projectCode}/init")
+    fun initExtServiceBuildPipeline(
+        @ApiParam(value = "用户ID", required = true, defaultValue = AUTH_HEADER_USER_ID_DEFAULT_VALUE)
+        @HeaderParam(AUTH_HEADER_USER_ID)
+        userId: String,
+        @ApiParam("项目代码", required = true)
+        @PathParam("projectCode")
+        projectCode: String,
+        @ApiParam("微扩展构建初始化流水线请求报文体", required = true)
+        extServiceBuildInitPipelineReq: ExtServiceBuildInitPipelineReq
+    ): Result<ExtServiceBuildInitPipelineResp>
 }

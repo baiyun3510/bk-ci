@@ -27,6 +27,7 @@
 
 package com.tencent.devops.store.service.atom.impl
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.UUIDUtil
 import com.tencent.devops.common.client.Client
@@ -45,6 +46,7 @@ import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import java.util.UUID
 
 /**
  * 插件协作逻辑处理

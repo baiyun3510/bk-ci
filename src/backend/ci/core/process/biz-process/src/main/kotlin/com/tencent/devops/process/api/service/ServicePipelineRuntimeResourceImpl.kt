@@ -28,9 +28,10 @@
 package com.tencent.devops.process.api.service
 
 import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.artifactory.pojo.Property
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
 import com.tencent.devops.common.api.exception.ErrorCodeException
 import com.tencent.devops.common.api.pojo.Result
-import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.common.websocket.dispatch.WebSocketDispatcher
 import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_NO_BUILD_EXISTS_BY_ID
@@ -38,6 +39,7 @@ import com.tencent.devops.process.constant.ProcessMessageCode.ERROR_UPDATE_FAILE
 import com.tencent.devops.process.engine.service.PipelineRuntimeService
 import com.tencent.devops.process.websocket.service.PipelineWebsocketService
 import com.tencent.devops.process.pojo.BuildHistory
+import com.tencent.devops.process.pojo.ReportImageInfo
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
@@ -59,7 +61,7 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
             projectId = projectId,
             pipelineId = pipelineId,
             buildId = buildId,
-            artifactListJsonString = JsonUtil.toJson(artifactoryFileList, formatted = false)
+            artifactoryFileList = artifactoryFileList
         )
         if (success) {
 
@@ -85,6 +87,32 @@ class ServicePipelineRuntimeResourceImpl @Autowired constructor(
             errorCode = ERROR_UPDATE_FAILED,
             defaultMessage = "更新失败的构建 $buildId",
             params = arrayOf(buildId)
+        )
+    }
+
+    override fun reportPipelineImageData(reportImageInfo: ReportImageInfo): Result<Boolean> {
+        val artifactoryFileList = listOf(
+            FileInfo(
+                name = reportImageInfo.name,
+                fullName = reportImageInfo.name,
+                path = reportImageInfo.path,
+                fullPath = reportImageInfo.path,
+                size = reportImageInfo.size,
+                modifiedTime = System.currentTimeMillis(),
+                artifactoryType = ArtifactoryType.CUSTOM_DIR,
+                folder = false,
+                fileType = reportImageInfo.fileType,
+                properties = listOf(Property("tag", reportImageInfo.tag))
+            )
+        )
+
+        return Result(
+                pipelineRuntimeService.updateArtifactList(
+                projectId = reportImageInfo.projectId,
+                pipelineId = reportImageInfo.pipelineId,
+                buildId = reportImageInfo.buildId,
+                artifactoryFileList = artifactoryFileList
+            )
         )
     }
 }

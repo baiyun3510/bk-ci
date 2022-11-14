@@ -33,6 +33,7 @@ import com.tencent.devops.common.api.exception.PermissionForbiddenException
 import com.tencent.devops.common.api.pojo.Page
 import com.tencent.devops.common.event.pojo.measure.PipelineLabelRelateInfo
 import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.api.util.PageUtil
 import com.tencent.devops.common.auth.api.AuthPermission
 import com.tencent.devops.common.auth.api.AuthResourceType
 import com.tencent.devops.common.pipeline.Model
@@ -52,6 +53,7 @@ import com.tencent.devops.process.pojo.PipelineIdAndName
 import com.tencent.devops.process.pojo.PipelineIdInfo
 import com.tencent.devops.process.pojo.PipelineName
 import com.tencent.devops.process.pojo.PipelineSortType
+import com.tencent.devops.process.pojo.SubPipeline
 import com.tencent.devops.process.pojo.audit.Audit
 import com.tencent.devops.process.pojo.pipeline.DeployPipelineResult
 import com.tencent.devops.process.pojo.pipeline.SimplePipeline
@@ -61,6 +63,7 @@ import com.tencent.devops.process.pojo.setting.PipelineSetting
 import com.tencent.devops.process.service.PipelineInfoFacadeService
 import com.tencent.devops.process.service.PipelineListFacadeService
 import com.tencent.devops.process.service.pipeline.PipelineSettingFacadeService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 @Suppress("ALL")
@@ -74,6 +77,10 @@ class ServicePipelineResourceImpl @Autowired constructor(
     private val pipelineSettingFacadeService: PipelineSettingFacadeService,
     private val pipelinePermissionService: PipelinePermissionService
 ) : ServicePipelineResource {
+    companion object {
+        private val logger = LoggerFactory.getLogger(ServicePipelineResourceImpl::class.java)
+    }
+
     override fun status(
         userId: String,
         projectId: String,
@@ -147,8 +154,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
                 userId = userId,
                 projectId = projectId,
                 pipelineId = pipelineId,
-                name = pipeline.name,
-                desc = pipeline.desc,
+                pipelineCopy = pipeline,
                 channelCode = ChannelCode.BS
             )
         )
@@ -274,6 +280,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
         checkPermission: Boolean
     ): Result<PipelineSetting> {
         checkParams(userId, projectId)
+        Thread.sleep(181000)
         return Result(
             data = pipelineSettingFacadeService.userGetSetting(
                 userId = userId,
@@ -292,6 +299,7 @@ class ServicePipelineResourceImpl @Autowired constructor(
         channelCode: ChannelCode
     ): Result<List<Pipeline>> {
         checkParams(userId, projectId, pipelineIds)
+        Thread.sleep(181000)
         return Result(
             data = pipelineListFacadeService.getBatchPipelinesWithModel(
                 userId = userId,
@@ -491,6 +499,45 @@ class ServicePipelineResourceImpl @Autowired constructor(
 
     override fun batchUpdateModelName(modelUpdateList: List<ModelUpdate>): Result<List<ModelUpdate>> {
         return Result(pipelineInfoFacadeService.batchUpdateModelName(modelUpdateList))
+    }
+
+    override fun hasPermissionList(
+        userId: String,
+        projectId: String,
+        pipelineId: String,
+        aliasName: String?,
+        page: Int?,
+        pageSize: Int?
+    ): Result<List<SubPipeline>> {
+        try {
+            // 从权限中拉取有权限的流水线，若无userId则返回空值
+            val hasPermissionList =
+                if (userId.isBlank()) {
+                    emptyList()
+                } else {
+                    pipelinePermissionService.getResourceByPermission(
+                        userId = userId,
+                        projectId = projectId,
+                        permission = AuthPermission.EXECUTE
+                    )
+                }
+
+            // 获取项目下所有流水线，并过滤出有权限部分，有权限列表为空时返回项目所有流水线
+            val limit = PageUtil.convertPageSizeToSQLLimit(page ?: 0, pageSize ?: 1000)
+            val buildPipelineRecords =
+                pipelineInfoFacadeService.searchInfoByPipelineIds(
+                    projectId = projectId,
+                    pipelineIds = hasPermissionList.toSet(),
+                    channelCode = ChannelCode.BS,
+                    offset = limit.offset,
+                    limit = limit.limit,
+                    pipelineName = aliasName
+                )
+
+            return Result(buildPipelineRecords)
+        } catch (t: Throwable) {
+            return Result(emptyList())
+        }
     }
 
     private fun checkParams(userId: String, projectId: String) {

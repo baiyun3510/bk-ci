@@ -27,6 +27,7 @@
 
 dependencies {
     api(project(":core:common:common-api"))
+    api("io.fabric8:kubernetes-client")
     api(project(":core:common:common-web"))
     api(project(":core:store:api-store-image"))
 }

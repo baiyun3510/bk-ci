@@ -58,9 +58,9 @@ import com.tencent.devops.process.yaml.v2.models.Variable
 import com.tencent.devops.process.yaml.v2.models.VariablePropType
 import com.tencent.devops.process.yaml.v2.models.on.EnableType
 import com.tencent.devops.process.yaml.v2.parsers.template.YamlTemplate
-import com.tencent.devops.process.yaml.v2.parsers.template.YamlTemplateConf
 import com.tencent.devops.process.yaml.v2.utils.ScriptYmlUtils
 import com.tencent.devops.stream.common.exception.ErrorCodeEnum
+import com.tencent.devops.process.yaml.v2.parsers.template.YamlTemplateConf
 import com.tencent.devops.stream.config.StreamGitConfig
 import com.tencent.devops.stream.dao.GitPipelineResourceDao
 import com.tencent.devops.stream.dao.GitRequestEventBuildDao
@@ -236,6 +236,7 @@ class ManualTriggerService @Autowired constructor(
         if (preYaml.triggerOn?.manual == EnableType.FALSE.value) {
             return emptyList()
         }
+
         // 获取蓝盾流水线的pipelineAsCodeSetting
         val pipelineSettings = client.get(ServicePipelineSettingResource::class).getPipelineSetting(
             projectId = projectId,

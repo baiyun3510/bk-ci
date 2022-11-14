@@ -30,4 +30,6 @@ package com.tencent.devops.project.constant
 object ProjectConstant {
     const val NAME_MAX_LENGTH = 64
     const val NAME_MIN_LENGTH = 2
+
+    const val ITEM_BK_SERVICE_REDIS_KEY = "project:item:bkService:"
 }

@@ -173,7 +173,8 @@ abstract class AbsProjectServiceImpl @Autowired constructor(
                         resourceCode = projectCreateInfo.englishName,
                         resourceName = projectCreateInfo.projectName
                     ),
-                    userDeptDetail = userDeptDetail
+                    userDeptDetail = userDeptDetail,
+                    subjectScopes = projectCreateInfo.subjectScopes
                 )
             }
         } catch (e: PermissionForbiddenException) {
@@ -226,6 +227,7 @@ abstract class AbsProjectServiceImpl @Autowired constructor(
         } catch (e: DuplicateKeyException) {
             logger.warn("Duplicate project $projectCreateInfo", e)
             if (createExtInfo.needAuth) {
+                // todo 待确定，切换v3后，是否需要做其他操作
                 deleteAuth(projectId, accessToken)
             }
             throw OperationException(MessageCodeUtil.getCodeLanMessage(ProjectMessageCode.PROJECT_NAME_EXIST))

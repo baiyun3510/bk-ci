@@ -30,10 +30,11 @@ package com.tencent.devops.dispatch.docker.service
 import com.tencent.devops.common.dispatch.sdk.pojo.docker.DockerConstants.DOCKER_ROUTING_KEY_PREFIX
 import com.tencent.devops.common.dispatch.sdk.pojo.docker.DockerRoutingType
 import com.tencent.devops.common.redis.RedisOperation
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class DockerRoutingService constructor(
+class DockerRoutingService @Autowired constructor(
     private val redisOperation: RedisOperation
 ) {
     fun addDockerRoutingType(userId: String, projectId: String, dockerRoutingType: DockerRoutingType): Boolean {

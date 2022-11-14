@@ -28,15 +28,18 @@
 package com.tencent.devops.auth.resources.service
 
 import com.tencent.devops.auth.api.service.ServiceDeptResource
+import com.tencent.devops.auth.pojo.StrategyEntity
 import com.tencent.devops.auth.pojo.vo.DeptInfoVo
 import com.tencent.devops.auth.service.DeptService
+import com.tencent.devops.auth.service.StrategyService
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
 class ServiceDeptResourceImpl @Autowired constructor(
-    val deptService: DeptService
+    val deptService: DeptService,
+    val strategyService: StrategyService
 ) : ServiceDeptResource {
     override fun getParentDept(userId: String): Result<Int> {
         return Result("", deptService.getUserParentDept(userId))

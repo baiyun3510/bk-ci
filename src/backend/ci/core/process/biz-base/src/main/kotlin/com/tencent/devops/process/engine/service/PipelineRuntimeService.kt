@@ -30,6 +30,7 @@ package com.tencent.devops.process.engine.service
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.devops.artifactory.pojo.FileInfo
+import com.tencent.devops.artifactory.pojo.enums.ArtifactoryType
 import com.tencent.devops.common.api.constant.BUILD_QUEUE
 import com.tencent.devops.common.api.enums.BuildReviewType
 import com.tencent.devops.common.api.pojo.ErrorInfo
@@ -73,11 +74,16 @@ import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.trace.TraceTag
 import com.tencent.devops.common.service.utils.MessageCodeUtil
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_EVENT_TYPE
+import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_ISSUE_IID
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_ID
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_MERGE_COMMIT_SHA
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_NUMBER
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_SOURCE_BRANCH
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_MR_URL
+import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_NOTE_ID
+import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_REVIEW_ID
+import com.tencent.devops.common.webhook.pojo.code.BK_REPO_GIT_WEBHOOK_TAG_NAME
+import com.tencent.devops.common.webhook.pojo.code.BK_REPO_WEBHOOK_REPO_ALIAS_NAME
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_WEBHOOK_REPO_AUTH_USER
 import com.tencent.devops.common.webhook.pojo.code.BK_REPO_WEBHOOK_REPO_URL
 import com.tencent.devops.common.webhook.pojo.code.PIPELINE_WEBHOOK_BRANCH
@@ -140,9 +146,6 @@ import com.tencent.devops.process.service.BuildVariableService
 import com.tencent.devops.process.service.StageTagService
 import com.tencent.devops.process.util.BuildMsgUtils
 import com.tencent.devops.process.utils.BUILD_NO
-import com.tencent.devops.process.utils.FIXVERSION
-import com.tencent.devops.process.utils.MAJORVERSION
-import com.tencent.devops.process.utils.MINORVERSION
 import com.tencent.devops.process.utils.PIPELINE_BUILD_ID
 import com.tencent.devops.process.utils.PIPELINE_BUILD_MSG
 import com.tencent.devops.process.utils.PIPELINE_BUILD_NUM
@@ -156,6 +159,7 @@ import com.tencent.devops.process.utils.PIPELINE_START_TYPE
 import com.tencent.devops.process.utils.PIPELINE_START_USER_ID
 import com.tencent.devops.process.utils.PIPELINE_START_USER_NAME
 import com.tencent.devops.process.utils.PIPELINE_VERSION
+import com.tencent.devops.process.utils.PipelineVarUtil
 import org.jooq.DSLContext
 import org.jooq.Result
 import org.jooq.impl.DSL
@@ -300,7 +304,8 @@ class PipelineRuntimeService @Autowired constructor(
             pipelineFilterParamList = pipelineFilterParamList,
             permissionFlag = permissionFlag,
             page = page,
-            pageSize = pageSize
+            pageSize = pageSize,
+            userId = null
         )
     }
 
@@ -1297,6 +1302,7 @@ class PipelineRuntimeService @Autowired constructor(
                 webhookRepoUrl = params[BK_REPO_WEBHOOK_REPO_URL]?.toString(),
                 webhookType = params[PIPELINE_WEBHOOK_TYPE]?.toString(),
                 webhookBranch = params[PIPELINE_WEBHOOK_BRANCH]?.toString(),
+                webhookAliasName = params[BK_REPO_WEBHOOK_REPO_ALIAS_NAME]?.toString(),
                 // GIT事件分为MR和MR accept,但是PIPELINE_WEBHOOK_EVENT_TYPE值只有MR
                 webhookEventType = if (params[PIPELINE_WEBHOOK_TYPE] == CodeType.GIT.name) {
                     params[BK_REPO_GIT_WEBHOOK_EVENT_TYPE]?.toString()
@@ -1309,7 +1315,11 @@ class PipelineRuntimeService @Autowired constructor(
                 mrId = params[BK_REPO_GIT_WEBHOOK_MR_ID]?.toString(),
                 mrIid = params[BK_REPO_GIT_WEBHOOK_MR_NUMBER]?.toString(),
                 mrUrl = params[BK_REPO_GIT_WEBHOOK_MR_URL]?.toString(),
-                repoAuthUser = params[BK_REPO_WEBHOOK_REPO_AUTH_USER]?.toString()
+                repoAuthUser = params[BK_REPO_WEBHOOK_REPO_AUTH_USER]?.toString(),
+                tagName = params[BK_REPO_GIT_WEBHOOK_TAG_NAME]?.toString(),
+                issueIid = params[BK_REPO_GIT_WEBHOOK_ISSUE_IID]?.toString(),
+                noteId = params[BK_REPO_GIT_WEBHOOK_NOTE_ID]?.toString(),
+                reviewId = params[BK_REPO_GIT_WEBHOOK_REVIEW_ID]?.toString()
             ),
             formatted = false
         )
@@ -1438,15 +1448,6 @@ class PipelineRuntimeService @Autowired constructor(
         pipelineBuildSummaryDao.updateBuildNo(dslContext, projectId, pipelineId, buildNo)
     }
 
-    fun updateRecommendVersion(projectId: String, buildId: String, recommendVersion: String) {
-        pipelineBuildDao.updateRecommendVersion(
-            dslContext = dslContext,
-            projectId = projectId,
-            buildId = buildId,
-            recommendVersion = recommendVersion
-        )
-    }
-
     /**
      * 开始最新一次构建
      */
@@ -1520,19 +1521,14 @@ class PipelineRuntimeService @Autowired constructor(
             val executeTime = try {
                 getExecuteTime(latestRunningBuild.projectId, buildId)
             } catch (ignored: Throwable) {
-                logger.error("[$pipelineId]|getExecuteTime-$buildId exception:", ignored)
+                logger.warn("[$pipelineId]|getExecuteTime-$buildId exception:", ignored)
                 0L
             }
             logger.info("[$pipelineId]|getExecuteTime-$buildId executeTime: $executeTime")
 
             val buildParameters = getBuildParametersFromStartup(projectId, buildId)
-
-            val recommendVersion = try {
-                getRecommendVersion(buildParameters)
-            } catch (ignored: Throwable) {
-                logger.error("[$pipelineId]|getRecommendVersion-$buildId exception:", ignored)
-                null
-            }
+            // 修正推荐版本号过长和流水号重复更新导致的问题
+            val recommendVersion = PipelineVarUtil.getRecommendVersion(buildParameters)
             logger.info("[$pipelineId]|getRecommendVersion-$buildId recommendVersion: $recommendVersion")
             val remark = buildVariableService.getVariable(projectId, pipelineId, buildId, PIPELINE_BUILD_REMARK)
             pipelineBuildDao.finishBuild(
@@ -1559,30 +1555,6 @@ class PipelineRuntimeService @Autowired constructor(
             )
             logger.info("[$pipelineId]|finishLatestRunningBuild-$buildId|status=$status")
         }
-    }
-
-    fun getRecommendVersion(buildParameters: List<BuildParameters>): String? {
-        val recommendVersionPrefix = getRecommendVersionPrefix(buildParameters) ?: return null
-        val buildNo = if (!buildParameters.none { it.key == BUILD_NO || it.key == "BuildNo" }) {
-            buildParameters.filter { it.key == BUILD_NO || it.key == "BuildNo" }[0].value.toString()
-        } else return null
-        return "$recommendVersionPrefix.$buildNo"
-    }
-
-    fun getRecommendVersionPrefix(buildParameters: List<BuildParameters>): String? {
-        val majorVersion = if (!buildParameters.none { it.key == MAJORVERSION || it.key == "MajorVersion" }) {
-            buildParameters.filter { it.key == MAJORVERSION || it.key == "MajorVersion" }[0].value.toString()
-        } else return null
-
-        val minorVersion = if (!buildParameters.none { it.key == MINORVERSION || it.key == "MinorVersion" }) {
-            buildParameters.filter { it.key == MINORVERSION || it.key == "MinorVersion" }[0].value.toString()
-        } else return null
-
-        val fixVersion = if (!buildParameters.none { it.key == FIXVERSION || it.key == "FixVersion" }) {
-            buildParameters.filter { it.key == FIXVERSION || it.key == "FixVersion" }[0].value.toString()
-        } else return null
-
-        return "$majorVersion.$minorVersion.$fixVersion"
     }
 
     fun getBuildParametersFromStartup(projectId: String, buildId: String): List<BuildParameters> {
@@ -1742,15 +1714,46 @@ class PipelineRuntimeService @Autowired constructor(
         )
     }
 
+    fun getArtifactList(projectId: String, pipelineId: String, buildId: String): List<FileInfo> {
+        val artifactInfo = pipelineBuildDao.getArtifactInfo(
+            dslContext = dslContext,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        )
+        val fileInfos = mutableListOf<FileInfo>()
+            JsonUtil.to(artifactInfo, Array<FileInfo>::class.java).map {
+            if (it.artifactoryType == ArtifactoryType.CUSTOM_DIR && it.fileType.equals("image")) {
+                fileInfos.add(it)
+            }
+        }
+        return fileInfos
+    }
+
     fun updateArtifactList(
         projectId: String,
         pipelineId: String,
         buildId: String,
-        artifactListJsonString: String
+        artifactoryFileList: List<FileInfo>
     ): Boolean {
+        val artifactInfo = pipelineBuildDao.getArtifactInfo(
+            dslContext = dslContext,
+            projectId = projectId,
+            pipelineId = pipelineId,
+            buildId = buildId
+        )
+        val fileInfoArray = JsonUtil.to(artifactInfo, Array<FileInfo>::class.java)
+        val fileInfoList = if (fileInfoArray.isEmpty()) {
+            artifactoryFileList
+        } else {
+            val fileInfos = mutableListOf<FileInfo>()
+            fileInfos.addAll(artifactoryFileList)
+            fileInfos.addAll(fileInfoArray)
+            fileInfos
+        }
         return pipelineBuildDao.updateArtifactList(
             dslContext = dslContext,
-            artifactList = artifactListJsonString,
+            artifactList = JsonUtil.toJson(fileInfoList, formatted = false),
             projectId = projectId,
             pipelineId = pipelineId,
             buildId = buildId

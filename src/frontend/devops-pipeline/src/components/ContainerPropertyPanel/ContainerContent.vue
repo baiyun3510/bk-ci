@@ -15,7 +15,7 @@
                 </atom-checkbox>
             </div>
         </form-field>
-        <form v-if="isVmContainer(container)" v-bkloading="{ isLoading: !apps || !containerModalId }">
+        <form v-if="isVmContainer(container)" v-bkloading="{ isLoading: !apps || !containerModalId || isLoadingImage }">
             <form-field :label="$t('editPage.resourceType')">
                 <selector
                     :disabled="!editable"
@@ -64,7 +64,7 @@
             </form-field>
             <form-field
                 :label="$t('editPage.assignResource')"
-                v-if="buildResourceType !== 'MACOS' && buildResourceType !== 'WINDOWS' && !isPublicResourceType && containerModalId && !showImagePublicTypeList.includes(buildResourceType)"
+                v-if="buildResourceType !== 'MACOS' && !isPublicResourceType && containerModalId && !showImagePublicTypeList.includes(buildResourceType)"
                 :is-error="errors.has('buildResource')"
                 :error-msg="errors.first('buildResource')"
                 :desc="buildResourceType === 'THIRD_PARTY_AGENT_ENV' ? this.$t('editPage.thirdSlaveTips') : ''"
@@ -87,20 +87,6 @@
                     name="buildResource"
                 />
             </form-field>
-
-            <!-- windows公共构建机类型 -->
-            <template v-if="buildResourceType === 'WINDOWS'">
-                <form-field :label="$t('editPage.winSystemVersion')" :required="true" :is-error="errors.has('systemVersion')" :error-msg="errors.first(`systemVersion`)">
-                    <bk-select @change="changeWindowSystem" :disabled="!editable" :value="systemVersion" searchable :loading="isLoadingWin" name="systemVersion" v-validate.initial="'required'">
-                        <bk-option v-for="item in windowsVersionList"
-                            :key="item.name"
-                            :id="item.name"
-                            :name="item.systemVersion"
-                        >
-                        </bk-option>
-                    </bk-select>
-                </form-field>
-            </template>
 
             <template v-if="buildResourceType === 'MACOS'">
                 <form-field :label="$t('editPage.macSystemVersion')" :required="true" :is-error="errors.has('systemVersion')" :error-msg="errors.first(`systemVersion`)">
@@ -129,7 +115,7 @@
                 <select-input v-bind="imageCredentialOption" :disabled="!editable" name="credentialId" :value="buildImageCreId" :handle-change="changeBuildResource"></select-input>
             </form-field>
 
-            <section v-if="buildResourceType === 'DOCKER'">
+            <section v-if="['DOCKER', 'PUBLIC_DEVCLOUD'].includes(buildResourceType)">
                 <form-field :label="$t('editPage.performance')" v-show="isShowPerformance">
                     <devcloud-option
                         :disabled="!editable"
@@ -142,8 +128,21 @@
                 </form-field>
             </section>
 
-            <form-field :label="$t('editPage.workspace')" v-if="isThirdParty">
+            <form-field :label="$t('editPage.workspace')" v-if="isThirdParty && !isPCGBuildType">
                 <vuex-input :disabled="!editable" name="workspace" :value="container.dispatchType.workspace" :handle-change="changeBuildResource" :placeholder="$t('editPage.workspaceTips')" />
+            </form-field>
+
+            <form-field v-if="isPCGBuildType">
+                <atom-checkbox
+                    class="show-build-resource"
+                    :value="!!container.dispatchType.useRoot"
+                    :text="$t('editPage.useRootText')"
+                    :desc="$t('editPage.useRootDesc')"
+                    name="useRoot"
+                    :handle-change="changeBuildResource"
+                    :disabled="!editable"
+                >
+                </atom-checkbox>
             </form-field>
             <form-field class="container-app-field" v-if="isShowNFSDependencies">
                 <atom-checkbox
@@ -296,8 +295,7 @@
                 isLoadingMac: false,
                 xcodeVersionList: [],
                 systemVersionList: [],
-                isLoadingWin: false,
-                windowsVersionList: [],
+                isLoadingImage: false,
                 isShowPerformance: false
             }
         },
@@ -318,12 +316,14 @@
                 'getContainerModalId',
                 'isThirdPartyContainer',
                 'isPublicResource',
-                'isDockerBuildResource'
+                'isDockerBuildResource',
+                'isPublicDevCloudContainer',
+                'getRealSeqId'
             ]),
             imageTypeList () {
                 return [
                     { label: this.$t('editPage.fromList'), value: 'BKSTORE' },
-                    { label: this.$t('editPage.fromHand'), value: 'THIRD', hidden: this.buildResourceType === 'PUBLIC_DEVCLOUD' }
+                    { label: this.$t('editPage.fromHand'), value: 'THIRD' }
                 ]
             },
             appEnvs () {
@@ -331,6 +331,9 @@
             },
             routeName () {
                 return this.$route.name
+            },
+            isDetailPage () {
+                return this.$route.name === 'pipelinesDetail'
             },
             projectId () {
                 return this.$route.params.projectId
@@ -359,6 +362,9 @@
             isThirdParty () {
                 return this.isThirdPartyContainer(this.container)
             },
+            isPCGBuildType () {
+                return this.buildResourceType === 'THIRD_PARTY_PCG'
+            },
             isDocker () {
                 return this.isDockerBuildResource(this.container)
             },
@@ -375,6 +381,9 @@
                 } catch (e) {
                     return ''
                 }
+            },
+            isPublicDevCloud () {
+                return this.isPublicDevCloudContainer(this.container)
             },
             xcodeVersion () {
                 return this.container.dispatchType.xcodeVersion
@@ -490,21 +499,39 @@
                     agentType: 'ID'
                 }))
             }
+            if (['DOCKER', 'IDC', 'PUBLIC_DEVCLOUD'].includes(this.buildResourceType) && !this.buildImageCode && this.buildImageType !== 'THIRD') {
+                if (/\$\{/.test(this.buildResource)) {
+                    this.handleContainerChange('dispatchType', Object.assign({
+                        ...this.container.dispatchType,
+                        imageType: 'THIRD'
+                    }))
+                } else {
+                    this.isLoadingImage = true
+                    this.requestImageHistory({ agentType: this.buildResourceType, value: this.buildResource }).then((res) => {
+                        const data = res.data || {}
+                        this.handleContainerChange('dispatchType', Object.assign({
+                            ...this.container.dispatchType,
+                            imageType: 'BKSTORE'
+                        }))
+                        data.historyVersion = data.version
+                        if (data.code) this.choose(data)
+                    }).catch((err) => this.$showTips({ theme: 'error', message: err.message || err })).finally(() => (this.isLoadingImage = false))
+                }
+            }
             if (this.container.dispatchType && this.container.dispatchType.imageCode) {
                 this.getVersionList(this.container.dispatchType.imageCode)
             }
             if (this.buildResourceType === 'MACOS') this.getMacOsData()
-            if (this.buildResourceType === 'WINDOWS') this.getWinData()
         },
         methods: {
             ...mapActions('atom', [
                 'updateContainer',
                 'getMacSysVersion',
-                'getMacXcodeVersion',
-                'getWinVersion'
+                'getMacXcodeVersion'
             ]),
             ...mapActions('pipelines', [
-                'requestImageVersionlist'
+                'requestImageVersionlist',
+                'requestImageHistory'
             ]),
 
             changeResourceType (name, val) {
@@ -520,10 +547,10 @@
                     imageName: defaultBuildResource.name || '',
                     imageType: defaultBuildResource.imageType || '',
                     recommendFlag: defaultBuildResource.recommendFlag,
+                    useRoot: val === 'THIRD_PARTY_PCG' ? false : undefined,
                     [name]: val
                 }))
                 if (val === 'MACOS') this.getMacOsData()
-                if (val === 'WINDOWS') this.getWinData()
                 if (this.container.dispatchType && this.container.dispatchType.imageCode) this.getVersionList(this.container.dispatchType.imageCode)
             },
 
@@ -652,18 +679,6 @@
                     [name]: value
                 }))
             },
-            changeWindowSystem (value) {
-                this.handleContainerChange('dispatchType', Object.assign({
-                    ...this.container.dispatchType,
-                    systemVersion: value,
-                    value
-                }))
-            },
-            async getWinData () {
-                this.isLoadingWin = true
-                this.windowsVersionList = await this.getWinVersion()
-                this.isLoadingWin = false
-            },
             handleContainerChange (name, value) {
                 this.updateContainer({
                     container: this.container,
@@ -697,6 +712,14 @@
                 this.handleContainerChange('buildEnv', {
                     ...buildEnv
                 })
+            },
+            async startDebug () {
+                const realSeqId = this.getRealSeqId(this.stages, this.stageIndex, this.containerIndex)
+                const vmSeqId = this.isDetailPage ? (this.container.containerId || realSeqId) : realSeqId
+                const tab = window.open('about:blank')
+                const buildIdStr = this.buildId ? `&buildId=${this.buildId}` : ''
+                const url = `${WEB_URL_PREFIX}/pipeline/${this.projectId}/dockerConsole/?pipelineId=${this.pipelineId}&dispatchType=${this.buildResourceType}&vmSeqId=${vmSeqId}${buildIdStr}`
+                tab.location = url
             },
             handleNfsSwitchChange (name, value) {
                 if (!value) {
@@ -786,6 +809,11 @@
             }
         }
         .control-bar {
+            position: absolute;
+            right: 34px;
+            top: 12px;
+        }
+        .debug-btn {
             position: absolute;
             right: 34px;
             top: 12px;

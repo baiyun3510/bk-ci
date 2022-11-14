@@ -38,6 +38,7 @@ import com.tencent.devops.process.utils.PIPELINE_TASK_MESSAGE_STRING_LENGTH_MAX
 import com.tencent.devops.worker.common.logger.LoggerService
 import com.tencent.devops.worker.common.service.SensitiveValueService
 import com.tencent.devops.worker.common.utils.TaskUtil
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -50,6 +51,9 @@ class TaskDaemon(
     private val buildVariables: BuildVariables,
     private val workspace: File
 ) : Callable<Map<String, String>> {
+
+    private val logger = LoggerFactory.getLogger(TaskDaemon::class.java)
+
     override fun call(): Map<String, String> {
         return try {
             task.run(buildTask, buildVariables, workspace)
@@ -64,6 +68,7 @@ class TaskDaemon(
         val executor = Executors.newCachedThreadPool()
         val taskId = buildTask.taskId
         if (taskId != null) {
+            logger.info("runWithTimeout put task[$taskId] into TaskExecutorCache")
             TaskExecutorCache.put(taskId, executor)
         }
         val f1 = executor.submit(this)
@@ -78,6 +83,7 @@ class TaskDaemon(
         } finally {
             executor.shutdownNow()
             if (taskId != null) {
+                logger.info("runWithTimeout invalidate task[$taskId] from TaskExecutorCache")
                 TaskExecutorCache.invalidate(taskId)
             }
         }
@@ -109,10 +115,10 @@ class TaskDaemon(
                     )
                     return@forEach
                 }
-                if (SensitiveValueService.matchSensitiveValue(value)) {
-                    LoggerService.addWarnLine("Warning, credentials cannot be assigned to variable[$key]")
-                    return@forEach
-                }
+//                if (SensitiveValueService.matchSensitiveValue(value)) {
+//                    LoggerService.addWarnLine("Warning, credentials cannot be assigned to variable[$key]")
+//                    return@forEach
+//                }
                 buildResult[key] = value
             }
         }

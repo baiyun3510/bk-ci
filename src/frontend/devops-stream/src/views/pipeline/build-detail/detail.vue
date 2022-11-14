@@ -42,52 +42,53 @@
                                 }"
                             ></icon>
                         </span>
-                        <span class="title-item">
-                            <span v-if="buildDetail.objectKind === 'schedule'">{{$t('pipeline.system')}}</span>
-                            <template v-else>
-                                <i class="stream-icon stream-user"></i>
-                                <template v-if="buildDetail.objectKind === 'openApi'">
-                                    {{$t('pipeline.openapi')}}（{{ buildDetail.userId }}）
-                                </template>
-                                <template v-else>
-                                    {{ buildDetail.userId }}
-                                </template>
-                            </template>
-                        </span>
                     </span>
-                    <span class="info-data">
-                        <span class="info-item text-ellipsis">
-                            <template v-if="buildDetail.operationKind === 'delete' && buildDetail.deleteTag">
-                                <icon name="tag" size="14"></icon>
-                                {{ buildDetail.commitId }}
+                    <span class="title-item">
+                        <span v-if="buildDetail.objectKind === 'schedule'">{{$t('pipeline.system')}}</span>
+                        <template v-else>
+                            <img :src="`http://dayu.oa.com/avatars/${buildDetail.userId}/profile.jpg`">
+                            <template v-if="buildDetail.objectKind === 'openApi'">
+                                {{$t('pipeline.openapi')}}（{{ buildDetail.userId }}）
                             </template>
                             <template v-else>
-                                <icon name="source-branch" size="14"></icon>
-                                {{ buildDetail.branch }}
+                                {{ buildDetail.userId }}
                             </template>
-                        </span>
-                        <span class="info-item text-ellipsis"><icon name="clock" size="14"></icon>{{ buildDetail.executeTime | spendTimeFilter }}</span>
-                        <span class="info-item text-ellipsis">
-                            <icon name="message" size="14"></icon>
-                            {{ buildDetail.buildHistoryRemark || '--' }}
-                            <bk-popconfirm trigger="click" @confirm="confirmUpdateRemark" placement="bottom" :confirm-text="$t('confirm')" :cancel-text="$t('cancel')">
-                                <div slot="content">
-                                    <h3 class="mb10">{{$t('pipeline.editNote')}}</h3>
-                                    <bk-input type="textarea" v-model="remark" :placeholder="$t('pipeline.notePlaceholder')" class="mb10 w200"></bk-input>
-                                </div>
-                                <bk-icon type="edit2" style="font-size: 18px;cursor:pointer" />
-                            </bk-popconfirm>
-                        </span>
+                        </template>
                     </span>
-                    <span class="info-data">
-                        <span :class="['info-item', 'text-ellipsis', { 'text-link': buildDetail.jumpUrl }]" @click="goToLink(buildDetail.jumpUrl)">
-                            <icon name="commit" size="14" v-if="buildDetail.objectKind === 'schedule'"></icon>
-                            <icon :name="buildTypeIcon" size="14" v-else></icon>
-                            {{ buildDetail.buildSource || '--' }}
-                        </span>
-                        <span class="info-item text-ellipsis"><icon name="date" size="14"></icon>{{ buildDetail.startTime | timeFilter }}</span>
+                </span>
+                <span class="info-data">
+                    <span class="info-item text-ellipsis">
+                        <template v-if="buildDetail.operationKind === 'delete' && buildDetail.deleteTag">
+                            <icon name="tag" size="14"></icon>
+                            {{ buildDetail.commitId }}
+                        </template>
+                        <template v-else>
+                            <icon name="source-branch" size="14"></icon>
+                            {{ buildDetail.branch }}
+                        </template>
                     </span>
-                </p>
+                    <span class="info-item text-ellipsis"><icon name="clock" size="14"></icon>{{ buildDetail.executeTime | spendTimeFilter }}</span>
+                    <span class="info-item text-ellipsis">
+                        <icon name="message" size="14"></icon>
+                        {{ buildDetail.buildHistoryRemark || '--' }}
+                        <bk-popconfirm trigger="click" @confirm="confirmUpdateRemark" placement="bottom" :confirm-text="$t('confirm')" :cancel-text="$t('cancel')">
+                            <div slot="content">
+                                <h3 class="mb10">{{$t('pipeline.editNote')}}</h3>
+                                <bk-input type="textarea" v-model="remark" :placeholder="$t('pipeline.notePlaceholder')" class="mb10 w200"></bk-input>
+                            </div>
+                            <bk-icon type="edit2" style="font-size: 18px;cursor:pointer" />
+                        </bk-popconfirm>
+                    </span>
+                </span>
+                <span class="info-data">
+                    <span :class="['info-item', 'text-ellipsis', { 'text-link': buildDetail.jumpUrl }]" @click="goToLink(buildDetail.jumpUrl)">
+                        <icon name="commit" size="14" v-if="buildDetail.objectKind === 'schedule'"></icon>
+                        <icon :name="buildTypeIcon" size="14" v-else></icon>
+                        {{ buildDetail.buildSource || '--' }}
+                    </span>
+                    <span class="info-item text-ellipsis"><icon name="date" size="14"></icon>{{ buildDetail.startTime | timeFilter }}</span>
+                </span>
+            </p>
 
                 <div v-bk-tooltips="computedOptToolTip" class="nav-button" v-if="['RUNNING', 'PREPARE_ENV', 'QUEUE', 'LOOP_WAITING', 'CALL_WAITING', 'REVIEWING', 'TRIGGER_REVIEWING'].includes(buildDetail.status)">
                     <bk-button class="detail-button" @click="cancleBuild" :loading="isOperating" :disabled="!curPipeline.enabled || !permission">{{$t('pipeline.cancelBuild')}}</bk-button>
@@ -136,16 +137,14 @@
             return {
                 stageList: [],
                 buildDetail: {},
-                modelEvent: {},
                 isLoading: false,
                 isOperating: false,
-                remark: '',
-                fileList: ['.ci/templates/a.yml', '.ci/templates/b.yml', '.ci/templates/c.yml']
+                remark: ''
             }
         },
 
         computed: {
-            ...mapState(['projectId', 'projectInfo', 'permission', 'curPipeline', 'user']),
+            ...mapState(['projectId', 'projectInfo', 'permission', 'curPipeline']),
 
             computedOptToolTip () {
                 return {
@@ -156,10 +155,6 @@
 
             buildTypeIcon () {
                 return getbuildTypeIcon(this.buildDetail.objectKind, this.buildDetail.operationKind)
-            },
-
-            isTriggerReviewUser () {
-                return (this.buildDetail?.triggerReviewers || []).indexOf(this.user?.username) !== -1
             }
         },
 
@@ -205,9 +200,7 @@
                         buildHistoryRemark: res.buildHistoryRemark,
                         executeTime: modelDetail.executeTime,
                         startTime: modelDetail.startTime,
-                        status: modelDetail.status,
-                        buildNum: modelDetail.buildNum,
-                        triggerReviewers: modelDetail.triggerReviewers || []
+                        status: modelDetail.status
                     }
                 }).catch((err) => {
                     this.$bkMessage({ theme: 'error', message: err.message || err })
@@ -269,14 +262,6 @@
                 if (url) {
                     window.open(url, '_blank')
                 }
-            },
-
-            reviewTrigger (approve = true) {
-                pipelines.reviewTrigger(this.projectId, this.$route.params.pipelineId, this.$route.params.buildId, approve).then(() => {
-                    this.getPipelineBuildDetail()
-                }).catch((err) => {
-                    this.$bkMessage({ theme: 'error', message: err.message || err })
-                })
             }
         }
     }
@@ -284,66 +269,6 @@
 
 <style lang="postcss" scoped>
     .detail-home {
-        background: #f5f5f5;
-    }
-    .review-info {
-        background: #fff;
-        margin-bottom: 26px;
-        padding: 24px;
-        .review-title {
-            font-size: 16px;
-            color: #313328;
-            margin-bottom: 12px;
-        }
-        .review-content {
-            border: 1px solid #F0F1F5;
-            padding: 12px 16px 20px;
-            font-size: 12px;
-            .sub-title {
-                .bold {
-                    font-weight: bold;
-                }
-                .primary {
-                    color: #3a84ff;
-                    margin: 0 6px;
-                }
-                .branch-info {
-                    background: #F0F3FA;
-                    color: #979BA5;
-                    padding: 3px 6px;
-                }
-                .icon-arrows-right {
-                    font-size: 18px;
-                    color: #63656E;
-                }
-            }
-            .link-info {
-                cursor: pointer;
-                &:hover {
-                    color: #3a84ff;
-                }
-            }
-            .file-list {
-                margin: 10px 0;
-                background: #FAFBFD;
-                border: 1px solid #E1E3E9;
-                padding: 10px 10px 4px;
-                overflow-y: auto;
-                max-height: 400px;
-                p {
-                    margin-bottom: 6px;
-                }
-            }
-            .help-tips {
-                margin-bottom: 10px;
-                .link-tips {
-                    cursor: pointer;
-                    color: #3a84ff;
-                }
-            }
-        }
-    }
-    .detail-content {
         background: #fff;
         height: 100%;
     }
@@ -362,7 +287,7 @@
             &.executing {
                 font-size: 14px;
             }
-            &.icon-exclamation, &.icon-exclamation-triangle, &.icon-clock {
+            &.icon-exclamation, &.icon-exclamation-triangle, &.icon-clock, &.stream-reviewing-2 {
                 font-size: 24px;
             }
             &.running {
@@ -407,11 +332,9 @@
                     &:last-child {
                         margin-left: 15px;
                     }
-                    .stream-user {
+                    img {
                         width: 20px;
                         height: 20px;
-                        line-height: 20px;
-                        font-size: 14px;
                         border-radius: 100%;
                         margin-right: 8px;
                     }

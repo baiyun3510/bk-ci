@@ -65,3 +65,5 @@ sharding:
   databaseShardingStrategy:
     algorithmClassName: "com.tencent.devops.misc.sharding.BkProcessDatabaseShardingAlgorithm"
     shardingField: PROJECT_ID
+
+

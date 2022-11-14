@@ -72,5 +72,7 @@ data class IndicatorUpdate(
     @ApiModelProperty("指标类型")
     val type: IndicatorType? = IndicatorType.SYSTEM,
     @ApiModelProperty("输出日志详情")
-    val logPrompt: String? = ""
+    val logPrompt: String? = "",
+    @ApiModelProperty("指标权重")
+    val weight: Int? = null
 )

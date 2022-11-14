@@ -27,15 +27,30 @@
 
 package com.tencent.devops.auth.common
 
+import IamBkActionServiceImpl
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.tencent.bk.sdk.iam.config.IamConfiguration
+import com.tencent.bk.sdk.iam.service.IamActionService
+import com.tencent.bk.sdk.iam.service.IamResourceService
+import com.tencent.bk.sdk.iam.service.SystemService
+import com.tencent.bk.sdk.iam.service.impl.ActionServiceImpl
+import com.tencent.bk.sdk.iam.service.impl.ApigwHttpClientServiceImpl
+import com.tencent.bk.sdk.iam.service.impl.ResourceServiceImpl
+import com.tencent.bk.sdk.iam.service.impl.SystemServiceImpl
+import com.tencent.devops.auth.dao.ActionDao
+import com.tencent.devops.auth.dao.ResourceDao
 import com.tencent.devops.auth.filter.BlackListAspect
 import com.tencent.devops.auth.filter.TokenCheckFilter
 import com.tencent.devops.auth.refresh.dispatch.AuthRefreshDispatch
 import com.tencent.devops.auth.refresh.listener.AuthRefreshEventListener
 import com.tencent.devops.auth.service.AuthUserBlackListService
+import com.tencent.devops.auth.service.iam.ActionService
+import com.tencent.devops.auth.service.iam.BkResourceService
+import com.tencent.devops.auth.service.iam.impl.IamBkResourceServiceImpl
 import com.tencent.devops.auth.utils.HostUtils
 import com.tencent.devops.common.client.ClientTokenService
 import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQ
+import org.jooq.DSLContext
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.BindingBuilder
 import org.springframework.amqp.core.DirectExchange
@@ -48,6 +63,7 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -131,4 +147,60 @@ class AuthCoreConfiguration {
 
     @Bean
     fun blackListAspect(authUserBlackListService: AuthUserBlackListService) = BlackListAspect(authUserBlackListService)
+
+    @Bean
+    fun iamSystemService(
+        apigwHttpClientServiceImpl: ApigwHttpClientServiceImpl,
+        iamConfiguration: IamConfiguration
+    ) = SystemServiceImpl(apigwHttpClientServiceImpl, iamConfiguration)
+
+    @Bean
+    fun iamActionService(
+        iamConfiguration: IamConfiguration,
+        apigwHttpClientServiceImpl: ApigwHttpClientServiceImpl,
+        systemService: SystemService
+    ) = ActionServiceImpl(iamConfiguration, apigwHttpClientServiceImpl, systemService)
+
+    @Bean
+    fun iamResourceService(
+        iamConfiguration: IamConfiguration,
+        apigwHttpClientServiceImpl: ApigwHttpClientServiceImpl,
+        systemService: SystemService
+    ) = ResourceServiceImpl(iamConfiguration, apigwHttpClientServiceImpl, systemService)
+
+    @Bean
+    @ConditionalOnMissingBean(ActionService::class)
+    fun ciIamActionService(
+        dslContext: DSLContext,
+        actionDao: ActionDao,
+        resourceService: BkResourceService,
+        iamConfiguration: IamConfiguration,
+        systemService: SystemService,
+        iamActionService: IamActionService,
+        iamResourceService: IamResourceService
+    ) = IamBkActionServiceImpl(
+        dslContext = dslContext,
+        actionDao = actionDao,
+        resourceService = resourceService,
+        iamConfiguration = iamConfiguration,
+        systemService = systemService,
+        iamActionService = iamActionService,
+        iamResourceService = iamResourceService
+    )
+
+    @Bean
+    @ConditionalOnMissingBean(BkResourceService::class)
+    fun ciIamResourceService(
+        dslContext: DSLContext,
+        resourceDao: ResourceDao,
+        iamConfiguration: IamConfiguration,
+        iamResourceService: IamResourceService,
+        iamSystemService: SystemService
+    ) = IamBkResourceServiceImpl(
+        dslContext = dslContext,
+        resourceDao = resourceDao,
+        iamConfiguration = iamConfiguration,
+        iamResourceService = iamResourceService,
+        iamSystemService = iamSystemService
+    )
 }
