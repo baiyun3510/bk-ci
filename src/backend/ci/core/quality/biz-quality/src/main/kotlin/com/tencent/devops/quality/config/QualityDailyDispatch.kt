@@ -25,17 +25,38 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.auth.refresh.event
+package com.tencent.devops.quality.config
 
-import com.tencent.devops.auth.entity.ManagerChangeType
 import com.tencent.devops.common.event.annotation.RabbitEvent
-import com.tencent.devops.common.event.dispatcher.pipeline.mq.MQ
+import com.tencent.devops.common.event.pojo.measure.QualityReportEvent
+import org.slf4j.LoggerFactory
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.stereotype.Component
 
-@RabbitEvent(exchange = MQ.EXCHANGE_AUTH_REFRESH_FANOUT, routeKey = MQ.ROUTE_AUTH_REFRESH_FANOUT)
-data class ManagerOrganizationChangeEvent(
-    override val refreshType: String,
-    override var retryCount: Int = 0,
-    override var delayMills: Int = 0,
-    val managerChangeType: ManagerChangeType,
-    val managerId: Int
-) : RefreshBroadCastEvent(refreshType, retryCount, delayMills)
+@Component
+class QualityDailyDispatch constructor(
+    private val rabbitTemplate: RabbitTemplate
+) {
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(QualityDailyDispatch::class.java)
+    }
+
+    fun dispatch(vararg events: QualityReportEvent) {
+        try {
+            events.forEach { event ->
+                val eventType = event::class.java.annotations.find { s -> s is RabbitEvent } as RabbitEvent
+                val routeKey = eventType.routeKey
+                logger.info("[${eventType.exchange}|$routeKey|${event.projectId} dispatch the refresh event")
+                rabbitTemplate.convertAndSend(eventType.exchange, routeKey, event) { message ->
+                    if (eventType.delayMills > 0) { // 事件类型固化默认值
+                        message.messageProperties.setHeader("x-delay", eventType.delayMills)
+                    }
+                    message
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("QUALITY|dispatch|Fail to dispatch the event|$events|error=${e.message}")
+        }
+    }
+}
