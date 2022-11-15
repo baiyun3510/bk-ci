@@ -602,7 +602,7 @@ class EngineVMBuildService @Autowired(required = false) constructor(
         }
         // #5109 提前判断，防止异常数据流入，后续各类Redis锁定出现无必要的额外开启。
         if (taskStatus.isFinish() || buildInfo.isFinish()) {
-            LOG.warn("ENGINE|BCT_END|$buildId|$projectId|j($vmSeqId)|$taskId|$taskStatus|${buildInfo.status}")
+            LOG.warn("ENGINE|BCT_END_BUILD|$buildId|$projectId|j($vmSeqId)|${result.taskId}|${buildInfo.status}")
             return
         }
 
@@ -612,6 +612,19 @@ class EngineVMBuildService @Autowired(required = false) constructor(
             containerIdLock.lock()
             // 锁定先 长过期保证降级
             redisOperation.set(tCompleteTaskKey, result.taskId, expiredInSecond = TimeUnit.HOURS.toSeconds(5))
+            // #7984 拿task信息放在锁内，避免被引擎修改后此处拿的旧值
+            val buildTask = pipelineTaskService.getBuildTask(projectId, buildId, result.taskId)
+            val taskStatus = buildTask?.status
+            if (taskStatus == null) {
+                // 当上报的任务不存在，则直接返回
+                LOG.warn("ENGINE|$buildId|BCT_INVALID_TASK|$projectId|$vmName|${result.taskId}|")
+                return
+            }
+
+            if (taskStatus.isFinish()) {
+                LOG.warn("ENGINE|BCT_END_TASK|$buildId|$projectId|j($vmSeqId)|${result.taskId}|$taskStatus")
+                return
+            }
             executeCompleteTaskBus(
                 result = result,
                 buildInfo = buildInfo,

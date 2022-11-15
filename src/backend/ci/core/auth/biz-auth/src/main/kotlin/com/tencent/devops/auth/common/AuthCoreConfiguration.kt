@@ -86,7 +86,7 @@ class AuthCoreConfiguration {
         @Autowired refreshListener: AuthRefreshEventListener
     ): Consumer<Message<RefreshBroadCastEvent>> {
         return Consumer { event: Message<RefreshBroadCastEvent> ->
-            refreshListener.handleAuthRefreshEvent(event.payload)
+            refreshListener.execute(event.payload)
         }
     }
 
