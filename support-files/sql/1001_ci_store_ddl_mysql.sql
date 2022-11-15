@@ -1180,4 +1180,131 @@ CREATE TABLE IF NOT EXISTS `T_STORE_ERROR_CODE_INFO` (
     UNIQUE KEY `T_STORE_ERROR_CODE_INFO_UN` (`STORE_CODE`,`ERROR_CODE`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='store组件所属错误码信息';
 
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE` (
+    `ID` varchar(32) NOT NULL COMMENT '主键',
+    `SERVICE_NAME` varchar(64) NOT NULL COMMENT '扩展服务名称',
+    `SERVICE_CODE` varchar(64) NOT NULL COMMENT '扩展服务代码',
+    `CLASSIFY_ID` varchar(32) NOT NULL COMMENT '所属分类ID',
+    `VERSION` varchar(20) NOT NULL COMMENT '版本号',
+    `SERVICE_STATUS` tinyint(4) NOT NULL COMMENT '扩展服务状态，0：初始化|1：提交中|2：构建中|3：构建失败|4：部署中|5：部署失败|6：测试中|7：提交资料|8：审核中|9：审核驳回|10：正式发布部署中|11：正式发布部署失败|12：已发布|13：上架中止|14：下架中|15：已下架',
+    `SERVICE_STATUS_MSG` varchar(1024) DEFAULT NULL COMMENT '状态对应的描述，如上架失败原因',
+    `LOGO_URL` varchar(256) DEFAULT NULL COMMENT 'logo地址',
+    `ICON` text COMMENT '扩展服务图标(BASE64字符串)',
+    `SUMMARY` varchar(256) DEFAULT NULL COMMENT '扩展服务简介',
+    `DESCRIPTION` text COMMENT '扩展服务描述',
+    `PUBLISHER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '扩展服务发布者',
+    `PUB_TIME` datetime(3) DEFAULT NULL COMMENT '发布时间',
+    `LATEST_FLAG` bit(1) NOT NULL COMMENT '是否为最新版本扩展服务， TRUE：最新 FALSE：非最新',
+    `DELETE_FLAG` bit(1) DEFAULT b'0' COMMENT '删除标识 true：是，false：否',
+    `OWNER` varchar(50) NOT NULL DEFAULT '' COMMENT '扩展服务归属人',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    UNIQUE KEY `uni_inx_tes_code_version` (`SERVICE_CODE`,`VERSION`),
+    KEY `inx_tes_service_name` (`SERVICE_NAME`),
+    KEY `inx_tes_service_code` (`SERVICE_CODE`),
+    KEY `inx_tes_service_status` (`SERVICE_STATUS`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='扩展服务信息表';
+
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE_CATEGORY_REL` (
+    `ID` varchar(32) NOT NULL DEFAULT '' COMMENT '主键',
+    `CATEGORY_ID` varchar(32) NOT NULL COMMENT '扩展服务范畴ID',
+    `SERVICE_ID` varchar(32) NOT NULL COMMENT '扩展服务ID',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    KEY `inx_tescr_category_id` (`CATEGORY_ID`),
+    KEY `inx_tescr_service_id` (`SERVICE_ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='扩展服务与范畴关联关系表';
+
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE_ENV_INFO` (
+    `ID` varchar(32) NOT NULL COMMENT '主键',
+    `SERVICE_ID` varchar(32) NOT NULL COMMENT '扩展服务ID',
+    `LANGUAGE` varchar(64) NOT NULL DEFAULT '' COMMENT '扩展服务开发语言',
+    `PKG_PATH` varchar(1024) NOT NULL DEFAULT '' COMMENT '扩展服务执行包路径',
+    `PKG_SHA_CONTENT` varchar(1024) NOT NULL DEFAULT '' COMMENT '扩展服务执行包SHA签名串',
+    `DOCKER_FILE_CONTENT` text NOT NULL COMMENT 'dockefile内容',
+    `IMAGE_PATH` varchar(1024) NOT NULL DEFAULT '' COMMENT '扩展服务镜像路径',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    KEY `inx_tesei_service_id` (`SERVICE_ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='扩展服务执行环境信息表';
+
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE_FEATURE` (
+    `ID` varchar(32) NOT NULL COMMENT '主键',
+    `SERVICE_CODE` varchar(64) NOT NULL COMMENT '扩展服务代码',
+    `SERVICE_TYPE` tinyint(4) NOT NULL DEFAULT '1' COMMENT '扩展服务类型：0：官方自研，1：第三方',
+    `PUBLIC_FLAG` bit(1) DEFAULT b'0' COMMENT '是否为公共扩展服务， TRUE：是 FALSE：不是',
+    `RECOMMEND_FLAG` bit(1) DEFAULT b'1' COMMENT '是否推荐， TRUE：是 FALSE：不是',
+    `CERTIFICATION_FLAG` bit(1) DEFAULT b'0' COMMENT '是否官方认证， TRUE：是 FALSE：不是',
+    `WEIGHT` int(11) DEFAULT NULL COMMENT '权重（数值越大代表权重越高）',
+    `DELETE_FLAG` bit(1) DEFAULT b'0' COMMENT '删除标识 true：是，false：否',
+    `VISIBILITY_LEVEL` int(11) DEFAULT '0' COMMENT '扩展服务可见范围 0：私有 10：登录用户开源',
+    `REPOSITORY_HASH_ID` varchar(64) DEFAULT NULL COMMENT '代码库hashId',
+    `CODE_SRC` varchar(256) DEFAULT NULL COMMENT '代码库地址',
+    `DESC_INPUT_TYPE` varchar(16) NOT NULL DEFAULT 'FILE' COMMENT '描述录入类型 FILE:文件读取 MANUAL:手工录入',
+    `KILL_GRAY_APP_FLAG` bit(1) DEFAULT NULL COMMENT '是否停掉灰度环境应用， TRUE：是 FALSE：否',
+    `KILL_GRAY_APP_MARK_TIME` datetime(3) DEFAULT NULL COMMENT '停掉灰度环境应用标记时间',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    KEY `inx_tesf_service_code` (`SERVICE_CODE`),
+    KEY `inx_tesf_public_flag` (`PUBLIC_FLAG`),
+    KEY `inx_tesf_recommend_flag` (`RECOMMEND_FLAG`),
+    KEY `inx_tesf_certification_flag` (`CERTIFICATION_FLAG`),
+    KEY `inx_tesf_kill_gray_app_flag` (`KILL_GRAY_APP_FLAG`),
+    KEY `inx_tesf_kill_gray_app_mark_time` (`KILL_GRAY_APP_MARK_TIME`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='扩展服务特性表';
+
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE_ITEM_REL` (
+    `ID` varchar(32) NOT NULL COMMENT '主键',
+    `ITEM_ID` varchar(32) NOT NULL COMMENT '服务功能项ID',
+    `SERVICE_ID` varchar(32) NOT NULL COMMENT '扩展服务ID',
+    `PROPS` text COMMENT '扩展服务前端针对该扩展点的配置信息Json串',
+    `BK_SERVICE_ID` bigint(20) NOT NULL DEFAULT '0' COMMENT '蓝盾服务ID',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    KEY `inx_tesir_item_id` (`ITEM_ID`),
+    KEY `inx_tesir_service_id` (`SERVICE_ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='扩展服务与服务功能项关联关系表';
+
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE_LABEL_REL` (
+    `ID` varchar(32) NOT NULL COMMENT '主键',
+    `LABEL_ID` varchar(32) NOT NULL COMMENT '标签ID',
+    `SERVICE_ID` varchar(32) NOT NULL COMMENT '扩展服务ID',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    KEY `inx_teslr_label_id` (`LABEL_ID`),
+    KEY `inx_teslr_service_id` (`SERVICE_ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='扩展服务与标签关联关系表';
+
+CREATE TABLE IF NOT EXISTS `T_EXTENSION_SERVICE_VERSION_LOG` (
+    `ID` varchar(32) NOT NULL COMMENT '主键',
+    `SERVICE_ID` varchar(32) NOT NULL COMMENT '扩展服务ID',
+    `RELEASE_TYPE` tinyint(4) NOT NULL COMMENT '发布类型，0：新上架 1：非兼容性升级 2：兼容性功能更新 3：兼容性问题修正',
+    `CONTENT` text NOT NULL COMMENT '版本日志内容',
+    `CREATOR` varchar(50) NOT NULL DEFAULT 'system' COMMENT '创建人',
+    `MODIFIER` varchar(50) NOT NULL DEFAULT 'system' COMMENT '最近修改人',
+    `CREATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    `UPDATE_TIME` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+    PRIMARY KEY (`ID`),
+    UNIQUE KEY `uni_inx_tesvl_service_id` (`SERVICE_ID`),
+    KEY `inx_tesvl_release_type` (`RELEASE_TYPE`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='扩展服务版本日志表';
+
 SET FOREIGN_KEY_CHECKS = 1;
