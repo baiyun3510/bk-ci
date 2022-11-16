@@ -32,7 +32,7 @@ import com.tencent.devops.common.api.constant.KEY_REPOSITORY_HASH_ID
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.api.util.JsonUtil
 import com.tencent.devops.common.service.utils.MessageCodeUtil
-import com.tencent.devops.project.api.service.service.ServiceItemResource
+import com.tencent.devops.project.api.service.ServiceItemResource
 import com.tencent.devops.repository.api.ServiceGitRepositoryResource
 import com.tencent.devops.repository.pojo.RepositoryInfo
 import com.tencent.devops.repository.pojo.enums.TokenTypeEnum
