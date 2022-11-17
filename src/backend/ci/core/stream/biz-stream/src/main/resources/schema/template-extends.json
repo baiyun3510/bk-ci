@@ -921,16 +921,7 @@
                     "type" : "object",
                     "additionalProperties" : {
                       "anyOf" : [ {
-                        "type" : "array",
-                        "items" : {
-                          "anyOf" : [ {
-                            "type" : "string"
-                          }, {
-                            "type" : "number"
-                          }, {
-                            "type" : "boolean"
-                          } ]
-                        }
+                        "type" : "array"
                       }, {
                         "type" : "string"
                       } ]
@@ -1061,6 +1052,9 @@
             },
             "if-modify" : {
               "$ref" : "#/definitions/ifModify"
+            },
+            "shell" : {
+              "type" : "string"
             }
           },
           "allOf" : [ {

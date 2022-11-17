@@ -204,6 +204,9 @@
             },
             "if-modify" : {
               "$ref" : "#/definitions/ifModify"
+            },
+            "shell" : {
+              "type" : "string"
             }
           },
           "allOf" : [ {
