@@ -24,6 +24,7 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import gradle.kotlin.dsl.accessors._aea957cc1a32034839ddc7a6074ba75d.main
 import nu.studer.gradle.jooq.JooqGenerate
 
 plugins {
@@ -42,15 +43,18 @@ var moduleNames = when (val moduleName = name.split("-")[1]) {
     "misc" -> {
         listOf("process", "project", "repository", "dispatch", "plugin", "quality", "artifactory", "environment")
     }
+
     "statistics" -> {
         listOf("process", "project", "openapi")
     }
+
     "lambda" -> {
         listOf("process", "project", "lambda", "store")
     }
     "gitci" -> {
         listOf("stream")
     }
+
     else -> listOf(moduleName)
 }
 
@@ -141,10 +145,10 @@ jooq {
         }
     }
 
-    tasks.getByName<AbstractCompile>("compileKotlin") {
-        destinationDir = File("build/generated-src")
-        tasks.matching { it is JooqGenerate }.forEach {
-            dependsOn(it.name)
-        }
+}
+
+tasks.getByName<AbstractCompile>("compileKotlin") {
+    tasks.matching { it is JooqGenerate }.forEach {
+        dependsOn(it.name)
     }
 }
