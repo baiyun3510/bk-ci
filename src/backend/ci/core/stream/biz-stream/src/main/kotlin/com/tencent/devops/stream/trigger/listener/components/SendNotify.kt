@@ -98,6 +98,7 @@ class SendNotify @Autowired constructor(
         val notices = YamlUtil.getObjectMapper().readValue(
             finishData.normalizedYaml, ScriptBuildYaml::class.java
         ).notices
+        logger.info("sendNotifyV2|$notices")
         notices?.forEach { notice ->
             // 替换 variables
             if (!checkStatus(finishData, build.id, replaceVar(notice.ifField, variables))) {

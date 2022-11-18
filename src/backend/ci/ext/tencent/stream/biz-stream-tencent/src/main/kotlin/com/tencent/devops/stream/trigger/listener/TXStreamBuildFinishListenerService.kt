@@ -197,7 +197,7 @@ class TXStreamBuildFinishListenerService @Autowired constructor(
                 lastBuildId = buildFinishEvent.buildId
             )
         )
-
+        logger.info("before sendNotify.sendNotify(action)")
         // 发送通知
         sendNotify.sendNotify(action)
     }
