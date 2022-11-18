@@ -25,20 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.archive.config
+dependencies {
+    implementation(project(":core:notify:api-notify"))
+    implementation(project(":core:notify:biz-notify"))
+    implementation(project(":core:notify:model-notify"))
+    implementation(project(":core:common:common-db"))
+    implementation(project(":core:common:common-notify"))
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
-
-/**
- * 仓库配置
- */
-@Component
-class BkRepoClientConfig {
-
-    @Value("\${artifactory.realm:}")
-    lateinit var artifactoryRealm: String
-
-    @Value("\${bkrepo.logRepoCredentialsKey:}")
-    lateinit var logRepoCredentialsKey: String
+    testImplementation(project(":core:common:common-test"))
 }

@@ -49,11 +49,12 @@ import com.tencent.devops.notify.pojo.NotificationResponseWithPage
 import com.tencent.devops.notify.service.EmailService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cloud.stream.function.StreamBridge
-import org.springframework.stereotype.Service
 import java.util.stream.Collectors
 
-@Service
+@org.springframework.context.annotation.Configuration
+@ConditionalOnProperty(prefix = "notify", name = ["emailChannel"], havingValue = "blueking", matchIfMissing = true)
 @Suppress("ALL")
 class EmailServiceImpl @Autowired constructor(
     private val notifyService: NotifyService,

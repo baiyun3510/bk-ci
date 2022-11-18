@@ -25,20 +25,32 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.common.archive.config
+USE devops_ci_notify;
+SET NAMES utf8mb4;
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
+DROP PROCEDURE IF EXISTS ci_notify_schema_update;
 
-/**
- * 仓库配置
- */
-@Component
-class BkRepoClientConfig {
+DELIMITER <CI_UBF>
+CREATE PROCEDURE ci_notify_schema_update()
+BEGIN
 
-    @Value("\${artifactory.realm:}")
-    lateinit var artifactoryRealm: String
+    DECLARE db VARCHAR(100);
+    SET AUTOCOMMIT = 0;
+SELECT DATABASE() INTO db;
 
-    @Value("\${bkrepo.logRepoCredentialsKey:}")
-    lateinit var logRepoCredentialsKey: String
-}
+IF NOT EXISTS(SELECT 1
+                  FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA = db
+                    AND TABLE_NAME = 'T_EMAILS_NOTIFY_MESSAGE_TEMPLATE'
+                    AND COLUMN_NAME = 'TENCENT_CLOUD_TEMPLATE_ID') THEN
+ALTER TABLE `T_EMAILS_NOTIFY_MESSAGE_TEMPLATE`
+    ADD COLUMN `TENCENT_CLOUD_TEMPLATE_ID` int(11) NULL COMMENT '腾讯云邮件模板id';
+	
+END IF;
+
+COMMIT;
+END <CI_UBF>
+DELIMITER ;
+COMMIT;
+
+CALL ci_notify_schema_update();
