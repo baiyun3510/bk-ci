@@ -126,6 +126,7 @@ class MetricsThirdPartyListenerConfiguration {
         )
     }
 
+/*
     @Bean
     fun metricsQualityDailyReportQueue() = Queue(QUEUE_QUALITY_DAILY_EVENT)
 
@@ -164,6 +165,7 @@ class MetricsThirdPartyListenerConfiguration {
             maxConcurrency = 20
         )
     }
+*/
 
     @Bean
     fun metricsTurboDailyReportQueue() = Queue(QUEUE_METRICS_STATISTIC_TURBO_DAILY)
