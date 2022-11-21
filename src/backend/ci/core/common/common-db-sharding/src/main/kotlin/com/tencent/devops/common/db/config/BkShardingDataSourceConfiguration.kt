@@ -215,7 +215,8 @@ class BkShardingDataSourceConfiguration {
             "${DATA_SOURCE_NAME_PREFIX}0.$tableName"
         }
         val shardingTableRuleConfig = ShardingTableRuleConfiguration(tableName, actualDataNodes)
-        logger.info("BkShardingDataSourceConfiguration table:$tableName|databaseShardingStrategy:$databaseShardingStrategy|tableShardingStrategy:$tableShardingStrategy|actualDataNodes:$actualDataNodes ")
+        logger.info("BkShardingDataSourceConfiguration table:$tableName|databaseShardingStrategy:" +
+            "$databaseShardingStrategy|tableShardingStrategy:$tableShardingStrategy|actualDataNodes:$actualDataNodes ")
         // 设置表的分库策略
         shardingTableRuleConfig.databaseShardingStrategy = if (databaseShardingStrategy != null) {
             StandardShardingStrategyConfiguration(databaseShardingField, DB_SHARDING_ALGORITHM_NAME)
