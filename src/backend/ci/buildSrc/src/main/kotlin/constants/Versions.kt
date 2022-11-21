@@ -43,7 +43,6 @@ object Versions {
     const val YamlSchema = "1.0.49"
     const val Xinge = "1.2.4.9"
     const val Pulsar = "2.7.2"
-    const val JacksonDatatypeJsr = "2.11.4"
     const val openTelemetryVersion = "1.14.0"
     const val openTelemetryAlphaVersion = "1.14.0-alpha"
     const val reflections = "0.10.2"
