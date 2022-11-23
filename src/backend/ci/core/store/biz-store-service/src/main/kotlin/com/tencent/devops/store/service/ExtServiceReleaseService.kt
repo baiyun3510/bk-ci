@@ -161,13 +161,20 @@ abstract class ExtServiceReleaseService @Autowired constructor() {
         // 校验信息
         validateAddServiceReq(extensionInfo)
         checkProjectInfo(userId, extensionInfo.projectCode)
-        val handleServicePackageResult = handleServicePackage(extensionInfo, userId, serviceCode)
-        logger.info("addExtService the handleServicePackage is :$handleServicePackageResult")
 
-        if (handleServicePackageResult.isNotOk()) {
-            return Result(handleServicePackageResult.status, handleServicePackageResult.message, null)
-        }
-        val handleServicePackageMap = handleServicePackageResult.data
+        val handleServicePackageMap =
+            if (extensionInfo.handleServicePackageMap != null) {
+                extensionInfo.handleServicePackageMap
+            } else {
+                val handleServicePackageResult = handleServicePackage(extensionInfo, userId, serviceCode)
+                logger.info("addExtService the handleServicePackage is :$handleServicePackageResult")
+
+                if (handleServicePackageResult.isNotOk()) {
+                    return Result(handleServicePackageResult.status, handleServicePackageResult.message, null)
+                }
+                handleServicePackageResult.data
+            }
+
         dslContext.transaction { t ->
             val context = DSL.using(t)
             val id = UUIDUtil.generate()
@@ -857,7 +864,7 @@ abstract class ExtServiceReleaseService @Autowired constructor() {
             processInfo.add(ReleaseProcessItem(MessageCodeUtil.getCodeLanMessage(ONLINE), ONLINE, NUM_FIVE, UNDO))
             processInfo.add(ReleaseProcessItem(MessageCodeUtil.getCodeLanMessage(END), END, NUM_SIX, UNDO))
         } else {
-            processInfo.add(ReleaseProcessItem(MessageCodeUtil.getCodeLanMessage(APPROVE), APPROVE, NUM_FIVE, UNDO))
+//            processInfo.add(ReleaseProcessItem(MessageCodeUtil.getCodeLanMessage(APPROVE), APPROVE, NUM_FIVE, UNDO))
             processInfo.add(ReleaseProcessItem(MessageCodeUtil.getCodeLanMessage(ONLINE), ONLINE, NUM_SIX, UNDO))
             processInfo.add(ReleaseProcessItem(MessageCodeUtil.getCodeLanMessage(END), END, NUM_SEVEN, UNDO))
         }
