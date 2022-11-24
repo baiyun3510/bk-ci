@@ -365,6 +365,7 @@ class StartActionTaskContainerCmd(
                         buildStatus = taskStatus
                     )
                 )
+                LOG.warn("ENGINE|$buildId|$source|CONTAINER_SKIP_TASK|$stageId|j($containerId)|$updateTaskStatusInfos")
                 refreshTaskStatus(updateTaskStatusInfos, index, containerTasks)
                 message.insert(0, "[$taskName]").append(" | summary=${containerContext.latestSummary}")
             }

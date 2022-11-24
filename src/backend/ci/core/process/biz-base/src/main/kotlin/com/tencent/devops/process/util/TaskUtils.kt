@@ -116,7 +116,7 @@ object TaskUtils {
         val taskSize = taskList.size - 1
         for (i in 0..taskSize) {
             val tmpTask = taskList[i]
-            logger.info("getPreTaskExecuteFlag taskIndex:$i|status:${tmpTask.status}|elementPostInfo:${tmpTask.additionalOptions?.elementPostInfo}")
+            logger.info("getPreTaskExecuteFlag buildId|${tmpTask.buildId}|taskIndex:$i|status:${tmpTask.status}|elementPostInfo:${tmpTask.additionalOptions?.elementPostInfo}")
             // 只需判断post任务之前的任务状态
             if (tmpTask.additionalOptions?.elementPostInfo != null) {
                 return flag
