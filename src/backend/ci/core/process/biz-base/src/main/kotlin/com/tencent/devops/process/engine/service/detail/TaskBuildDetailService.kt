@@ -376,7 +376,7 @@ class TaskBuildDetailService(
                     updateTaskStatusInfos = updateTaskStatusInfos
                 )
             }
-            buildStatus == BuildStatus.SKIP -> {
+            buildStatus.isSkip() -> {
                 updateTaskStatusInfos?.add(
                     PipelineTaskStatusInfo(
                         taskId = endElement.id!!,

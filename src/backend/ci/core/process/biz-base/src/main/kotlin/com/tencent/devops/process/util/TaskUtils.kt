@@ -35,11 +35,8 @@ import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.process.engine.common.VMUtils
 import com.tencent.devops.process.engine.control.ControlUtils
 import com.tencent.devops.process.engine.pojo.PipelineBuildTask
-import org.slf4j.LoggerFactory
 
 object TaskUtils {
-
-    private val logger = LoggerFactory.getLogger(TaskUtils::class.java)
 
     private val realExecuteBuildStatusList = listOf(
         BuildStatus.SUCCEED,
@@ -116,7 +113,6 @@ object TaskUtils {
         val taskSize = taskList.size - 1
         for (i in 0..taskSize) {
             val tmpTask = taskList[i]
-            logger.info("getPreTaskExecuteFlag buildId|${tmpTask.buildId}|taskIndex:$i|status:${tmpTask.status}|elementPostInfo:${tmpTask.additionalOptions?.elementPostInfo}")
             // 只需判断post任务之前的任务状态
             if (tmpTask.additionalOptions?.elementPostInfo != null) {
                 return flag
@@ -140,7 +136,6 @@ object TaskUtils {
                 break
             }
         }
-        logger.info("getPreTaskExecuteFlag flag:$flag")
         return flag
     }
 
