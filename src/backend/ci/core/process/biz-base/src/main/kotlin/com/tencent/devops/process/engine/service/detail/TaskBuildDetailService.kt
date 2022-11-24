@@ -353,26 +353,41 @@ class TaskBuildDetailService(
         elements: List<Element>,
         updateTaskStatusInfos: MutableList<PipelineTaskStatusInfo>?
     ): Boolean {
-        if (cancelTaskPostFlag) {
-            return handleCancelTaskPost(
-                containerId = containerId,
-                endElement = endElement,
-                endElementIndex = endElementIndex,
-                tmpElement = tmpElement,
-                tmpElementIndex = tmpElementIndex,
-                elements = elements,
-                updateTaskStatusInfos = updateTaskStatusInfos
-            )
-        } else {
-            return handleCancelTaskNormal(
-                tmpElement = tmpElement,
-                endElement = endElement,
-                buildStatus = buildStatus,
-                endElementIndex = endElementIndex,
-                elements = elements,
-                containerId = containerId,
-                updateTaskStatusInfos = updateTaskStatusInfos
-            )
+        when {
+            cancelTaskPostFlag -> {
+                return handleCancelTaskPost(
+                    containerId = containerId,
+                    endElement = endElement,
+                    endElementIndex = endElementIndex,
+                    tmpElement = tmpElement,
+                    tmpElementIndex = tmpElementIndex,
+                    elements = elements,
+                    updateTaskStatusInfos = updateTaskStatusInfos
+                )
+            }
+            buildStatus.isCancel() -> {
+                return handleCancelTaskNormal(
+                    tmpElement = tmpElement,
+                    endElement = endElement,
+                    buildStatus = buildStatus,
+                    endElementIndex = endElementIndex,
+                    elements = elements,
+                    containerId = containerId,
+                    updateTaskStatusInfos = updateTaskStatusInfos
+                )
+            }
+            else -> {
+                updateTaskStatusInfos?.add(
+                    PipelineTaskStatusInfo(
+                        taskId = endElement.id!!,
+                        containerHashId = containerId,
+                        buildStatus = buildStatus,
+                        executeCount = endElement.executeCount,
+                        message = endElement.errorMsg
+                    )
+                )
+                return true
+            }
         }
     }
 
