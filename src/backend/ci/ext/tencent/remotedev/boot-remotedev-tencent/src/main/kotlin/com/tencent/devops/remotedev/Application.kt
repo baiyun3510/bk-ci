@@ -25,8 +25,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":ext:tencent:dispatch-kubernetes:biz-dispatch-kubernetes-bcs-tencent"))
-    api(project(":core:dispatch-kubernetes:biz-dispatch-kubernetes"))
-    api(project(":ext:tencent:dispatch-kubernetes:common-dispatch-kubernetes-tencent"))
+package com.tencent.devops.remotedev
+
+import com.tencent.devops.common.service.MicroService
+import com.tencent.devops.common.service.MicroServiceApplication
+import org.springframework.context.annotation.ComponentScan
+
+@MicroService
+@ComponentScan("com.tencent.devops.remotedev")
+class Application
+
+fun main(args: Array<String>) {
+    MicroServiceApplication.run(Application::class, args)
 }

@@ -25,8 +25,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":ext:tencent:dispatch-kubernetes:biz-dispatch-kubernetes-bcs-tencent"))
-    api(project(":core:dispatch-kubernetes:biz-dispatch-kubernetes"))
-    api(project(":ext:tencent:dispatch-kubernetes:common-dispatch-kubernetes-tencent"))
+package com.tencent.devops.remotedev.pojo
+
+enum class WorkspaceStatus {
+    PREPARING,
+    RUNNING,
+    STOPPED,
+    SLEEP,
+    DELETED,
+    EXCEPTION
 }

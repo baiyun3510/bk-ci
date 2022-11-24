@@ -25,8 +25,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":ext:tencent:dispatch-kubernetes:biz-dispatch-kubernetes-bcs-tencent"))
-    api(project(":core:dispatch-kubernetes:biz-dispatch-kubernetes"))
-    api(project(":ext:tencent:dispatch-kubernetes:common-dispatch-kubernetes-tencent"))
-}
+package com.tencent.devops.remotedev.pojo
+
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+
+@ApiModel("工作空间信息")
+data class Workspace(
+    @ApiModelProperty("工作空间ID")
+    val workspaceId: Long,
+    @ApiModelProperty("工作空间名称")
+    val name: String,
+    @ApiModelProperty("远程开发仓库地址")
+    val repositoryUrl: String,
+    @ApiModelProperty("仓库分支")
+    val branch: String,
+    @ApiModelProperty("devfile配置路径")
+    val devFilePath: String?,
+    @ApiModelProperty("工作空间模板ID")
+    val wsTemplateId: Int?,
+    @ApiModelProperty("工作空间状态")
+    val status: WorkspaceStatus
+)

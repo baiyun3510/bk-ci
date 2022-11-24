@@ -25,8 +25,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":ext:tencent:dispatch-kubernetes:biz-dispatch-kubernetes-bcs-tencent"))
-    api(project(":core:dispatch-kubernetes:biz-dispatch-kubernetes"))
-    api(project(":ext:tencent:dispatch-kubernetes:common-dispatch-kubernetes-tencent"))
+package com.tencent.devops.remotedev.resources.user
+
+import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.web.RestResource
+import com.tencent.devops.remotedev.api.user.UserRemoteDevResource
+import com.tencent.devops.remotedev.pojo.RemoteDevSettings
+
+@RestResource
+@Suppress("ALL")
+class UserRemoteDevResourceImpl constructor(
+
+) : UserRemoteDevResource {
+    override fun getRemoteDevSettings(userId: String): Result<RemoteDevSettings> {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateRemoteDevSettings(userId: String, remoteDevSettings: RemoteDevSettings): Result<Boolean> {
+        TODO("Not yet implemented")
+    }
 }

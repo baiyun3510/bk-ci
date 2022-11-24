@@ -25,8 +25,27 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    api(project(":ext:tencent:dispatch-kubernetes:biz-dispatch-kubernetes-bcs-tencent"))
-    api(project(":core:dispatch-kubernetes:biz-dispatch-kubernetes"))
-    api(project(":ext:tencent:dispatch-kubernetes:common-dispatch-kubernetes-tencent"))
-}
+package com.tencent.devops.remotedev.pojo
+
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+
+@ApiModel("远程开发配置")
+data class RemoteDevSettings(
+    @ApiModelProperty("默认shell")
+    val defaultShell: String,
+    @ApiModelProperty("默认外观")
+    val appearance: String,
+    @ApiModelProperty("默认语言")
+    val language: String,
+    @ApiModelProperty("是否开启声音通知")
+    val notice: Boolean,
+    @ApiModelProperty("是否连接工蜂")
+    val gitAttached: Boolean,
+    @ApiModelProperty("是否连接TAPD")
+    val tapdAttached: Boolean,
+    @ApiModelProperty("是否连接GitHub")
+    val githubAttached: Boolean,
+    @ApiModelProperty("远程开发环境变量配置")
+    val envs: Map<String, String> = emptyMap()
+)

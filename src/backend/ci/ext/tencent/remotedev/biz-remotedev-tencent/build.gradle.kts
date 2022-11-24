@@ -26,7 +26,9 @@
  */
 
 dependencies {
-    api(project(":ext:tencent:dispatch-kubernetes:biz-dispatch-kubernetes-bcs-tencent"))
-    api(project(":core:dispatch-kubernetes:biz-dispatch-kubernetes"))
-    api(project(":ext:tencent:dispatch-kubernetes:common-dispatch-kubernetes-tencent"))
+    api(project(":ext:tencent:dispatch-kubernetes:api-dispatch-kubernetes-tencent"))
+    api(project(":ext:tencent:remotedev:api-remotedev-tencent"))
+    api(project(":ext:tencent:remotedev:model-remotedev-tencent"))
+
+    testImplementation(project(":core:common:common-test"))
 }
