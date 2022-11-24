@@ -389,6 +389,7 @@ class TaskBuildDetailService(
                 return true
             }
         }
+        return true
     }
 
     private fun handleCancelTaskNormal(
