@@ -33,5 +33,9 @@ enum class WorkspaceStatus {
     STOPPED,
     SLEEP,
     DELETED,
-    EXCEPTION
+    EXCEPTION;
+
+    fun isRunning() = this == RUNNING
+
+    fun isSleeping() = this == SLEEP
 }

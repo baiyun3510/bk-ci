@@ -27,17 +27,24 @@
 
 package com.tencent.devops.remotedev.resources.user
 
+import com.tencent.devops.common.api.pojo.Page
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.process.pojo.github.GithubAppUrl
 import com.tencent.devops.remotedev.api.user.UserWorkspaceResource
 import com.tencent.devops.remotedev.pojo.Workspace
+import com.tencent.devops.remotedev.pojo.WorkspaceDetail
+import com.tencent.devops.remotedev.pojo.WorkspaceOpHistory
+import com.tencent.devops.remotedev.service.GitTransferService
 import com.tencent.devops.remotedev.service.WorkspaceService
+import com.tencent.devops.repository.pojo.AuthorizeResult
+import com.tencent.devops.repository.pojo.enums.RedirectUrlTypeEnum
 
 @RestResource
 @Suppress("ALL")
 class UserWorkspaceResourceImpl constructor(
-    private val workspaceService: WorkspaceService
+    val gitTransferService: GitTransferService,
+    val workspaceService: WorkspaceService
 ) : UserWorkspaceResource {
 
     override fun getAuthorizedGitRepository(userId: String): Result<GithubAppUrl> {
@@ -60,11 +67,44 @@ class UserWorkspaceResourceImpl constructor(
         return Result(workspaceService.deleteWorkspace(userId, workspaceId))
     }
 
-    override fun getWorkspaceList(userId: String): Result<Workspace> {
-        return Result(workspaceService.getWorkspaceList(userId))
+    override fun getWorkspaceList(userId: String, page: Int?, pageSize: Int?): Result<Page<Workspace>> {
+        return Result(workspaceService.getWorkspaceList(userId, page, pageSize))
     }
 
-    override fun getWorkspaceDetail(userId: String, workspaceId: Long): Result<Workspace> {
+    override fun getWorkspaceDetail(userId: String, workspaceId: Long): Result<WorkspaceDetail?> {
         return Result(workspaceService.getWorkspaceDetail(userId, workspaceId))
+    }
+
+    override fun getWorkspaceTimeline(
+        userId: String,
+        workspaceId: Long,
+        page: Int?,
+        pageSize: Int?
+    ): Result<Page<WorkspaceOpHistory>> {
+        return Result(
+            workspaceService.getWorkspaceTimeline(
+                userId = userId,
+                workspaceId = workspaceId,
+                page = page,
+                pageSize = pageSize
+            )
+        )
+    }
+
+    override fun isOAuth(
+        userId: String,
+        redirectUrlType: RedirectUrlTypeEnum?,
+        redirectUrl: String?,
+        gitProjectId: Long,
+        refreshToken: Boolean?
+    ): Result<AuthorizeResult> {
+        // 权限校验？
+        return gitTransferService.isOAuth(
+            userId = userId,
+            redirectUrlType = redirectUrlType,
+            redirectUrl = redirectUrl,
+            gitProjectId = gitProjectId,
+            refreshToken = refreshToken
+        )
     }
 }

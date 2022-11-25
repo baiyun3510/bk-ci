@@ -27,13 +27,16 @@
 
 package com.tencent.devops.remotedev.dao
 
+import com.tencent.devops.common.api.model.SQLLimit
 import com.tencent.devops.model.remotedev.tables.TWorkspace
 import com.tencent.devops.model.remotedev.tables.records.TWorkspaceRecord
 import com.tencent.devops.remotedev.pojo.Workspace
 import com.tencent.devops.remotedev.pojo.WorkspaceStatus
+import org.jooq.Condition
 import org.jooq.DSLContext
 import org.jooq.Result
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 class WorkspaceDao {
@@ -76,17 +79,36 @@ class WorkspaceDao {
                 )
                 .returning(ID)
                 .fetchOne()!!.id
-
         }
     }
 
-    fun getWorkspaceByUserId(
-        userId: String,
-        dslContext: DSLContext
+    fun countWorkspace(
+        dslContext: DSLContext,
+        userId: String? = null,
+    ): Long {
+        with(TWorkspace.T_WORKSPACE) {
+            val condition = mixCondition(userId = userId)
+            return dslContext.selectCount().from(this)
+                .where(condition)
+                .fetchOne(0, Long::class.java) ?: 0
+        }
+    }
+
+    fun limitFetchWorkspace(
+        dslContext: DSLContext,
+        limit: SQLLimit,
+        userId: String? = null,
+        workspaceId: Long? = null
     ): Result<TWorkspaceRecord>? {
-        return with(TWorkspace.T_WORKSPACE) {
-            dslContext.selectFrom(this)
-                .where(USER_ID.eq(userId))
+        with(TWorkspace.T_WORKSPACE) {
+            val condition = mixCondition(userId, workspaceId)
+
+            if (condition.isEmpty()) {
+                return null
+            }
+            return dslContext.selectFrom(this)
+                .where(condition).orderBy(CREATE_TIME.desc())
+                .limit(limit.limit).offset(limit.offset)
                 .fetch()
         }
     }
@@ -101,9 +123,44 @@ class WorkspaceDao {
             dslContext.update(this)
                 .set(STATUS, status.ordinal)
                 .set(NAME, name)
+                .set(UPDATE_TIME, LocalDateTime.now())
                 .where(ID.eq(workspaceId))
                 .execute()
         }
+    }
+
+    fun fetchAnyWorkspace(
+        dslContext: DSLContext,
+        userId: String? = null,
+        workspaceId: Long? = null
+    ): TWorkspaceRecord? {
+        with(TWorkspace.T_WORKSPACE) {
+            val condition = mixCondition(userId, workspaceId)
+
+            if (condition.isEmpty()) {
+                return null
+            }
+
+            return dslContext.selectFrom(this)
+                .where(condition)
+                .fetchAny()
+        }
+    }
+
+    fun mixCondition(
+        userId: String? = null,
+        workspaceId: Long? = null
+    ): List<Condition> {
+        val condition = mutableListOf<Condition>()
+        with(TWorkspace.T_WORKSPACE) {
+            if (!userId.isNullOrBlank()) {
+                condition.add(USER_ID.eq(userId))
+            }
+            if (workspaceId != null) {
+                condition.add(ID.eq(workspaceId))
+            }
+        }
+        return condition
     }
 
     fun updateWorkspaceStatus(
@@ -114,6 +171,8 @@ class WorkspaceDao {
         with(TWorkspace.T_WORKSPACE) {
             dslContext.update(this)
                 .set(STATUS, status.ordinal)
+                .set(UPDATE_TIME, LocalDateTime.now())
+                .set(LAST_STATUS_UPDATE_TIME, LocalDateTime.now())
                 .where(ID.eq(workspaceId))
                 .execute()
         }
