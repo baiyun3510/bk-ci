@@ -914,8 +914,9 @@ abstract class ExtServiceReleaseService @Autowired constructor() {
         ) {
             return Pair(false, CommonMessageCode.PERMISSION_DENIED)
         }
-        val allowDeployStatus = if (isNormalUpgrade != null && isNormalUpgrade) ExtServiceStatusEnum.EDIT
-        else ExtServiceStatusEnum.AUDITING
+//        val allowDeployStatus = if (isNormalUpgrade != null && isNormalUpgrade) ExtServiceStatusEnum.EDIT
+//        else ExtServiceStatusEnum.AUDITING
+        val allowDeployStatus = ExtServiceStatusEnum.EDIT
         var validateFlag = true
         if (status == ExtServiceStatusEnum.COMMITTING.status.toByte() &&
             recordStatus != ExtServiceStatusEnum.INIT.status.toByte()
