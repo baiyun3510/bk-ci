@@ -29,6 +29,18 @@ class WorkspaceSharedDao {
         }
     }
 
+    fun exsitWorkspaceSharedInfo(
+        workspaceShared: WorkspaceShared,
+        dslContext: DSLContext
+    ): Boolean {
+        return with(TWorkspaceShared.T_WORKSPACE_SHARED) {
+            dslContext.selectCount().from(this)
+                .where(WORKSPACE_ID.eq(workspaceShared.workspaceId))
+                .and(SHARED_USER.eq(workspaceShared.sharedUser))
+                .fetchOne(0, Int::class.java)!! > 0
+        }
+    }
+
     // 删除工作空间共享记录
     fun deleteWorkspaceSharedInfo(
         workspaceId: Long,

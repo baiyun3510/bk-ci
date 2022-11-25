@@ -61,7 +61,8 @@ class WorkspaceDao {
                 CPU,
                 MEMORY,
                 DISK,
-                STATUS
+                STATUS,
+                LAST_STATUS_UPDATE_TIME
             )
                 .values(
                     userId,
@@ -75,7 +76,8 @@ class WorkspaceDao {
                     8,
                     16,
                     100,
-                    workspaceStatus.ordinal
+                    workspaceStatus.ordinal,
+                    LocalDateTime.now()
                 )
                 .returning(ID)
                 .fetchOne()!!.id
@@ -107,7 +109,7 @@ class WorkspaceDao {
                 return null
             }
             return dslContext.selectFrom(this)
-                .where(condition).orderBy(CREATE_TIME.desc())
+                .where(condition).orderBy(CREATE_TIME.desc(), ID.desc())
                 .limit(limit.limit).offset(limit.offset)
                 .fetch()
         }
@@ -116,12 +118,10 @@ class WorkspaceDao {
     fun updateWorkspaceName(
         workspaceId: Long,
         name: String,
-        status: WorkspaceStatus,
         dslContext: DSLContext
     ) {
         with(TWorkspace.T_WORKSPACE) {
             dslContext.update(this)
-                .set(STATUS, status.ordinal)
                 .set(NAME, name)
                 .set(UPDATE_TIME, LocalDateTime.now())
                 .where(ID.eq(workspaceId))
