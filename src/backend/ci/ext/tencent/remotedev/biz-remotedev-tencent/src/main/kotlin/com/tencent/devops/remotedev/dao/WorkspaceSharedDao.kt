@@ -3,7 +3,9 @@ package com.tencent.devops.remotedev.dao
 import com.tencent.devops.model.remotedev.tables.TWorkspaceShared
 import com.tencent.devops.remotedev.pojo.WorkspaceShared
 import org.jooq.DSLContext
+import org.springframework.stereotype.Repository
 
+@Repository
 class WorkspaceSharedDao {
 
     // 新增工作空间共享记录
