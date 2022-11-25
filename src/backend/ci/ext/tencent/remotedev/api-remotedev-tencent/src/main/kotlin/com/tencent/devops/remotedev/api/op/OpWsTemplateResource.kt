@@ -70,6 +70,7 @@ interface OpWsTemplateResource {
         @HeaderParam(AUTH_HEADER_USER_ID)
         userId: String,
         @ApiParam(value = "模板ID", required = true)
+        @PathParam("wsTemplateId")
         workspaceTemplateId: Long,
         @ApiParam(value = "模板信息", required = true)
         workspaceTemplate: WorkspaceTemplate
