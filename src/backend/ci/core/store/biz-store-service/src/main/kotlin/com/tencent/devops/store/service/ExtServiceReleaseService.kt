@@ -640,7 +640,7 @@ abstract class ExtServiceReleaseService @Autowired constructor() {
         return if (isNormalUpgrade) {
             ExtServiceStatusEnum.RELEASE_DEPLOYING.status.toByte()
         } else {
-            ExtServiceStatusEnum.AUDITING.status.toByte()
+            ExtServiceStatusEnum.RELEASE_DEPLOYING.status.toByte()
         }
     }
 
