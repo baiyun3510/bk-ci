@@ -198,6 +198,9 @@ class ApigwBuildResourceV3Impl @Autowired constructor(
         pipelineId: String,
         buildId: String
     ): Result<BuildHistoryWithVars> {
+
+        logger.info("堆栈debug", Throwable())
+
         logger.info("OPENAPI_BUILD_V3|$userId|get status|$projectId|$pipelineId|$buildId")
         return client.get(ServiceBuildResource::class).getBuildStatus(
             userId = userId,
