@@ -37,6 +37,7 @@ import com.tencent.devops.openapi.IgnoreProjectId
 import com.tencent.devops.openapi.service.op.AppCodeService
 import com.tencent.devops.openapi.utils.ApiGatewayUtil
 import org.aspectj.lang.JoinPoint
+import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
@@ -142,7 +143,7 @@ class ApiAspect(
     }
 
     @Around("execution(* com.tencent.devops.openapi.resources.apigw..*.*(..))")
-    fun aroundMethod(pdj: MethodInvocationProceedingJoinPoint): Any? {
+    fun aroundMethod(pdj: ProceedingJoinPoint): Any? {
         val begin = System.currentTimeMillis()
         val methodName = pdj.signature.name
         val parameterValue = pdj.args
