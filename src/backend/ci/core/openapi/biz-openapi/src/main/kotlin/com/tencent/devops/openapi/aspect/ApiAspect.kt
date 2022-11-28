@@ -27,9 +27,7 @@
 package com.tencent.devops.openapi.aspect
 
 import com.tencent.devops.common.api.exception.CustomException
-import com.tencent.devops.common.api.exception.ParamBlankException
 import com.tencent.devops.common.api.exception.PermissionForbiddenException
-import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.client.consul.ConsulConstants.PROJECT_TAG_REDIS_KEY
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.BkTag
@@ -37,17 +35,13 @@ import com.tencent.devops.openapi.IgnoreProjectId
 import com.tencent.devops.openapi.service.op.AppCodeService
 import com.tencent.devops.openapi.utils.ApiGatewayUtil
 import org.aspectj.lang.JoinPoint
-import org.aspectj.lang.ProceedingJoinPoint
-import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.reflect.MethodSignature
 import org.slf4j.LoggerFactory
-import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.ws.rs.core.Response
-import kotlin.reflect.jvm.kotlinFunction
 
 @Aspect
 @Component
@@ -125,15 +119,17 @@ class ApiAspect(
             }
         }
 
-        if (projectId != null && appCode != null && (apigwType == "apigw-app")) {
-            if (!appCodeService.validAppCode(appCode, projectId)) {
+        if (projectId != null) {
+            if (appCodeService.validProjectInfo(projectId) == null) {
+                appCodeService.invalidProjectInfo(projectId)
+                throw CustomException(Response.Status.NOT_FOUND, "ProjectId [$projectId] not find, please check it.")
+            }
+
+            if (appCode != null && apigwType == "apigw-app" && !appCodeService.validAppCode(appCode, projectId)) {
                 throw PermissionForbiddenException(
                     message = "Permission denied: apigwType[$apigwType],appCode[$appCode],ProjectId[$projectId]"
                 )
             }
-        }
-
-        if (projectId != null) {
             // openAPI 网关无法判别项目信息, 切面捕获project信息。 剩余一种URI内无${projectId}的情况,接口自行处理
             val projectConsulTag = redisOperation.hget(PROJECT_TAG_REDIS_KEY, projectId)
             if (!projectConsulTag.isNullOrEmpty()) {
@@ -142,36 +138,46 @@ class ApiAspect(
         }
     }
 
+    @Suppress("ComplexCondition")
     @Around("execution(* com.tencent.devops.openapi.resources.apigw..*.*(..))")
     fun aroundMethod(pdj: ProceedingJoinPoint): Any? {
         val begin = System.currentTimeMillis()
         val methodName = pdj.signature.name
-        val parameterValue = pdj.args
-        val parameterMap = ((pdj.signature as MethodSignature).parameterNames zip parameterValue).toMap()
-        val parameters = (pdj.signature as MethodSignature).method.kotlinFunction?.parameters
-
-        parameters?.forEach { kParameter ->
-            // 大多数调用失败都是参数缺失，所以进行null判断
-            if (kParameter.name != null &&
-                !kParameter.type.isMarkedNullable &&
-                parameterMap.containsKey(kParameter.name) &&
-                parameterMap[kParameter.name] == null) {
-                throw CustomException(Response.Status.BAD_REQUEST, "参数校验失败: 请求参数${kParameter.name} 不能为空")
-            }
-        }
 
         /*执行目标方法*/
         val res = try {
             pdj.proceed()
         } catch (error: RemoteServiceException) {
-            logger.error(
-                "openapi trigger remote service error,error code:${error.errorCode}| error info:${error.message}",
-                error
+            if (error.httpStatus >= HTTP_500) {
+                logger.error(
+                    "openapi trigger remote service error,error code:${error.errorCode}| error info:${error.message}",
+                    error
+                )
+            }
+            logger.info(
+                "openapi trigger remote service failed,error code:${error.errorCode}| error info:${error.message}"
             )
             throw error
         } catch (ignored: ParamBlankException) {
             logger.info("openapi check parameters error| error info:${ignored.message}")
             throw CustomException(Response.Status.BAD_REQUEST, "参数校验失败: ${ignored.message}")
+        } catch (error: NullPointerException) {
+            // 如果在openapi层报NPE，一般是必填参数用户未传
+            val parameterValue = pdj.args
+            val parameterMap = ((pdj.signature as MethodSignature).parameterNames zip parameterValue).toMap()
+            val parameters = (pdj.signature as MethodSignature).method.kotlinFunction?.parameters
+
+            parameters?.forEach { kParameter ->
+                // 大多数调用失败都是参数缺失，所以进行null判断
+                if (kParameter.name != null && // name为空的情况不需要判断
+                    !kParameter.type.isMarkedNullable && // 判断字段是否可空
+                    parameterMap.containsKey(kParameter.name) && // 检查参数集合中是否存在对应key，避免直接拿取到null
+                    parameterMap[kParameter.name] == null // 判断用户传参是否为为null
+                ) {
+                    throw CustomException(Response.Status.BAD_REQUEST, "参数校验失败: 请求参数${kParameter.name} 不能为空")
+                }
+            }
+            throw error
         } finally {
             logger.info("$methodName 方法耗时${System.currentTimeMillis() - begin}毫秒")
         }
