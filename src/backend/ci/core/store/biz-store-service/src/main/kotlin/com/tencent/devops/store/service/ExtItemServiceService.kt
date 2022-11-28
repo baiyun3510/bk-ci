@@ -72,6 +72,7 @@ class ExtItemServiceService @Autowired constructor(
                 page = null,
                 pageSize = null
             )
+            logger.info("getExtItemServiceList itemId:$itemId|serviceRecords:$serviceRecords")
             val serviceList = mutableListOf<ExtServiceVO>()
             val tExtensionServiceItemRel = TExtensionServiceItemRel.T_EXTENSION_SERVICE_ITEM_REL
             val tExtensionService = TExtensionService.T_EXTENSION_SERVICE

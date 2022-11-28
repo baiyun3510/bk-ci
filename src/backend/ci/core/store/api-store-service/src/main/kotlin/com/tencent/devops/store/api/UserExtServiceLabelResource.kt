@@ -39,13 +39,13 @@ import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
-@Api(tags = ["USER_EXT_SERVICE_LABEL"], description = "流水线-插件标签")
+@Api(tags = ["USER_EXT_SERVICE_LABEL"], description = "流水线-微扩展标签")
 @Path("/user/market/service/label")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 interface UserExtServiceLabelResource {
 
-    @ApiOperation("获取所有插件标签信息")
+    @ApiOperation("获取所有微扩展标签信息")
     @GET
     @Path("/labels")
     fun getAllServiceLabels(): Result<List<Label>?>
