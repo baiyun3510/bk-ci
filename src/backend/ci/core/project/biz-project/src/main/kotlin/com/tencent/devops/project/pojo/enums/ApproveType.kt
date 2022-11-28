@@ -25,26 +25,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.project.resources
+package com.tencent.devops.project.pojo.enums
 
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.project.api.callback.ProjectCallBackResource
-import com.tencent.devops.project.api.pojo.ItsmCallBackInfo
-import com.tencent.devops.project.pojo.Result
-import com.tencent.devops.project.service.ProjectCallBackSevice
-import org.springframework.beans.factory.annotation.Autowired
+enum class ApproveType(val type: Int) {
+    // 创建审批
+    CREATE_APPROVE(0),
 
-@RestResource
-class ProjectCallBackResourceImpl @Autowired constructor(
-    private val projectCallBackSevice: ProjectCallBackSevice
-) : ProjectCallBackResource {
-    override fun handleItsmProjectCreateCallBack(itsmCallBackInfo: ItsmCallBackInfo): Result<Boolean> {
-        projectCallBackSevice.createProjectCallBack(itsmCallBackInfo)
-        return Result(true)
-    }
+    // 仅权限保密字段修改发起的审批
+    AUTH_SECRECY_APPROVE(1),
 
-    override fun handleItsmProjectUpdateCallBack(itsmCallBackInfo: ItsmCallBackInfo): Result<Boolean> {
-        projectCallBackSevice.updateProjectCallBack(itsmCallBackInfo)
-        return Result(true)
-    }
+    // 仅项目可授权人员范围修改发起的审批
+    SUBJECT_SCOPES_APPROVE(2),
+
+    // 两者均被修改发起的审批
+    ALL_CHANGE_APPROVE(3),
 }

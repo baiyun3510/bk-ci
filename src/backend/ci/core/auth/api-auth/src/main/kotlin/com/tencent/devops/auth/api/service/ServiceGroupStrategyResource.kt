@@ -25,26 +25,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.project.resources
+package com.tencent.devops.auth.api.service
 
-import com.tencent.devops.common.web.RestResource
-import com.tencent.devops.project.api.callback.ProjectCallBackResource
-import com.tencent.devops.project.api.pojo.ItsmCallBackInfo
-import com.tencent.devops.project.pojo.Result
-import com.tencent.devops.project.service.ProjectCallBackSevice
-import org.springframework.beans.factory.annotation.Autowired
+import com.tencent.devops.auth.pojo.StrategyEntity
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import javax.ws.rs.Consumes
+import javax.ws.rs.GET
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
 
-@RestResource
-class ProjectCallBackResourceImpl @Autowired constructor(
-    private val projectCallBackSevice: ProjectCallBackSevice
-) : ProjectCallBackResource {
-    override fun handleItsmProjectCreateCallBack(itsmCallBackInfo: ItsmCallBackInfo): Result<Boolean> {
-        projectCallBackSevice.createProjectCallBack(itsmCallBackInfo)
-        return Result(true)
-    }
-
-    override fun handleItsmProjectUpdateCallBack(itsmCallBackInfo: ItsmCallBackInfo): Result<Boolean> {
-        projectCallBackSevice.updateProjectCallBack(itsmCallBackInfo)
-        return Result(true)
-    }
+@Api(tags = ["AUTH_GROUP_STRATEGY"], description = "权限-用户-策略")
+@Path("/service/auth/strategy")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+interface ServiceGroupStrategyResource {
+    @GET
+    @Path("/getGroupStrategy")
+    @ApiOperation("获取组策略")
+    fun getGroupStrategy(): List<StrategyEntity>
 }

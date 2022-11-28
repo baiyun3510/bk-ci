@@ -35,6 +35,7 @@ import com.tencent.bk.sdk.iam.service.impl.GrantServiceImpl
 import com.tencent.bk.sdk.iam.service.impl.ManagerServiceImpl
 import com.tencent.bk.sdk.iam.service.impl.PolicyServiceImpl
 import com.tencent.bk.sdk.iam.service.impl.TokenServiceImpl
+import com.tencent.bk.sdk.iam.service.v2.impl.V2ManagerServiceImpl
 import com.tencent.devops.auth.service.AuthDeptServiceImpl
 import com.tencent.devops.common.redis.RedisOperation
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
@@ -65,6 +66,11 @@ class TxAuthConfiguration {
     fun iamManagerService(
         iamConfiguration: IamConfiguration
     ) = ManagerServiceImpl(managerHttpClientService(iamConfiguration), iamConfiguration)
+
+    @Bean
+    fun iamV2ManagerService(
+        iamConfiguration: IamConfiguration
+    ) = V2ManagerServiceImpl(managerHttpClientService(iamConfiguration), iamConfiguration)
 
     @Bean
     fun tokenService(
