@@ -166,6 +166,7 @@ class KubernetesRemoteDevClient @Autowired constructor(
 
         val request = clientCommon.baseRequest(userId, url).get().build()
 
+        logger.info("=======>>>>> ${request.url().url().path}  ${request.url().url().host}")
         try {
             OkhttpUtils.doHttp(request).use { response ->
                 val responseContent = response.body()!!.string()
