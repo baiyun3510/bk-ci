@@ -43,11 +43,14 @@ import org.jooq.Record
 import org.jooq.Record10
 import org.jooq.Result
 import org.jooq.SelectOnConditionStep
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 
 @Repository
 class ExtItemServiceDao {
+
+    private val logger = LoggerFactory.getLogger(ExtItemServiceDao::class.java)
 
     fun updateItemService(dslContext: DSLContext, itemId: String, bkServiceId: String, userId: String) {
         with(TExtensionServiceItemRel.T_EXTENSION_SERVICE_ITEM_REL) {
@@ -118,6 +121,9 @@ class ExtItemServiceDao {
             conditions.add(tes.SERVICE_STATUS.eq(ExtServiceStatusEnum.RELEASED.status.toByte()))
             baseStep.where(conditions).asTable("t")
         }
+        logger.debug("getExtItemServiceList baseStep:$baseStep")
+        logger.debug("getExtItemServiceList conditions:$conditions")
+        logger.debug("getExtItemServiceList t:$t")
         val sql = dslContext.select().from(t).orderBy(t.field("WEIGHT")!!.desc(), t.field("SERVICE_CODE")!!.asc())
         return if (null != page && null != pageSize) {
             sql.limit((page - 1) * pageSize, pageSize).fetch()
