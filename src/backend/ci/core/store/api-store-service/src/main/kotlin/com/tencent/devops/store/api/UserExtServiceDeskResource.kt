@@ -144,7 +144,7 @@ interface UserExtServiceDeskResource {
         serviceCode: String
     ): Result<Boolean>
 
-    @ApiOperation("根据插件版本ID获取插件详情")
+    @ApiOperation("根据微扩展版本ID获取微扩展详情")
     @GET
     @Path("/{serviceId}")
     fun getServiceDetails(
