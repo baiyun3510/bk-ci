@@ -26,8 +26,11 @@
  */
 package com.tencent.devops.openapi.aspect
 
+import com.tencent.devops.common.api.constant.HTTP_500
 import com.tencent.devops.common.api.exception.CustomException
+import com.tencent.devops.common.api.exception.ParamBlankException
 import com.tencent.devops.common.api.exception.PermissionForbiddenException
+import com.tencent.devops.common.api.exception.RemoteServiceException
 import com.tencent.devops.common.client.consul.ConsulConstants.PROJECT_TAG_REDIS_KEY
 import com.tencent.devops.common.redis.RedisOperation
 import com.tencent.devops.common.service.BkTag
@@ -35,6 +38,8 @@ import com.tencent.devops.openapi.IgnoreProjectId
 import com.tencent.devops.openapi.service.op.AppCodeService
 import com.tencent.devops.openapi.utils.ApiGatewayUtil
 import org.aspectj.lang.JoinPoint
+import org.aspectj.lang.ProceedingJoinPoint
+import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.reflect.MethodSignature
@@ -42,6 +47,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.ws.rs.core.Response
+import kotlin.reflect.jvm.kotlinFunction
 
 @Aspect
 @Component
