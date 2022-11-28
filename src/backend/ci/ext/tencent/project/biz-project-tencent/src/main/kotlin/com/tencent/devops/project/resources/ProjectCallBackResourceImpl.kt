@@ -31,21 +31,20 @@ import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.project.api.callback.ProjectCallBackResource
 import com.tencent.devops.project.api.pojo.ItsmCallBackInfo
 import com.tencent.devops.project.pojo.Result
-import org.slf4j.LoggerFactory
+import com.tencent.devops.project.service.ProjectCallBackSevice
+import org.springframework.beans.factory.annotation.Autowired
 
 @RestResource
-class ProjectCallBackResourceImpl : ProjectCallBackResource {
+class ProjectCallBackResourceImpl @Autowired constructor(
+    private val projectCallBackSevice: ProjectCallBackSevice
+) : ProjectCallBackResource {
     override fun handleItsmProjectCreateCallBack(itsmCallBackInfo: ItsmCallBackInfo): Result<Boolean> {
-        logger.info("handleItsmProjectCreateCallBack : $itsmCallBackInfo")
+        projectCallBackSevice.createProjectCallBack(itsmCallBackInfo)
         return Result(true)
     }
 
     override fun handleItsmProjectUpdateCallBack(itsmCallBackInfo: ItsmCallBackInfo): Result<Boolean> {
-        logger.info("handleItsmProjectUpdateCallBack : $itsmCallBackInfo")
+        projectCallBackSevice.updateProjectCallBack(itsmCallBackInfo)
         return Result(true)
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(ProjectCallBackResourceImpl::class.java)
     }
 }

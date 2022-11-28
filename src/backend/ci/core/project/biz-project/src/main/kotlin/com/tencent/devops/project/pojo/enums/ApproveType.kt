@@ -25,26 +25,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.auth.api.service
+package com.tencent.devops.project.pojo.enums
 
-import com.tencent.devops.auth.pojo.StrategyEntity
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
-import javax.ws.rs.Consumes
-import javax.ws.rs.GET
-import javax.ws.rs.Path
-import javax.ws.rs.Produces
-import javax.ws.rs.QueryParam
-import javax.ws.rs.core.MediaType
+enum class ApproveType(val type: Int) {
+    // 创建审批
+    CREATE_APPROVE(0),
 
-@Api(tags = ["AUTH_GROUP_STRATEGY"], description = "权限-用户-策略")
-@Path("/service/auth/strategy")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
-interface ServiceGroupStrategyResource {
-    @GET
-    @Path("/getGroupStrategy")
-    @ApiOperation("获取组策略")
-    fun getGroupStrategy(): List<StrategyEntity>
+    // 仅权限保密字段修改发起的审批
+    AUTH_SECRECY_APPROVE(1),
+
+    // 仅项目可授权人员范围修改发起的审批
+    SUBJECT_SCOPES_APPROVE(2),
+
+    // 两者均被修改发起的审批
+    ALL_CHANGE_APPROVE(3),
 }

@@ -246,7 +246,7 @@ class ProjectDao {
                     paasProject.remark,
                     paasProject.updated_at?.time,
                     paasProject.use_bk,
-                    ApproveStatus.APPROVED.status,
+                    ApproveStatus.CREATE_APPROVED.status,
                     true
                 )
                 .execute()
@@ -310,7 +310,7 @@ class ProjectDao {
                 userId,
                 LocalDateTime.now(),
                 projectCreateInfo.projectType,
-                ApproveStatus.APPROVED.status,
+                ApproveStatus.CREATE_APPROVED.status,
                 logoAddress,
                 userDeptDetail.bgName,
                 userDeptDetail.deptName,
@@ -625,6 +625,35 @@ class ProjectDao {
                 .from(this)
                 .where(ROUTER_TAG.eq(routeTag))
                 .fetch(ENGLISH_NAME, String::class.java)
+        }
+    }
+
+    fun updateProjectStatusByEnglishName(
+        dslContext: DSLContext,
+        projectCode: String,
+        statusEnum: ApproveStatus
+    ): Int {
+        with(TProject.T_PROJECT) {
+            return dslContext.update(this)
+                .set(APPROVAL_STATUS, statusEnum.status).where(ENGLISH_NAME.eq(projectCode))
+                .execute()
+        }
+    }
+
+    fun updateProjectByEnglishName(
+        dslContext: DSLContext,
+        subjectScopesStr: String,
+        authSecrecy: Boolean,
+        projectCode: String,
+        statusEnum: ApproveStatus
+    ): Int {
+        with(TProject.T_PROJECT) {
+            return dslContext.update(this)
+                .set(SUBJECTSCOPES, subjectScopesStr)
+                .set(IS_AUTH_SECRECY, authSecrecy)
+                .set(APPROVAL_STATUS, statusEnum.status)
+                .where(ENGLISH_NAME.eq(projectCode))
+                .execute()
         }
     }
 }
