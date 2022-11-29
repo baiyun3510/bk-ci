@@ -50,8 +50,6 @@ import java.time.LocalDateTime
 @Repository
 class ExtItemServiceDao {
 
-    private val logger = LoggerFactory.getLogger(ExtItemServiceDao::class.java)
-
     fun updateItemService(dslContext: DSLContext, itemId: String, bkServiceId: String, userId: String) {
         with(TExtensionServiceItemRel.T_EXTENSION_SERVICE_ITEM_REL) {
             val baseStep = dslContext.update(this)
@@ -121,10 +119,7 @@ class ExtItemServiceDao {
             conditions.add(tes.SERVICE_STATUS.eq(ExtServiceStatusEnum.RELEASED.status.toByte()))
             baseStep.where(conditions).asTable("t")
         }
-        logger.debug("getExtItemServiceList baseStep:$baseStep")
-        logger.debug("getExtItemServiceList conditions:$conditions")
-        logger.debug("getExtItemServiceList t:$t")
-        val sql = dslContext.select().from(t).orderBy(t.field("WEIGHT")!!.desc(), t.field("SERVICE_CODE")!!.asc())
+        val sql = dslContext.select().from(t).orderBy(t.field(KEY_WEIGHT)!!.desc(), t.field(KEY_SERVICE_CODE)!!.asc())
         return if (null != page && null != pageSize) {
             sql.limit((page - 1) * pageSize, pageSize).fetch()
         } else {
@@ -228,14 +223,14 @@ class ExtItemServiceDao {
     ): SelectOnConditionStep<Record10<String, String, String, String, String, String?, String, String?, Int, Boolean?>> {
         return dslContext.select(
             tes.ID,
-            tes.SERVICE_CODE,
+            tes.SERVICE_CODE.`as`(KEY_SERVICE_CODE),
             tes.SERVICE_NAME,
             tes.LOGO_URL,
             tes.VERSION,
             tes.SUMMARY,
             tes.PUBLISHER,
             tesir.PROPS,
-            tesf.WEIGHT,
+            tesf.WEIGHT.`as`(KEY_WEIGHT),
             tesf.KILL_GRAY_APP_FLAG
         )
             .from(tes)

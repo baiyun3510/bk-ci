@@ -223,8 +223,7 @@ class ExtServiceSearchService @Autowired constructor(
             page = page,
             pageSize = pageSize
         ) ?: return SearchExtServiceVO(0, page, pageSize, results)
-//        val serviceCodeList = services.map { it[KEY_SERVICE_CODE] as String }.toList()
-        val serviceCodeList = services.map { it["SERVICE_CODE"] as String }.toList()
+        val serviceCodeList = services.map { it[KEY_SERVICE_CODE] as String }.toList()
         // 获取可见范围
         val storeType = StoreTypeEnum.SERVICE
         val serviceVisibleData = storeCommonService.generateStoreVisibleData(serviceCodeList, storeType)
