@@ -49,7 +49,7 @@ import javax.ws.rs.core.MediaType
 @Consumes(MediaType.APPLICATION_JSON)
 interface UserExtServiceCommentReplyResource {
 
-    @ApiOperation("获取插件相应评论的回复列表")
+    @ApiOperation("获取微扩展相应评论的回复列表")
     @GET
     @Path("/comments/{commentId}/replys")
     fun getStoreCommentReplysByCommentId(
@@ -58,7 +58,7 @@ interface UserExtServiceCommentReplyResource {
         commentId: String
     ): Result<List<StoreCommentReplyInfo>?>
 
-    @ApiOperation("插件评论回复")
+    @ApiOperation("微扩展评论回复")
     @POST
     @Path("/comments/{commentId}/reply")
     fun addStoreCommentReply(

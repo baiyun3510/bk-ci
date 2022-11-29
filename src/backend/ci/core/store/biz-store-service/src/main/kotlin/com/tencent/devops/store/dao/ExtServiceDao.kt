@@ -736,7 +736,7 @@ class ExtServiceDao {
             tExtensionService.ID,
             tExtensionService.SERVICE_NAME,
             tExtensionService.CLASSIFY_ID,
-            tExtensionService.SERVICE_CODE,
+            tExtensionService.SERVICE_CODE.`as`(KEY_SERVICE_CODE),
             tExtensionService.LOGO_URL,
             tExtensionService.PUBLISHER,
             tExtensionService.SUMMARY,
