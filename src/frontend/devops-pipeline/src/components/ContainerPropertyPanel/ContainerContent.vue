@@ -296,6 +296,8 @@
                 xcodeVersionList: [],
                 systemVersionList: [],
                 isLoadingImage: false,
+                isLoadingWin: false,
+                windowsVersionList: [],
                 isShowPerformance: false
             }
         },

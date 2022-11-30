@@ -457,6 +457,7 @@ class PipelineViewGroupService @Autowired constructor(
         return PipelineViewPreview(addedPipelineInfos, removedPipelineInfos, reservePipelineInfos)
     }
 
+    @SuppressWarnings("LongMethod", "ComplexMethod")
     fun dict(userId: String, projectId: String): PipelineViewDict {
         // 流水线信息
         val pipelineInfoMap = allPipelineInfos(projectId, true).associateBy { it.pipelineId }
@@ -617,11 +618,17 @@ class PipelineViewGroupService @Autowired constructor(
         val isProjectManager = checkPermission(userId, projectId)
         if (isProjectManager && !view.isProject && view.createUser != userId) {
             logger.warn("bulkRemove , $userId is ProjectManager , but can`t remove other view")
-            return false
+            throw ErrorCodeException(
+                errorCode = ProcessMessageCode.ERROR_VIEW_GROUP_NO_PERMISSION,
+                defaultMessage = "user:$userId has no permission to edit view group, project:$projectId"
+            )
         }
         if (!isProjectManager && (view.isProject || view.createUser != userId)) {
             logger.warn("bulkRemove , $userId isn`t ProjectManager , just can remove self view")
-            return false
+            throw ErrorCodeException(
+                errorCode = ProcessMessageCode.ERROR_VIEW_GROUP_NO_PERMISSION,
+                defaultMessage = "user:$userId has no permission to edit view group, project:$projectId"
+            )
         }
         pipelineViewGroupDao.batchRemove(dslContext, projectId, viewId, bulkRemove.pipelineIds)
         return true

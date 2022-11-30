@@ -43,52 +43,52 @@
                             ></icon>
                         </span>
                     </span>
-                    <span class="title-item">
-                        <span v-if="buildDetail.objectKind === 'schedule'">{{$t('pipeline.system')}}</span>
-                        <template v-else>
-                            <img :src="`http://dayu.oa.com/avatars/${buildDetail.userId}/profile.jpg`">
-                            <template v-if="buildDetail.objectKind === 'openApi'">
-                                {{$t('pipeline.openapi')}}（{{ buildDetail.userId }}）
+                        <span class="title-item">
+                            <span v-if="buildDetail.objectKind === 'schedule'">{{$t('pipeline.system')}}</span>
+                            <template v-else>
+                                <img :src="`https://dayu.woa.com/avatars/${buildDetail.userId}/profile.jpg`">
+                                <template v-if="buildDetail.objectKind === 'openApi'">
+                                    {{$t('pipeline.openapi')}}（{{ buildDetail.userId }}）
+                                </template>
+                                <template v-else>
+                                    {{ buildDetail.userId }}
+                                </template>
+                            </template>
+                        </span>
+                    </span>
+                    <span class="info-data">
+                        <span class="info-item text-ellipsis">
+                            <template v-if="buildDetail.operationKind === 'delete' && buildDetail.deleteTag">
+                                <icon name="tag" size="14"></icon>
+                                {{ buildDetail.commitId }}
                             </template>
                             <template v-else>
-                                {{ buildDetail.userId }}
+                                <icon name="source-branch" size="14"></icon>
+                                {{ buildDetail.branch }}
                             </template>
-                        </template>
+                        </span>
+                        <span class="info-item text-ellipsis"><icon name="clock" size="14"></icon>{{ buildDetail.executeTime | spendTimeFilter }}</span>
+                        <span class="info-item text-ellipsis">
+                            <icon name="message" size="14"></icon>
+                            {{ buildDetail.buildHistoryRemark || '--' }}
+                            <bk-popconfirm trigger="click" @confirm="confirmUpdateRemark" placement="bottom" :confirm-text="$t('confirm')" :cancel-text="$t('cancel')">
+                                <div slot="content">
+                                    <h3 class="mb10">{{$t('pipeline.editNote')}}</h3>
+                                    <bk-input type="textarea" v-model="remark" :placeholder="$t('pipeline.notePlaceholder')" class="mb10 w200"></bk-input>
+                                </div>
+                                <bk-icon type="edit2" style="font-size: 18px;cursor:pointer" />
+                            </bk-popconfirm>
+                        </span>
                     </span>
-                </span>
-                <span class="info-data">
-                    <span class="info-item text-ellipsis">
-                        <template v-if="buildDetail.operationKind === 'delete' && buildDetail.deleteTag">
-                            <icon name="tag" size="14"></icon>
-                            {{ buildDetail.commitId }}
-                        </template>
-                        <template v-else>
-                            <icon name="source-branch" size="14"></icon>
-                            {{ buildDetail.branch }}
-                        </template>
+                    <span class="info-data">
+                        <span :class="['info-item', 'text-ellipsis', { 'text-link': buildDetail.jumpUrl }]" @click="goToLink(buildDetail.jumpUrl)">
+                            <icon name="commit" size="14" v-if="buildDetail.objectKind === 'schedule'"></icon>
+                            <icon :name="buildTypeIcon" size="14" v-else></icon>
+                            {{ buildDetail.buildSource || '--' }}
+                        </span>
+                        <span class="info-item text-ellipsis"><icon name="date" size="14"></icon>{{ buildDetail.startTime | timeFilter }}</span>
                     </span>
-                    <span class="info-item text-ellipsis"><icon name="clock" size="14"></icon>{{ buildDetail.executeTime | spendTimeFilter }}</span>
-                    <span class="info-item text-ellipsis">
-                        <icon name="message" size="14"></icon>
-                        {{ buildDetail.buildHistoryRemark || '--' }}
-                        <bk-popconfirm trigger="click" @confirm="confirmUpdateRemark" placement="bottom" :confirm-text="$t('confirm')" :cancel-text="$t('cancel')">
-                            <div slot="content">
-                                <h3 class="mb10">{{$t('pipeline.editNote')}}</h3>
-                                <bk-input type="textarea" v-model="remark" :placeholder="$t('pipeline.notePlaceholder')" class="mb10 w200"></bk-input>
-                            </div>
-                            <bk-icon type="edit2" style="font-size: 18px;cursor:pointer" />
-                        </bk-popconfirm>
-                    </span>
-                </span>
-                <span class="info-data">
-                    <span :class="['info-item', 'text-ellipsis', { 'text-link': buildDetail.jumpUrl }]" @click="goToLink(buildDetail.jumpUrl)">
-                        <icon name="commit" size="14" v-if="buildDetail.objectKind === 'schedule'"></icon>
-                        <icon :name="buildTypeIcon" size="14" v-else></icon>
-                        {{ buildDetail.buildSource || '--' }}
-                    </span>
-                    <span class="info-item text-ellipsis"><icon name="date" size="14"></icon>{{ buildDetail.startTime | timeFilter }}</span>
-                </span>
-            </p>
+                </p>
 
                 <div v-bk-tooltips="computedOptToolTip" class="nav-button" v-if="['RUNNING', 'PREPARE_ENV', 'QUEUE', 'LOOP_WAITING', 'CALL_WAITING', 'REVIEWING', 'TRIGGER_REVIEWING'].includes(buildDetail.status)">
                     <bk-button class="detail-button" @click="cancleBuild" :loading="isOperating" :disabled="!curPipeline.enabled || !permission">{{$t('pipeline.cancelBuild')}}</bk-button>
