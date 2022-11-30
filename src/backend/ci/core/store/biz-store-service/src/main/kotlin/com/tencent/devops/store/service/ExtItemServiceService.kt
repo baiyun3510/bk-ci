@@ -35,6 +35,7 @@ import com.tencent.devops.model.store.tables.TExtensionServiceItemRel
 import com.tencent.devops.store.config.ExtServiceIngressConfig
 import com.tencent.devops.store.dao.ExtItemServiceDao
 import com.tencent.devops.store.dao.common.StoreProjectRelDao
+import com.tencent.devops.store.pojo.common.KEY_SERVICE_CODE
 import com.tencent.devops.store.pojo.common.enums.StoreTypeEnum
 import com.tencent.devops.store.pojo.vo.ExtItemServiceVO
 import com.tencent.devops.store.pojo.vo.ExtServiceVO
@@ -79,7 +80,7 @@ class ExtItemServiceService @Autowired constructor(
             val tExtensionServiceFeature = TExtensionServiceFeature.T_EXTENSION_SERVICE_FEATURE
             serviceRecords?.forEach { service ->
                 val props = service[tExtensionServiceItemRel.PROPS]
-                val serviceCode = service[tExtensionService.SERVICE_CODE]
+                val serviceCode = service[KEY_SERVICE_CODE] as String
                 val killGrayAppFlag = service[tExtensionServiceFeature.KILL_GRAY_APP_FLAG]
                 // 判断用户的项目是否是调试项目
                 val testProjectFlag = storeProjectRelDao.isTestProjectCode(
