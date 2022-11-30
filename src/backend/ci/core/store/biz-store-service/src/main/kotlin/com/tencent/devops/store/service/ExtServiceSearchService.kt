@@ -243,7 +243,7 @@ class ExtServiceSearchService @Autowired constructor(
         val tExtensionService = TExtensionService.T_EXTENSION_SERVICE
         val tExtensionServiceFeature = TExtensionServiceFeature.T_EXTENSION_SERVICE_FEATURE
         services.forEach {
-            val serviceCode = it[tExtensionService.SERVICE_CODE] as String
+            val serviceCode = it[KEY_SERVICE_CODE] as String
             val visibleList = serviceVisibleData?.get(serviceCode)
             val statistic = statisticData[serviceCode]
             val publicFlag = it[tExtensionServiceFeature.PUBLIC_FLAG] as Boolean
