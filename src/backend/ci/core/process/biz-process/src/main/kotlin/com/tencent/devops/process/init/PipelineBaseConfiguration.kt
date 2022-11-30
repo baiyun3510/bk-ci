@@ -75,8 +75,7 @@ class PipelineBaseConfiguration {
         pipelineAtomStatisticsService = pipelineAtomStatisticsService,
         callBackControl = callBackControl,
         agentPipelineRefService = agentPipelineRefService,
-        pipelineEventDispatcher = pipelineEventDispatcher,
-        pipelineViewGroupService = pipelineViewGroupService
+        pipelineEventDispatcher = pipelineEventDispatcher
     )
 
     @Bean
@@ -96,8 +95,7 @@ class PipelineBaseConfiguration {
         pipelineAtomStatisticsService = pipelineAtomStatisticsService,
         callBackControl = callBackControl,
         agentPipelineRefService = agentPipelineRefService,
-        pipelineEventDispatcher = pipelineEventDispatcher,
-        pipelineViewGroupService = pipelineViewGroupService
+        pipelineEventDispatcher = pipelineEventDispatcher
     )
 
     @Bean
