@@ -55,11 +55,10 @@ import org.springframework.stereotype.Service
 @Service
 class ProjectCallBackSevice @Autowired constructor(
     private val dslContext: DSLContext,
-    // todo
     private val iamManagerService: V2ManagerService,
     private val projectDao: ProjectDao,
     private val projectApprovalCallbackDao: ProjectApprovalCallbackDao,
-    private val iamV5Service: IamRbacService,
+    private val iamRbacService: IamRbacService,
     private val objectMapper: ObjectMapper
 ) {
     @Value("\${esb.code:#{null}}")
@@ -70,6 +69,7 @@ class ProjectCallBackSevice @Autowired constructor(
 
     @Value("\${itsm.verify.token.url:#{null}}")
     private val verifyItsmTokenUrl: String = ""
+
     fun createProjectCallBack(itsmCallBackInfo: ItsmCallBackInfo) {
         val sn = itsmCallBackInfo.sn
         // 校验token
@@ -84,9 +84,14 @@ class ProjectCallBackSevice @Autowired constructor(
                 )
             )
         val englishName = callBackInfo.englishName
-        val projectInfo = projectDao.getByEnglishName(dslContext, englishName)
-        if (projectInfo == null) {
-            logger.warn("The project has been canceled create! | englishName = $englishName")
+        val projectInfo = projectDao.getByEnglishName(dslContext, englishName) ?: throw OperationException(
+            MessageCodeUtil.getCodeLanMessage(
+                messageCode = ProjectMessageCode.PROJECT_NOT_EXIST,
+                defaultMessage = "The project does not exist! | englishName = $englishName"
+            )
+        )
+        if (projectInfo.approvalStatus == ApproveStatus.CANCEL_CREATE.status) {
+            logger.info("This project has been canceled create! englishName = $englishName")
             return
         }
         val callBackId = callBackInfo.callbackId
@@ -105,7 +110,7 @@ class ProjectCallBackSevice @Autowired constructor(
                     iamManagerService.handleCallbackApplication(callBackId, callbackApplicationDTO)
                 gradeManagerId = iamCallbackApplication.roleId
                 // 创建默认组
-                iamV5Service.batchCreateDefaultGroups(
+                iamRbacService.batchCreateDefaultGroups(
                     userId = callBackInfo.applicant,
                     gradeManagerId = gradeManagerId,
                     projectCode = englishName,
