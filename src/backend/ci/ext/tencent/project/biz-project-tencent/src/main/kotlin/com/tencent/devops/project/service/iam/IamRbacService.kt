@@ -109,6 +109,12 @@ class IamRbacService @Autowired constructor(
             projectCode = projectCode,
             defaultGroupType = DefaultGroupType.PM
         )
+        createDefaultGroup(
+            userId = userId,
+            gradeManagerId = gradeManagerId,
+            projectCode = projectCode,
+            defaultGroupType = DefaultGroupType.VIEWER
+        )
     }
     private fun createManagerGroup(userId: String, gradeManagerId: Int, projectCode: String, projectName: String) {
         val defaultGroup = ManagerRoleGroup(
