@@ -179,7 +179,7 @@ object KubernetesApiUtils {
                 .withName(secretName)
                 .withNamespace(namespaceName)
                 .endMetadata()
-                .withData(secretData)
+                .addToData(secretData)
                 .withType("kubernetes.io/dockerconfigjson")
             secret = kubernetesClient.secrets().inNamespace(namespaceName).createOrReplace(secretBuilder.build())
         }
