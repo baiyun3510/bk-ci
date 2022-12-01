@@ -144,11 +144,8 @@ object ShellUtil {
         if (commonEnv.isNotEmpty()) {
             commonEnv.forEach { (name, value) ->
                 // --bug=75509999 Agent环境变量中替换掉破坏性字符
-                // 过滤掉中文汉字和中文字符
-                if (!isContainChinese(name)){
-                    val clean = value.replace(specialCharToReplace, "")
-                    command.append("export $name='$clean'\n")
-                }
+                val clean = value.replace(specialCharToReplace, "")
+                command.append("export $name='$clean'\n")
             }
         }
         if (buildEnvs.isNotEmpty()) {
@@ -189,18 +186,10 @@ object ShellUtil {
             command.append("set +e\n")
         }
 
-        command.append(
-            setEnv.replace(
-                oldValue = "##resultFile##",
-                newValue = "\"${File(dir, ScriptEnvUtils.getEnvFile(buildId)).absolutePath}\""
-            )
-        )
-        command.append(
-            setGateValue.replace(
-                oldValue = "##gateValueFile##",
-                newValue = "\"${File(dir, ScriptEnvUtils.getQualityGatewayEnvFile()).absolutePath}\""
-            )
-        )
+        command.append(setEnv.replace(oldValue = "##resultFile##",
+                                      newValue = "\"${File(dir, ScriptEnvUtils.getEnvFile(buildId)).absolutePath}\""))
+        command.append(setGateValue.replace(oldValue = "##gateValueFile##",
+                                            newValue = "\"${File(dir, ScriptEnvUtils.getQualityGatewayEnvFile()).absolutePath}\""))
         command.append(". ${userScriptFile.absolutePath}")
         userScriptFile.writeText(script)
         file.writeText(command.toString())
@@ -249,17 +238,6 @@ object ShellUtil {
 
     private fun isContainChinese(str: String): Boolean {
         val pattern = Pattern.compile(chineseRegex)
-        val matcher = pattern.matcher(str)
-        if (matcher.find()) {
-            return true
-        }
-        return false
-    }
-
-    private fun isContainChinese(str: String): Boolean {
-        val pattern = Pattern.compile(
-            "[\u4E00-\u9FA5|\\！|\\，|\\。|\\（|\\）|\\《|\\》|\\“|\\”|\\？|\\：|\\；|\\【|\\】]"
-        )
         val matcher = pattern.matcher(str)
         if (matcher.find()) {
             return true
