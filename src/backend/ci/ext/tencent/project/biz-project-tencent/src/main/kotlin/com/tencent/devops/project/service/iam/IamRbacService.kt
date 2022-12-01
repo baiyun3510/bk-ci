@@ -185,6 +185,7 @@ class IamRbacService @Autowired constructor(
                 DefaultGroupType.TESTER -> addIamGroupAction(roleId, projectCode, DefaultGroupType.TESTER)
                 DefaultGroupType.QC -> addIamGroupAction(roleId, projectCode, DefaultGroupType.QC)
                 DefaultGroupType.PM -> addIamGroupAction(roleId, projectCode, DefaultGroupType.PM)
+                DefaultGroupType.VIEWER -> addIamGroupAction(roleId, projectCode, DefaultGroupType.VIEWER)
             }
         } catch (e: Exception) {
             iamManagerService.deleteRoleGroupV2(roleId)
