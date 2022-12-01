@@ -128,15 +128,15 @@ class DispatchClient @Autowired constructor(
                 .build()
 
 
-            logger.info("Start refresh buildLess status $path")
+            logger.info("Start refresh buildLess status $url")
             OkhttpUtils.doHttp(request).use { response ->
                 val responseContent = response.body()!!.string()
                 if (!response.isSuccessful) {
-                    logger.error("Refresh buildLess status $path fail. $responseContent")
+                    logger.error("Refresh buildLess status $url fail. $responseContent")
                     throw TaskExecuteException(
                         errorCode = ErrorCode.SYSTEM_WORKER_INITIALIZATION_ERROR,
                         errorType = ErrorType.SYSTEM,
-                        errorMsg = "Refresh buildLess status $path fail")
+                        errorMsg = "Refresh buildLess status $url fail")
                 }
                 logger.info("End refreshDockerIpStatus.")
             }
