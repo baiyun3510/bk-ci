@@ -78,6 +78,7 @@ import com.tencent.devops.scm.pojo.GitRepositoryDirItem
 import com.tencent.devops.scm.pojo.GitRepositoryResp
 import com.tencent.devops.scm.utils.code.git.GitUtils
 import com.tencent.devops.ticket.api.ServiceCredentialResource
+import org.apache.commons.lang3.StringUtils
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
@@ -495,7 +496,8 @@ class RepositoryService @Autowired constructor(
                 checkRepositoryToken(projectId, repository)
             }
         }
-
+        //Git项目ID
+        val gitProjectId = getGitProjectId(projectId = projectId, repo = repository, userId = userId)
         val repositoryId = dslContext.transactionResult { configuration ->
             val transactionContext = DSL.using(configuration)
             val repositoryId = when (repository) {
@@ -535,7 +537,8 @@ class RepositoryService @Autowired constructor(
                         projectName = GitUtils.getProjectName(repository.url),
                         userName = repository.userName,
                         credentialId = repository.credentialId,
-                        authType = repository.authType
+                        authType = repository.authType,
+                        gitProjectId = gitProjectId.toString()
                     )
                     repositoryId
                 }
@@ -554,7 +557,8 @@ class RepositoryService @Autowired constructor(
                         projectName = GitUtils.getProjectName(repository.url),
                         userName = repository.userName,
                         credentialId = repository.credentialId,
-                        authType = repository.authType
+                        authType = repository.authType,
+                        gitProjectId = gitProjectId.toString()
                     )
                     repositoryId
                 }
@@ -573,7 +577,8 @@ class RepositoryService @Autowired constructor(
                         projectName = GitUtils.getProjectName(repository.url),
                         userName = repository.userName,
                         privateToken = repository.credentialId,
-                        authType = repository.authType
+                        authType = repository.authType,
+                        gitProjectId = gitProjectId.toString()
                     )
                     repositoryId
                 }
@@ -1746,6 +1751,51 @@ class RepositoryService @Autowired constructor(
             token = token,
             tokenType = finalTokenType
         )
+    }
+
+    private fun getRepositoryType(repo: Repository): Pair<RepoAuthType?, ScmType>? {
+        //获取仓库对应的类型信息
+        return when (repo) {
+            is CodeGitRepository ->
+                Pair(repo.authType, ScmType.CODE_GIT)
+            is CodeTGitRepository ->
+                Pair(repo.authType, ScmType.CODE_TGIT)
+            is CodeGitlabRepository ->
+                Pair(RepoAuthType.HTTP, ScmType.CODE_GITLAB)
+            else ->
+                return null
+        }
+    }
+
+
+    fun getGitProjectId(projectId: String, repo: Repository, userId: String): Int {
+        val pair = DHUtil.initKey()
+        val encoder = Base64.getEncoder()
+        val result = client.get(ServiceCredentialResource::class)
+                .get(projectId, repo.credentialId, encoder.encodeToString(pair.publicKey))
+        if (result.isNotOk() || result.data == null) {
+            throw ErrorCodeException(errorCode = RepositoryMessageCode.GET_TICKET_FAIL)
+        }
+        val credential = result.data!!
+        logger.info("Get the credential($credential)")
+        val list = ArrayList<String>()
+        list.add(decode(credential.v1, credential.publicKey, pair.privateKey))
+        if (!credential.v2.isNullOrEmpty()) {
+            list.add(decode(credential.v2!!, credential.publicKey, pair.privateKey))
+            if (!credential.v3.isNullOrEmpty()) {
+                list.add(decode(credential.v3!!, credential.publicKey, pair.privateKey))
+                if (!credential.v4.isNullOrEmpty()) {
+                    list.add(decode(credential.v4!!, credential.publicKey, pair.privateKey))
+                }
+            }
+        }
+        val type = getRepositoryType(repo) ?: return -1
+        //根据仓库授权类型匹配Token类型
+        val tokenType = if (type.first == RepoAuthType.OAUTH) TokenTypeEnum.OAUTH else TokenTypeEnum.PRIVATE_KEY
+        val token = list[0]
+        val gitProjectInfo = gitService.getGitProjectInfo(id = projectId, token = token, tokenType = tokenType)
+        logger.info("the gitProjectInfo is:$gitProjectInfo")
+        return gitProjectInfo.data?.id ?: -1
     }
 
     companion object {
