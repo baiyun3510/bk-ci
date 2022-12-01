@@ -27,6 +27,7 @@
 
 package com.tencent.devops.buildless.client
 
+import com.tencent.devops.buildless.config.BuildLessConfig
 import com.tencent.devops.buildless.pojo.BuildLessTask
 import com.tencent.devops.buildless.utils.CommonUtils
 import com.tencent.devops.buildless.utils.SystemInfoUtil
@@ -51,10 +52,12 @@ import org.springframework.stereotype.Component
 
 @Component
 class DispatchClient @Autowired constructor(
-    private val client: Client,
+    private val buildLessConfig: BuildLessConfig,
     private val commonConfig: CommonConfig,
     private val bkTag: BkTag
 ) {
+
+
     fun updateContainerId(buildLessTask: BuildLessTask, containerId: String) {
         val path = "/ms/dispatch-docker/api/service/dockerhost/builds/${buildLessTask.buildId}/vmseqs" +
             "/${buildLessTask.vmSeqId}?containerId=$containerId"
@@ -64,7 +67,7 @@ class DispatchClient @Autowired constructor(
             val request = Request
                 .Builder()
                 .url(url)
-                .headers(Headers.of(mapOf(AUTH_HEADER_GATEWAY_TAG to bkTag.getLocalTag())))
+                .headers(Headers.of(mapOf(AUTH_HEADER_GATEWAY_TAG to buildLessConfig.gatewayHeaderTag)))
                 .put(RequestBody.create(
                     MediaType.parse("application/json; charset=utf-8"),
                     "")
@@ -120,7 +123,7 @@ class DispatchClient @Autowired constructor(
             val request = Request
                 .Builder()
                 .url(url)
-                .headers(Headers.of(mapOf(AUTH_HEADER_GATEWAY_TAG to bkTag.getLocalTag())))
+                .headers(Headers.of(mapOf(AUTH_HEADER_GATEWAY_TAG to buildLessConfig.gatewayHeaderTag)))
                 .post(RequestBody.create(
                     MediaType.parse("application/json; charset=utf-8"),
                     JsonUtil.toJson(dockerIpInfoVO))
