@@ -1,0 +1,23 @@
+# 该配置只能定义应用名， 其他配置信息请再devops-config修改
+spring:
+  application:
+    name: BuildLess
+    desc: DevOps BuildLess Service
+    version: 4.0.0
+    packageName: com.tencent.devops.buildless
+  profiles: dev
+  cloud:
+    consul:
+      enabled: false
+      config:
+        enabled: false
+      discovery:
+        tags: local
+        register: false
+        enabled: false
+        heartbeat:
+          enabled: false
+        query-passing: false
+        preferIpAddress: false
+        catalogServicesWatch:
+          enabled: false
