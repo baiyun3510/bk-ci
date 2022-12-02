@@ -78,6 +78,7 @@ import com.tencent.devops.scm.pojo.GitRepositoryDirItem
 import com.tencent.devops.scm.pojo.GitRepositoryResp
 import com.tencent.devops.scm.utils.code.git.GitUtils
 import com.tencent.devops.ticket.api.ServiceCredentialResource
+import org.apache.commons.lang3.StringUtils
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
@@ -477,14 +478,18 @@ class RepositoryService @Autowired constructor(
                 params = arrayOf(repository.getStartPrefix())
             )
         }
-
         if (hasAliasName(projectId, null, repository.aliasName)) {
             throw ErrorCodeException(
                 errorCode = RepositoryMessageCode.REPO_NAME_EXIST,
                 params = arrayOf(repository.aliasName)
             )
         }
-
+        val repositoryType = getRepositoryType(repository)
+        //仓库凭证
+        var token:String = StringUtils.EMPTY
+        if(repositoryType!=null && repositoryType.first == RepoAuthType.OAUTH){
+            token = gitOauthService.getAccessToken(userId)?.accessToken ?: StringUtils.EMPTY
+        }
         if (needToCheckToken(repository)) {
             /**
              * tGit 类型，去除凭据验证
@@ -492,11 +497,11 @@ class RepositoryService @Autowired constructor(
              * 2022/2/10 tgit类型验证凭证，并且验证失败时返回提示信息
              */
             if (repository !is GithubRepository) {
-                checkRepositoryToken(projectId, repository)
+                token = checkRepositoryToken(projectId, repository)
             }
         }
         //Git项目ID
-        val gitProjectId = getGitProjectId(projectId = projectId, repo = repository, userId = userId)
+        val gitProjectId = getGitProjectId(projectId = projectId, repo = repository, token = token)
         val repositoryId = dslContext.transactionResult { configuration ->
             val transactionContext = DSL.using(configuration)
             val repositoryId = when (repository) {
@@ -1384,7 +1389,7 @@ class RepositoryService @Autowired constructor(
         repositoryPermissionService.deleteResource(projectId = projectId, repositoryId = repositoryId)
     }
 
-    private fun checkRepositoryToken(projectId: String, repo: Repository) {
+    private fun checkRepositoryToken(projectId: String, repo: Repository) :String{
         val pair = DHUtil.initKey()
         val encoder = Base64.getEncoder()
         val result = client.get(ServiceCredentialResource::class)
@@ -1392,7 +1397,6 @@ class RepositoryService @Autowired constructor(
         if (result.isNotOk() || result.data == null) {
             throw ErrorCodeException(errorCode = RepositoryMessageCode.GET_TICKET_FAIL)
         }
-
         val credential = result.data!!
         logger.info("Get the credential($credential)")
         val list = ArrayList<String>()
@@ -1407,8 +1411,10 @@ class RepositoryService @Autowired constructor(
                 }
             }
         }
+        var token = list[0]
         val checkResult = when (repo) {
             is CodeSvnRepository -> {
+                token = StringUtils.EMPTY
                 val svnCredential = CredentialUtils.getCredential(repo, list, result.data!!.credentialType)
                 scmService.checkPrivateKeyAndToken(
                     projectName = repo.projectName,
@@ -1424,7 +1430,6 @@ class RepositoryService @Autowired constructor(
             is CodeGitRepository -> {
                 when (repo.authType) {
                     RepoAuthType.SSH -> {
-                        val token = list[0]
                         if (list.size < 2) {
                             throw OperationException(
                                 message = MessageCodeUtil.getCodeLanMessage(RepositoryMessageCode.USER_SECRET_EMPTY)
@@ -1454,7 +1459,6 @@ class RepositoryService @Autowired constructor(
                         )
                     }
                     RepoAuthType.HTTP -> {
-                        val token = list[0]
                         if (list.size < 2) {
                             throw OperationException(
                                 message = MessageCodeUtil.getCodeLanMessage(RepositoryMessageCode.USER_NAME_EMPTY)
@@ -1499,7 +1503,6 @@ class RepositoryService @Autowired constructor(
             is CodeTGitRepository -> {
                 when (repo.authType) {
                     RepoAuthType.SSH -> {
-                        val token = list[0]
                         if (list.size < 2) {
                             throw OperationException(
                                 message = MessageCodeUtil.getCodeLanMessage(RepositoryMessageCode.USER_SECRET_EMPTY)
@@ -1531,7 +1534,6 @@ class RepositoryService @Autowired constructor(
                         )
                     }
                     RepoAuthType.HTTP -> {
-                        val token = list[0]
                         if (list.size < 2) {
                             throw OperationException(
                                 message = MessageCodeUtil.getCodeLanMessage(RepositoryMessageCode.USER_NAME_EMPTY)
@@ -1545,7 +1547,7 @@ class RepositoryService @Autowired constructor(
                         }
                         if (list.size < 3) {
                             logger.info("TGit check type is username+password,don't check, return")
-                            return
+                            return StringUtils.EMPTY
                         }
                         val password = list[2]
                         if (password.isEmpty()) {
@@ -1563,7 +1565,6 @@ class RepositoryService @Autowired constructor(
                         )
                     }
                     RepoAuthType.HTTPS -> {
-                        val token = list[0]
                         if (list.size < 2) {
                             throw OperationException(
                                 message = MessageCodeUtil.getCodeLanMessage(RepositoryMessageCode.USER_NAME_EMPTY)
@@ -1577,7 +1578,7 @@ class RepositoryService @Autowired constructor(
                         }
                         if (list.size < 3) {
                             logger.info("TGit check type is username+password,don't check, return")
-                            return
+                            return StringUtils.EMPTY
                         }
                         val password = list[2]
                         if (password.isEmpty()) {
@@ -1605,7 +1606,6 @@ class RepositoryService @Autowired constructor(
             is CodeGitlabRepository -> {
                 when (repo.authType) {
                     RepoAuthType.SSH -> {
-                        val token = list[0]
                         if (list.size < 2) {
                             throw OperationException(
                                 message = MessageCodeUtil.getCodeLanMessage(RepositoryMessageCode.USER_SECRET_EMPTY)
@@ -1651,6 +1651,7 @@ class RepositoryService @Autowired constructor(
                 }
             }
             is CodeP4Repository -> {
+                token = StringUtils.EMPTY
                 val username = list[0]
                 if (username.isEmpty()) {
                     throw OperationException(
@@ -1688,6 +1689,9 @@ class RepositoryService @Autowired constructor(
             logger.warn("Fail to check the repo token & private key because of ${checkResult.message}")
             throw OperationException(checkResult.message)
         }
+
+        //返回token信息
+        return token
     }
 
     private fun decode(encode: String, publicKey: String, privateKey: ByteArray): String {
@@ -1700,6 +1704,7 @@ class RepositoryService @Autowired constructor(
             return false
         }
         val isGitOauth = repository is CodeGitRepository && repository.authType == RepoAuthType.OAUTH
+
         if (isGitOauth) {
             return false
         }
@@ -1760,38 +1765,17 @@ class RepositoryService @Autowired constructor(
             is CodeTGitRepository ->
                 Pair(repo.authType, ScmType.CODE_TGIT)
             is CodeGitlabRepository ->
-                Pair(RepoAuthType.HTTP, ScmType.CODE_GITLAB)
+                Pair(repo.authType, ScmType.CODE_GITLAB)
             else ->
                 return null
         }
     }
 
 
-    fun getGitProjectId(projectId: String, repo: Repository, userId: String): Int {
-        val pair = DHUtil.initKey()
-        val encoder = Base64.getEncoder()
-        val result = client.get(ServiceCredentialResource::class)
-                .get(projectId, repo.credentialId, encoder.encodeToString(pair.publicKey))
-        if (result.isNotOk() || result.data == null) {
-            throw ErrorCodeException(errorCode = RepositoryMessageCode.GET_TICKET_FAIL)
-        }
-        val credential = result.data!!
-        logger.info("Get the credential($credential)")
-        val list = ArrayList<String>()
-        list.add(decode(credential.v1, credential.publicKey, pair.privateKey))
-        if (!credential.v2.isNullOrEmpty()) {
-            list.add(decode(credential.v2!!, credential.publicKey, pair.privateKey))
-            if (!credential.v3.isNullOrEmpty()) {
-                list.add(decode(credential.v3!!, credential.publicKey, pair.privateKey))
-                if (!credential.v4.isNullOrEmpty()) {
-                    list.add(decode(credential.v4!!, credential.publicKey, pair.privateKey))
-                }
-            }
-        }
+    fun getGitProjectId(projectId: String, repo: Repository, token: String): Int {
         val type = getRepositoryType(repo) ?: return -1
         //根据仓库授权类型匹配Token类型
         val tokenType = if (type.first == RepoAuthType.OAUTH) TokenTypeEnum.OAUTH else TokenTypeEnum.PRIVATE_KEY
-        val token = list[0]
         val gitProjectInfo = gitService.getGitProjectInfo(id = projectId, token = token, tokenType = tokenType)
         logger.info("the gitProjectInfo is:$gitProjectInfo")
         return gitProjectInfo.data?.id ?: -1
