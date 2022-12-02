@@ -591,9 +591,7 @@ class PipelineRuntimeService @Autowired constructor(
         buildIds: Set<String>,
         startBeginTime: String? = null,
         endBeginTime: String? = null,
-        projectId: String? = null,
-        buildStatus: Set<Int>? = null,
-        pipelineId: String? = null
+        projectId: String? = null
     ): List<BuildHistory> {
         val records = pipelineBuildDao.listBuildInfoByBuildIds(
             dslContext = dslContext,
@@ -1609,12 +1607,12 @@ class PipelineRuntimeService @Autowired constructor(
         return pipelineBuildDao.count(dslContext = dslContext, projectId = projectId, pipelineId = pipelineId)
     }
 
-    fun getBuildsNoNeedPipelineId(
+    fun getBuilds(
         projectId: String,
         pipelineId: String?,
         buildStatus: Set<BuildStatus>?
     ): List<String> {
-        return pipelineBuildDao.getBuildsNoNeedPipelineId(
+        return pipelineBuildDao.getBuilds(
             dslContext = dslContext,
             projectId = projectId,
             pipelineId = pipelineId,

@@ -543,7 +543,7 @@ class ServiceBuildResourceImpl @Autowired constructor(
         )
     }
 
-    override fun getBuildsNoNeedPipelineId(
+    override fun getBuilds(
         userId: String,
         projectId: String,
         pipelineId: String?,
@@ -551,7 +551,7 @@ class ServiceBuildResourceImpl @Autowired constructor(
         channelCode: ChannelCode
     ): Result<List<String>> {
         return Result(
-            pipelineBuildFacadeService.getBuildsNoNeedPipelineId(
+            pipelineBuildFacadeService.getBuilds(
                 userId = userId,
                 projectId = projectId,
                 pipelineId = pipelineId,
