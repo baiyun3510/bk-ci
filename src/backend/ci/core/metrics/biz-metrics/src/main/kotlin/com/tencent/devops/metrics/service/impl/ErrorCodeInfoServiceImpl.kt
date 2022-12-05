@@ -28,19 +28,24 @@
 package com.tencent.devops.metrics.service.impl
 
 import com.tencent.devops.common.api.pojo.Page
+import com.tencent.devops.common.client.Client
 import com.tencent.devops.metrics.dao.ErrorCodeInfoDao
 import com.tencent.devops.metrics.pojo.`do`.ErrorCodeInfoDO
 import com.tencent.devops.metrics.pojo.dto.QueryErrorCodeInfoDTO
+import com.tencent.devops.metrics.pojo.po.SaveErrorCodeInfoPO
 import com.tencent.devops.metrics.pojo.qo.QueryErrorCodeInfoQO
 import com.tencent.devops.metrics.service.ErrorCodeInfoManageService
+import com.tencent.devops.project.api.service.ServiceAllocIdResource
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class ErrorCodeInfoServiceImpl @Autowired constructor(
     private val dslContext: DSLContext,
-    private val errorCodeInfoDao: ErrorCodeInfoDao
+    private val errorCodeInfoDao: ErrorCodeInfoDao,
+    private val client: Client
 ) : ErrorCodeInfoManageService {
 
     override fun getErrorCodeInfo(queryErrorCodeInfoDTO: QueryErrorCodeInfoDTO): Page<ErrorCodeInfoDO> {
@@ -66,5 +71,26 @@ class ErrorCodeInfoServiceImpl @Autowired constructor(
                 )
             )
         )
+    }
+
+    override fun addErrorCodeTest(errorCodes: List<Int>): Boolean {
+        val saveErrorCodeInfoPOs = mutableSetOf<SaveErrorCodeInfoPO>()
+        errorCodes.forEach {
+            saveErrorCodeInfoPOs.add(
+                SaveErrorCodeInfoPO(
+                    id = client.get(ServiceAllocIdResource::class)
+                        .generateSegmentId("METRICS_ERROR_CODE_INFO").data ?: 0,
+                    errorType = 1,
+                    errorCode = it,
+                    errorMsg = "",
+                    creator = "",
+                    modifier = "",
+                    createTime = LocalDateTime.now(),
+                    updateTime = LocalDateTime.now()
+                )
+            )
+        }
+        errorCodeInfoDao.batchSave(dslContext, saveErrorCodeInfoPOs)
+        return true
     }
 }

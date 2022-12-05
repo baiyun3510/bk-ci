@@ -29,9 +29,12 @@ package com.tencent.devops.metrics.dao
 
 import com.tencent.devops.model.metrics.tables.TErrorCodeInfo
 import com.tencent.devops.metrics.pojo.`do`.ErrorCodeInfoDO
+import com.tencent.devops.metrics.pojo.po.SaveErrorCodeInfoPO
 import com.tencent.devops.metrics.pojo.qo.QueryErrorCodeInfoQO
+import com.tencent.devops.model.metrics.tables.records.TErrorCodeInfoRecord
 import org.jooq.Condition
 import org.jooq.DSLContext
+import org.jooq.InsertSetMoreStep
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -78,5 +81,29 @@ class ErrorCodeInfoDao {
                 .groupBy(ERROR_CODE)
                 .execute().toLong()
         }
+    }
+
+    fun batchSave(
+        dslContext: DSLContext,
+        saveErrorCodeInfoPOs: Set<SaveErrorCodeInfoPO>
+    ) {
+        val records =
+            mutableListOf<InsertSetMoreStep<TErrorCodeInfoRecord>>()
+        with(TErrorCodeInfo.T_ERROR_CODE_INFO) {
+            saveErrorCodeInfoPOs.forEach { saveErrorCodeInfoPO ->
+                records.add(
+                    dslContext.insertInto(this)
+                        .set(ID, saveErrorCodeInfoPO.id)
+                        .set(ERROR_TYPE, saveErrorCodeInfoPO.errorType)
+                        .set(ERROR_CODE, saveErrorCodeInfoPO.errorCode)
+                        .set(ERROR_MSG, saveErrorCodeInfoPO.errorMsg)
+                        .set(CREATOR, saveErrorCodeInfoPO.creator)
+                        .set(MODIFIER, saveErrorCodeInfoPO.modifier)
+                        .set(UPDATE_TIME, saveErrorCodeInfoPO.updateTime)
+                        .set(CREATE_TIME, saveErrorCodeInfoPO.createTime)
+                )
+            }
+        }
+        dslContext.batch(records).execute()
     }
 }

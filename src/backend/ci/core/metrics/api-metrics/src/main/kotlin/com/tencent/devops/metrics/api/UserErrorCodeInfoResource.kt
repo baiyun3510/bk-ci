@@ -34,12 +34,14 @@ import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.annotation.BkField
 import com.tencent.devops.common.web.constant.BkStyleEnum
 import com.tencent.devops.metrics.pojo.`do`.ErrorCodeInfoDO
+import com.tencent.devops.metrics.pojo.vo.AtomDisplayConfigVO
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import javax.ws.rs.Consumes
 import javax.ws.rs.GET
 import javax.ws.rs.HeaderParam
+import javax.ws.rs.POST
 import javax.ws.rs.QueryParam
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
@@ -75,4 +77,12 @@ interface UserErrorCodeInfoResource {
         @QueryParam("keyword")
         keyword: String?
     ): Result<Page<ErrorCodeInfoDO>>
+
+    @ApiOperation("新增错误码")
+    @Path("/batchAdd")
+    @POST
+    fun addErrorCodeTest(
+        @ApiParam("错误码列表", required = true)
+        errorCodes: List<Int>
+    ): Result<Boolean>
 }

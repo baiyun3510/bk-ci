@@ -39,4 +39,7 @@ interface ErrorCodeInfoManageService {
      * @return 错误码信息列表视图
      */
     fun getErrorCodeInfo(queryErrorCodeInfoDTO: QueryErrorCodeInfoDTO): Page<ErrorCodeInfoDO>
+
+
+    fun addErrorCodeTest(errorCodes: List<Int>): Boolean
 }
