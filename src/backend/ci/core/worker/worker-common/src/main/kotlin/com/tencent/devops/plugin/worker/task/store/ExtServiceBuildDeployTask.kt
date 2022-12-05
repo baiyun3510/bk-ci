@@ -167,7 +167,7 @@ class ExtServiceBuildDeployTask : ITask() {
             imageTag = imageTag,
             userName = username,
             password = password,
-            args = listOf("packageName=$packageName", "filePath=$filePath"),
+            args = listOf("packageName=$packageName", "filePath=$filePath", "serviceCode=$serviceCode"),
             poolNo = System.getenv("pool_no")
         )
         val dockerHostIp = System.getenv("docker_host_ip")
