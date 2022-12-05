@@ -151,7 +151,7 @@ class ExtServiceKubernetesService {
             ),
             appIngress = AppIngress(
                 host = MessageFormat(host).format(arrayOf(serviceCode)),
-                contextPath = extServiceIngressConfig.contextPath,
+                contextPath = "${extServiceIngressConfig.contextPath}service/$serviceCode",
                 ingressAnnotationMap = mapOf(
                     "kubernetes.io/ingress.class" to extServiceIngressConfig.annotationClass,
                     "kubernetes.io/ingress.existLbId" to if (grayFlag) {
