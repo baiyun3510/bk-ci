@@ -485,7 +485,7 @@ class RepositoryService @Autowired constructor(
             )
         }
         val repositoryType = getRepositoryType(repository)
-        //仓库凭证
+        // 仓库凭证
         var token:String = StringUtils.EMPTY
         if(repositoryType!=null && repositoryType.first == RepoAuthType.OAUTH){
             token = gitOauthService.getAccessToken(userId)?.accessToken ?: StringUtils.EMPTY
@@ -500,8 +500,8 @@ class RepositoryService @Autowired constructor(
                 token = checkRepositoryToken(projectId, repository)
             }
         }
-        //Git项目ID
-        val gitProjectId = getGitProjectId(projectId = projectId, repo = repository, token = token)
+        // Git项目ID
+        val gitProjectId = getGitProjectId( repo = repository, token = token)
         val repositoryId = dslContext.transactionResult { configuration ->
             val transactionContext = DSL.using(configuration)
             val repositoryId = when (repository) {
@@ -1772,11 +1772,12 @@ class RepositoryService @Autowired constructor(
     }
 
 
-    fun getGitProjectId(projectId: String, repo: Repository, token: String): Int {
+    fun getGitProjectId(repo: Repository, token: String): Int {
+        logger.info("the repo is:$repo")
         val type = getRepositoryType(repo) ?: return -1
-        //根据仓库授权类型匹配Token类型
+        // 根据仓库授权类型匹配Token类型
         val tokenType = if (type.first == RepoAuthType.OAUTH) TokenTypeEnum.OAUTH else TokenTypeEnum.PRIVATE_KEY
-        val gitProjectInfo = gitService.getGitProjectInfo(id = projectId, token = token, tokenType = tokenType)
+        val gitProjectInfo = gitService.getGitProjectInfo(id = repo.projectName, token = token, tokenType = tokenType)
         logger.info("the gitProjectInfo is:$gitProjectInfo")
         return gitProjectInfo.data?.id ?: -1
     }
