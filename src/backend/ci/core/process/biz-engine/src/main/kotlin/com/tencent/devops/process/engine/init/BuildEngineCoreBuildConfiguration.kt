@@ -254,7 +254,7 @@ class BuildEngineCoreBuildConfiguration {
         @Autowired pipelineTaskService: PipelineTaskService,
         @Autowired pipelineContainerService: PipelineContainerService,
         @Autowired pipelineTaskPauseService: PipelineTaskPauseService,
-        @Autowired taskBuildRecordService: TaskBuildRecordService,,
+        @Autowired taskBuildRecordService: TaskBuildRecordService,
         @Autowired buildVariableService: BuildVariableService,
         @Autowired dslContext: DSLContext,
         @Autowired buildLogPrinter: BuildLogPrinter,
