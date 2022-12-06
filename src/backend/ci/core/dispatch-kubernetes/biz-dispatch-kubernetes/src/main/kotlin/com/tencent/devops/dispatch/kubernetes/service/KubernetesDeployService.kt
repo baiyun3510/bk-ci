@@ -327,7 +327,9 @@ class KubernetesDeployService @Autowired constructor(private val redisOperation:
         val ingressName = redisOperation.get(ingressRedisKey)
         val ingress =
             bcsKubernetesClient.extensions().ingresses().inNamespace(namespaceName).withName(ingressName).get()
+        logger.debug("deleteIngressRule ingress is $ingress")
         ingress.spec.rules.removeIf { rule -> rule.host == MessageFormat(host).format(arrayOf(deploymentName)) }
+        logger.debug("deleteIngressRule newIngress is $ingress")
         KubernetesApiUtils.createIngress(apiUrl, token, namespaceName, ingress)
     }
 }
