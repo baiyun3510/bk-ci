@@ -24,26 +24,15 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+package com.tencent.devops.process.pojo.enums
 
-package com.tencent.devops.process.pojo.setting
-
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
-
-@ApiModel("流水线版本摘要")
-data class PipelineVersionSimple(
-    @ApiModelProperty("流水线ID", required = true)
-    val pipelineId: String,
-    @ApiModelProperty("流水线创建人", required = true)
-    val creator: String,
-    @ApiModelProperty("创建时间戳", required = true)
-    val createTime: Long,
-    @ApiModelProperty("流水线版本号", required = true)
-    val version: Int,
-    @ApiModelProperty("流水线版本名称", required = true)
-    val versionName: String,
-    @ApiModelProperty("是否还有构建记录引用该版本标识", required = false)
-    val referFlag: Boolean? = null,
-    @ApiModelProperty("关联构建记录总数", required = false)
-    val referCount: Int? = null
-)
+enum class BuildTimestampType {
+    STAGE_CHECK_IN_WAITING,
+    STAGE_CHECK_OUT_WAITING,
+    JOB_MUTEX_WAITING,
+    JOB_CONTAINER_STARTUP,
+    JOB_CONTAINER_SHUTDOWN,
+    TASK_ATOM_LOADING,
+    TASK_REVIEW_WAITING,
+    UNKNOWN;
+}

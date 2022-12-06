@@ -24,24 +24,20 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.tencent.devops.process.pojo.enums
 
-enum class BuildTimestampEnum(val value: String) {
-    STAGE_CHECK_IN_WAITING("stageCheckInWaiting"),
-    STAGE_CHECK_OUT_WAITING("stageCheckOutWaiting"),
-    JOB_MUTEX_WAITING("jobMutexWaiting"),
-    JOB_CONTAINER_STARTUP("jobContainerStartup"),
-    JOB_CONTAINER_SHUTDOWN("jobMutexShutdown"),
-    TASK_ATOM_LOADING("taskAtomLoading"),
-    TASK_REVIEW_WAITING("reviewWaiting"),
-    UNKNOWN("unknown");
+package com.tencent.devops.process.pojo.pipeline.record.time
 
-    companion object {
-        fun get(value: String): BuildTimestampEnum {
-            values().forEach {
-                if (value == it.value) return it
-            }
-            return UNKNOWN
-        }
-    }
-}
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+
+@ApiModel("各项执行耗时")
+data class BuildRecordTimeCost(
+    @ApiModelProperty("系统耗时", required = true)
+    var systemCost: Long = 0,
+    @ApiModelProperty("执行耗时", required = true)
+    var executeCost: Long = 0,
+    @ApiModelProperty("等待耗时", required = true)
+    var waitCost: Long = 0,
+    @ApiModelProperty("排队耗时", required = true)
+    var queueCost: Long = 0
+)
