@@ -33,13 +33,13 @@ import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.lang.NonNullApi
-import java.util.Optional
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import java.util.Optional
 import java.util.concurrent.CompletionStage
 
 /**
