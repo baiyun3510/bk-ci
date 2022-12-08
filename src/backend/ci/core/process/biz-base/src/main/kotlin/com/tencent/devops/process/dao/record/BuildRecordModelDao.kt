@@ -54,7 +54,7 @@ class BuildRecordModelDao {
                 .set(PIPELINE_ID, record.pipelineId)
                 .set(RESOURCE_VERSION, record.resourceVersion)
                 .set(BUILD_NUM, record.buildNum)
-                .set(EXECUTE_COUNT, record.buildNum)
+                .set(EXECUTE_COUNT, record.executeCount)
                 .set(START_USER, record.startUser)
                 .set(START_TYPE, record.startType)
                 .set(MODEL_VAR, JsonUtil.toJson(record.modelVar, false))
@@ -74,6 +74,7 @@ class BuildRecordModelDao {
         buildId: String,
         executeCount: Int,
         buildStatus: BuildStatus,
+        modelVar: Map<String, Any>,
         cancelUser: String?,
         startTime: LocalDateTime?,
         endTime: LocalDateTime?,
@@ -88,6 +89,7 @@ class BuildRecordModelDao {
         with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {
             val update = dslContext.update(this)
                 .set(STATUS, buildStatus.name)
+                .set(MODEL_VAR, JsonUtil.toJson(modelVar, false))
             cancelUser?.let { update.set(CANCEL_USER, cancelUser) }
             startTime?.let { update.set(START_TIME, startTime) }
             endTime?.let { update.set(END_TIME, endTime) }
