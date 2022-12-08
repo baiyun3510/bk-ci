@@ -1314,7 +1314,6 @@ class PipelineRuntimeService @Autowired constructor(
             projectId = projectId,
             pipelineId = pipelineId,
             buildId = buildId,
-            ex
             buildStatus = newBuildStatus,
             errorMsg = "Rejected by $userId"
         )
