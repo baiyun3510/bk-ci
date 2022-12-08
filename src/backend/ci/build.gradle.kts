@@ -15,11 +15,11 @@ allprojects {
             if (System.getProperty("snapshot") == "true") "-SNAPSHOT" else "-RELEASE"
 
     // Docker镜像构建
-    if (name.startsWith("boot-")
-        && properties["devops.assemblyMode"] ?: System.getProperty("devops.assemblyMode") == "KUBERNETES"
-    ) {
-        pluginManager.apply("task-docker-build")
-    }
+//    if (name.startsWith("boot-")
+//        && properties["devops.assemblyMode"] ?: System.getProperty("devops.assemblyMode") == "KUBERNETES"
+//    ) {
+//        pluginManager.apply("task-docker-build")
+//    }
 
     // 版本管理
     dependencyManagement {
