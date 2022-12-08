@@ -39,9 +39,12 @@ import org.jooq.DSLContext
 import org.jooq.RecordMapper
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 
 @Repository
 class BuildRecordModelDao {
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     fun createRecord(dslContext: DSLContext, record: BuildRecordModel) {
         with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {
@@ -77,6 +80,11 @@ class BuildRecordModelDao {
         timestamps: List<BuildRecordTimeStamp>?,
         timeCost: BuildRecordTimeCost?
     ) {
+        logger.info(
+            "RECORD|updateModel|$projectId|$pipelineId|$buildId|$executeCount" +
+                "|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|timestamps=$timestamps|timeCost=$timeCost|cancelUser=$cancelUser"
+        )
         with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {
             val update = dslContext.update(this)
                 .set(STATUS, buildStatus.name)

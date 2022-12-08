@@ -40,9 +40,12 @@ import org.jooq.DSLContext
 import org.jooq.RecordMapper
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 
 @Repository
 class BuildRecordTaskDao {
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     fun batchSave(dslContext: DSLContext, records: List<BuildRecordTask>) {
         with(TPipelineBuildRecordTask.T_PIPELINE_BUILD_RECORD_TASK) {
@@ -79,6 +82,11 @@ class BuildRecordTaskDao {
         timestamps: List<BuildRecordTimeStamp>?,
         timeCost: BuildRecordTimeCost?
     ) {
+        logger.info(
+            "RECORD|updateTask|$projectId|$pipelineId|$buildId|$taskId|$executeCount" +
+                "|taskVar=$taskVar|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|timestamps=$timestamps|timeCost=$timeCost"
+        )
         with(TPipelineBuildRecordTask.T_PIPELINE_BUILD_RECORD_TASK) {
             val update = dslContext.update(this)
                 .set(TASK_VAR, JsonUtil.toJson(taskVar, false))
