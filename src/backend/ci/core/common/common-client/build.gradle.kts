@@ -1,5 +1,3 @@
-import com.tencent.devops.utils.findPropertyOrEmpty
-
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
@@ -39,7 +37,7 @@ dependencies {
     api("io.opentelemetry:opentelemetry-sdk")
     api("io.opentelemetry:opentelemetry-exporter-otlp")
     api("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
-    if (project.findPropertyOrEmpty("devops.assemblyMode") == "KUBERNETES") {
+    if (System.getProperty("devops.assemblyMode") == "KUBERNETES") {
         print("use common-kubernetes")
         api(project(":core:common:common-kubernetes"))
     }
