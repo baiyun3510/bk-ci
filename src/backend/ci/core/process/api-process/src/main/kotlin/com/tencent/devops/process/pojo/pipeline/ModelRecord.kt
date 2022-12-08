@@ -27,7 +27,6 @@
 
 package com.tencent.devops.process.pojo.pipeline
 
-import com.tencent.devops.common.api.pojo.ErrorInfo
 import com.tencent.devops.common.pipeline.Model
 import com.tencent.devops.process.pojo.PipelineBuildMaterial
 import com.tencent.devops.process.pojo.pipeline.record.time.BuildRecordTimeCost
@@ -35,7 +34,7 @@ import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("构建详情-构建信息")
-data class ModelDetail(
+data class ModelRecord(
     @ApiModelProperty("构建ID", required = true)
     val id: String,
     @ApiModelProperty("流水线ID", required = true)
@@ -52,7 +51,7 @@ data class ModelDetail(
     val startTime: Long,
     @ApiModelProperty("End time", required = false)
     val endTime: Long?,
-    @ApiModelProperty(value = "Build status", required = true)
+    @ApiModelProperty("Build status", required = true)
     val status: String,
     @ApiModelProperty("Build Model", required = true)
     val model: Model,
@@ -74,8 +73,6 @@ data class ModelDetail(
     val executeTime: Long = 0,
     @ApiModelProperty("各项耗时", required = true)
     val timeCost: BuildRecordTimeCost,
-    @ApiModelProperty("流水线任务执行错误", required = false)
-    var errorInfoList: List<ErrorInfo>?,
     @ApiModelProperty("触发审核人列表", required = false)
     val triggerReviewers: List<String>? = null,
     @ApiModelProperty("查询的执行次数", required = false)

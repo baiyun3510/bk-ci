@@ -210,6 +210,7 @@ class PipelineRuntimeService @Autowired constructor(
     private val pipelineSettingService: PipelineSettingService,
     private val pipelineRuleService: PipelineRuleService,
     private val pipelineBuildDetailService: PipelineBuildDetailService,
+    private val pipelineBuildRecordService: PipelineBuildRecordService,
     private val buildRecordService: PipelineRecordModelService,
     private val pipelineUrlBean: PipelineUrlBean,
     private val buildLogPrinter: BuildLogPrinter,
@@ -641,6 +642,11 @@ class PipelineRuntimeService @Autowired constructor(
         logger.info("[$buildId]|SHUTDOWN_BUILD|userId=$userId|status=$buildStatus|terminateFlag=$terminateFlag")
         // 记录该构建取消人信息
         pipelineBuildDetailService.updateBuildCancelUser(
+            projectId = projectId,
+            buildId = buildId,
+            cancelUserId = userId
+        )
+        pipelineBuildRecordService.updateBuildCancelUser(
             projectId = projectId,
             buildId = buildId,
             cancelUserId = userId
@@ -1300,6 +1306,13 @@ class PipelineRuntimeService @Autowired constructor(
         logger.info("[$buildId|DISAPPROVE_BUILD|userId($userId)|pipelineId=$pipelineId")
         val (_, allStageStatus) = pipelineBuildDetailService.buildEnd(
             projectId = projectId,
+            buildId = buildId,
+            buildStatus = newBuildStatus,
+            errorMsg = "Rejected by $userId"
+        )
+        pipelineBuildRecordService.buildEnd(
+            projectId = projectId,
+            pipelineId = pipelineId,
             buildId = buildId,
             buildStatus = newBuildStatus,
             errorMsg = "Rejected by $userId"

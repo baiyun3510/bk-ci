@@ -110,7 +110,7 @@ class BuildRecordModelDao {
         pipelineId: String,
         buildId: String,
         executeCount: Int
-    ): BuildRecordModel {
+    ): BuildRecordModel? {
         with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {
             return dslContext.selectFrom(this)
                 .where(
@@ -118,7 +118,7 @@ class BuildRecordModelDao {
                         .and(PROJECT_ID.eq(projectId))
                         .and(PIPELINE_ID.eq(pipelineId))
                         .and(EXECUTE_COUNT.eq(executeCount))
-                ).fetchSingle(mapper)
+                ).fetchAny(mapper)
         }
     }
 
@@ -147,6 +147,21 @@ class BuildRecordModelDao {
                     }
                 )
             }
+        }
+    }
+
+    fun updateBuildCancelUser(
+        dslContext: DSLContext,
+        projectId: String,
+        buildId: String,
+        cancelUser: String
+    ) {
+        with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {
+            dslContext.update(this)
+                .set(CANCEL_USER, cancelUser)
+                .where(PROJECT_ID.eq(projectId))
+                .and(BUILD_ID.eq(buildId))
+                .execute()
         }
     }
 
