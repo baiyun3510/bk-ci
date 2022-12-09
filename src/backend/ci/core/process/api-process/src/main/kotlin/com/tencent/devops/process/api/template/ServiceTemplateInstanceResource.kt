@@ -189,17 +189,6 @@ interface ServiceTemplateInstanceResource {
         templateIds: Collection<String>
     ): Result<Int>
 
-    @ApiOperation("根据项目id和模板id查询流水线模板实例数")
-    @POST
-    @Path("/project/{projectId}/templateInstanceCount")
-    fun getTemplateInstancesCount(
-        @ApiParam("项目ID", required = true)
-        @PathParam("projectId")
-        projectId: String,
-        @ApiParam("模板ID", required = true)
-        templateIds: Collection<String>
-    ): Result<Map<String, Int>>
-
     @ApiOperation("查询流水线模板实例总数")
     @POST
     @Path("/projects/{projectId}/countTemplateInstanceDetail")
