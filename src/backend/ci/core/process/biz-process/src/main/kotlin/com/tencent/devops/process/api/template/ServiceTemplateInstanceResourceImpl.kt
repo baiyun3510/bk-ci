@@ -68,7 +68,7 @@ class ServiceTemplateInstanceResourceImpl @Autowired constructor(
         return Result(templateFacadeService.serviceCountTemplateInstances(projectId, templateIds))
     }
 
-    override fun getTemplateInstancesCount(projectId: String, templateIds: Collection<String>): Result<RuleTemplateRange> {
+    override fun getTemplateInstancesCount(projectId: String, templateIds: Collection<String>): Result<Map<String, Int>> {
         return Result(templateFacadeService.getTemplateInstancesCount(projectId, templateIds))
     }
 

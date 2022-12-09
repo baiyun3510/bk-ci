@@ -287,7 +287,9 @@ class QualityRuleService @Autowired constructor(
 //            .countTemplateInstance(projectId, templateIds).data ?: 0
         val templatePipelineData = client.get(ServiceTemplateInstanceResource::class)
             .getTemplateInstancesCount(projectId, templateIds).data
-        logger.info("QualityRuleService userGetRule template pipelineCount: [$templatePipelineCount]")
+        val templatePipelineCount = templatePipelineData.get("count")
+        logger.info("QualityRuleService userGetRule template pipelineCount: [$templatePipelineData]," +
+                " count: [$templatePipelineCount]")
 
         return UserQualityRule(
             hashId = rule.hashId,
@@ -298,7 +300,7 @@ class QualityRuleService @Autowired constructor(
             range = range,
             templateRange = templateRange,
 //            pipelineCount = range.size + templatePipelineCount,
-            pipelineCount = range.size + templatePipelineData.elementCount,
+            pipelineCount = range.size,
             operation = rule.operation,
             notifyTypeList = rule.notifyTypeList,
             notifyGroupList = rule.notifyGroupList?.map { HashUtil.encodeLongId(it.toLong()) },
