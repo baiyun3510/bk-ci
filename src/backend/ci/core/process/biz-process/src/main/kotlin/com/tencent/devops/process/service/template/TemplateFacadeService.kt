@@ -1894,19 +1894,19 @@ class TemplateFacadeService @Autowired constructor(
         )
     }
 
-    fun getTemplateInstancesCount(projectId: String, templateIds: Collection<String>): RuleTemplateRange {
+    fun getTemplateInstancesCount(projectId: String, templateIds: Collection<String>): Map<String, Int>  {
         logger.info("[$projectId|$templateIds] serviceCountTemplateInstances List the templates instances")
-        if (templateIds.isEmpty()) return 0
+        if (templateIds.isEmpty()) return mapOf()
         val count = templatePipelineDao.countByTemplates(
             dslContext = dslContext,
             projectId = projectId,
             instanceType = PipelineInstanceTypeEnum.CONSTRAINT.type,
             templateIds = templateIds
         )
-        logger.info("serviceCountTemplateInstances count: [$count]")
-        return RuleTemplateRange(
-            elementCount = count
-        )
+        val map: MutableMap<String, Int> = java.util.HashMap()
+        map["count"] = 1
+        logger.info("serviceCountTemplateInstances count: [$count], map:[$map]")
+        return map
     }
 
     fun serviceCountTemplateInstancesDetail(projectId: String, templateIds: Collection<String>): Map<String, Int> {

@@ -198,7 +198,7 @@ interface ServiceTemplateInstanceResource {
         projectId: String,
         @ApiParam("模板ID", required = true)
         templateIds: Collection<String>
-    ): Result<RuleTemplateRange>
+    ): Result<Map<String, Int>>
 
     @ApiOperation("查询流水线模板实例总数")
     @POST
