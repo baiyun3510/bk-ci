@@ -281,15 +281,9 @@ class QualityRuleService @Autowired constructor(
         }
         val templateRange = templateMap?.map { UserQualityRule.RangeItem(it.key, it.value.name) } ?: listOf()
 
-        logger.info("QualityRuleService userGetRule range: [$range.size]")
         // 获取模板对应的流水线总数
-//        val templatePipelineCount = client.get(ServiceTemplateInstanceResource::class)
-//            .countTemplateInstance(projectId, templateIds).data ?: 0
-        val templatePipelineData = client.get(ServiceTemplateInstanceResource::class)
-            .getTemplateInstancesCount(projectId, templateIds).data
-        val templatePipelineCount = templatePipelineData?.get("count")
-        logger.info("QualityRuleService userGetRule template pipelineCount: [$templatePipelineData]," +
-                " count: [$templatePipelineCount]")
+        val templatePipelineCount = client.get(ServiceTemplateInstanceResource::class)
+            .countTemplateInstance(projectId, templateIds).data ?: 0
 
         return UserQualityRule(
             hashId = rule.hashId,
@@ -299,8 +293,7 @@ class QualityRuleService @Autowired constructor(
             controlPoint = rule.controlPoint,
             range = range,
             templateRange = templateRange,
-            pipelineCount = range.size + templatePipelineCount!!,
-//            pipelineCount = range.size,
+            pipelineCount = range.size + templatePipelineCount,
             operation = rule.operation,
             notifyTypeList = rule.notifyTypeList,
             notifyGroupList = rule.notifyGroupList?.map { HashUtil.encodeLongId(it.toLong()) },
