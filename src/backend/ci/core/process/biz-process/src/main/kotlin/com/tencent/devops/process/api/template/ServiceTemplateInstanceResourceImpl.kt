@@ -37,6 +37,7 @@ import com.tencent.devops.process.pojo.template.TemplateInstancePage
 import com.tencent.devops.process.pojo.template.TemplateInstanceParams
 import com.tencent.devops.process.pojo.template.TemplateOperationRet
 import com.tencent.devops.process.pojo.template.TemplateInstanceUpdate
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 @Suppress("ALL")
@@ -44,6 +45,10 @@ import org.springframework.beans.factory.annotation.Autowired
 class ServiceTemplateInstanceResourceImpl @Autowired constructor(
     private val templateFacadeService: TemplateFacadeService
 ) : ServiceTemplateInstanceResource {
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ServiceTemplateInstanceResource::class.java)
+    }
 
     override fun createTemplateInstances(
         userId: String,
@@ -64,7 +69,9 @@ class ServiceTemplateInstanceResourceImpl @Autowired constructor(
     }
 
     override fun countTemplateInstance(projectId: String, templateIds: Collection<String>): Result<Int> {
-        return Result(templateFacadeService.serviceCountTemplateInstances(projectId, templateIds))
+        val count = templateFacadeService.serviceCountTemplateInstances(projectId, templateIds)
+        logger.info("countTemplateInstance count: [$count]")
+        return Result(count)
     }
 
     override fun countTemplateInstanceDetail(
