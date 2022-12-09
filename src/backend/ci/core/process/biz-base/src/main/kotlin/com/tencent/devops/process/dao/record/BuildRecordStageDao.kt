@@ -82,7 +82,7 @@ class BuildRecordStageDao {
     ) {
         logger.info(
             "RECORD|updateStage|$projectId|$pipelineId|$buildId|$stageId|$executeCount" +
-                "|stageVar=$stageVar|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|stageVar=$stageVar|buildStatus=$buildStatus" +
                 "|timestamps=$timestamps|timeCost=$timeCost"
         )
         with(TPipelineBuildRecordStage.T_PIPELINE_BUILD_RECORD_STAGE) {

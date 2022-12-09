@@ -84,7 +84,7 @@ class BuildRecordTaskDao {
     ) {
         logger.info(
             "RECORD|updateTask|$projectId|$pipelineId|$buildId|$taskId|$executeCount" +
-                "|taskVar=$taskVar|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|taskVar=$taskVar|buildStatus=$buildStatus" +
                 "|timestamps=$timestamps|timeCost=$timeCost"
         )
         with(TPipelineBuildRecordTask.T_PIPELINE_BUILD_RECORD_TASK) {

@@ -84,7 +84,7 @@ class BuildRecordModelDao {
     ) {
         logger.info(
             "RECORD|updateModel|$projectId|$pipelineId|$buildId|$executeCount" +
-                "|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|buildStatus=$buildStatus" +
                 "|timestamps=$timestamps|timeCost=$timeCost|cancelUser=$cancelUser"
         )
         with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {

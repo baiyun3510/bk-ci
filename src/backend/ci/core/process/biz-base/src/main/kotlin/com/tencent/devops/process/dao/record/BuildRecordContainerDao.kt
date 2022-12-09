@@ -85,7 +85,7 @@ class BuildRecordContainerDao {
     ) {
         logger.info(
             "RECORD|updateContainer|$projectId|$pipelineId|$buildId|$containerId|$executeCount" +
-                "|containerVar=$containerVar|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|containerVar=$containerVar|buildStatus=$buildStatus" +
                 "|timestamps=$timestamps|timeCost=$timeCost"
         )
         with(TPipelineBuildRecordContainer.T_PIPELINE_BUILD_RECORD_CONTAINER) {
