@@ -59,6 +59,8 @@ class BuildRecordTaskDao {
                     .set(CONTAINER_ID, record.containerId)
                     .set(TASK_ID, record.taskId)
                     .set(EXECUTE_COUNT, record.executeCount)
+                    .set(CLASS_TYPE, record.classType)
+                    .set(ORIGIN_CLASS_TYPE, record.originClassType)
                     .set(TASK_VAR, JsonUtil.toJson(record.taskVar, false))
                     .set(TASK_SEQ, record.taskSeq)
                     .set(ATOM_CODE, record.atomCode)
@@ -91,8 +93,6 @@ class BuildRecordTaskDao {
             val update = dslContext.update(this)
                 .set(TASK_VAR, JsonUtil.toJson(taskVar, false))
             buildStatus?.let { update.set(STATUS, buildStatus.name) }
-            startTime?.let { update.set(START_TIME, startTime) }
-            endTime?.let { update.set(END_TIME, endTime) }
             timestamps?.let { update.set(TIMESTAMPS, JsonUtil.toJson(timestamps, false)) }
             timeCost?.let { update.set(TIMESTAMPS, JsonUtil.toJson(timeCost, false)) }
             update.where(
@@ -185,8 +185,6 @@ class BuildRecordTaskDao {
                     atomCode = atomCode,
                     originClassType = originClassType,
                     status = status,
-                    startTime = startTime,
-                    endTime = endTime,
                     timestamps = timestamps?.let {
                         JsonUtil.getObjectMapper().readValue(it) as List<BuildRecordTimeStamp>
                     } ?: emptyList(),
