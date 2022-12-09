@@ -61,8 +61,6 @@ class BuildRecordModelDao {
                 .set(MODEL_VAR, JsonUtil.toJson(record.modelVar, false))
                 .set(STATUS, record.status)
                 .set(CANCEL_USER, record.cancelUser)
-                .set(START_TIME, record.startTime)
-                .set(END_TIME, record.endTime)
                 .set(TIMESTAMPS, JsonUtil.toJson(record.timestamps, false))
                 .execute()
         }
@@ -84,7 +82,7 @@ class BuildRecordModelDao {
     ) {
         logger.info(
             "RECORD|updateModel|$projectId|$pipelineId|$buildId|$executeCount" +
-                "|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|buildStatus=$buildStatus" +
                 "|timestamps=$timestamps|timeCost=$timeCost|cancelUser=$cancelUser"
         )
         with(TPipelineBuildRecordModel.T_PIPELINE_BUILD_RECORD_MODEL) {
@@ -92,8 +90,6 @@ class BuildRecordModelDao {
                 .set(STATUS, buildStatus.name)
                 .set(MODEL_VAR, JsonUtil.toJson(modelVar, false))
             cancelUser?.let { update.set(CANCEL_USER, cancelUser) }
-            startTime?.let { update.set(START_TIME, startTime) }
-            endTime?.let { update.set(END_TIME, endTime) }
             timestamps?.let { update.set(TIMESTAMPS, JsonUtil.toJson(timestamps, false)) }
             timeCost?.let { update.set(TIME_COST, JsonUtil.toJson(timeCost, false)) }
             val exeCount = executeCount ?: dslContext.select(DSL.max(EXECUTE_COUNT)).where(
@@ -143,8 +139,6 @@ class BuildRecordModelDao {
                     startType = startType,
                     status = status,
                     cancelUser = cancelUser,
-                    startTime = startTime,
-                    endTime = endTime,
                     timestamps = timestamps?.let {
                         JsonUtil.getObjectMapper().readValue(it) as List<BuildRecordTimeStamp>
                     } ?: emptyList(),

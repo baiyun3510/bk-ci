@@ -61,8 +61,6 @@ class BuildRecordContainerDao {
                     .set(CONTAINER_TYPE, record.containerType)
                     .set(MATRIX_GROUP_FLAG, record.matrixGroupFlag)
                     .set(MATRIX_GROUP_ID, record.matrixGroupId)
-                    .set(START_TIME, record.startTime)
-                    .set(END_TIME, record.endTime)
                     .set(TIMESTAMPS, JsonUtil.toJson(record.timestamps, false))
                     .execute()
             }
@@ -78,22 +76,18 @@ class BuildRecordContainerDao {
         executeCount: Int,
         containerVar: Map<String, Any>,
         buildStatus: BuildStatus?,
-        startTime: LocalDateTime?,
-        endTime: LocalDateTime?,
         timestamps: List<BuildRecordTimeStamp>?,
         timeCost: BuildRecordTimeCost?
     ) {
         logger.info(
             "RECORD|updateContainer|$projectId|$pipelineId|$buildId|$containerId|$executeCount" +
-                "|containerVar=$containerVar|buildStatus=$buildStatus|startTime=$startTime|endTime=$endTime" +
+                "|containerVar=$containerVar|buildStatus=$buildStatus" +
                 "|timestamps=$timestamps|timeCost=$timeCost"
         )
         with(TPipelineBuildRecordContainer.T_PIPELINE_BUILD_RECORD_CONTAINER) {
             val update = dslContext.update(this)
                 .set(CONTAINER_VAR, JsonUtil.toJson(containerVar, false))
             buildStatus?.let { update.set(STATUS, buildStatus.name) }
-            startTime?.let { update.set(START_TIME, startTime) }
-            endTime?.let { update.set(END_TIME, endTime) }
             timestamps?.let { update.set(TIMESTAMPS, JsonUtil.toJson(timestamps, false)) }
             timeCost?.let { update.set(TIME_COST, JsonUtil.toJson(timeCost, false)) }
             update.where(
@@ -182,8 +176,6 @@ class BuildRecordContainerDao {
                     status = status,
                     matrixGroupFlag = matrixGroupFlag,
                     matrixGroupId = matrixGroupId,
-                    startTime = startTime,
-                    endTime = endTime,
                     timestamps = timestamps?.let {
                         JsonUtil.getObjectMapper().readValue(it) as List<BuildRecordTimeStamp>
                     } ?: emptyList(),
