@@ -287,7 +287,7 @@ class QualityRuleService @Autowired constructor(
 //            .countTemplateInstance(projectId, templateIds).data ?: 0
         val templatePipelineData = client.get(ServiceTemplateInstanceResource::class)
             .getTemplateInstancesCount(projectId, templateIds).data
-        val templatePipelineCount = templatePipelineData.get("count")
+        val templatePipelineCount = templatePipelineData?.get("count")
         logger.info("QualityRuleService userGetRule template pipelineCount: [$templatePipelineData]," +
                 " count: [$templatePipelineCount]")
 
