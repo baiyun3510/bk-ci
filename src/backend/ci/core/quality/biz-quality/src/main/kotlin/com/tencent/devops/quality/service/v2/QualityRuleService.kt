@@ -299,7 +299,7 @@ class QualityRuleService @Autowired constructor(
             controlPoint = rule.controlPoint,
             range = range,
             templateRange = templateRange,
-//            pipelineCount = range.size + templatePipelineCount,
+            pipelineCount = range.size + templatePipelineCount,
             pipelineCount = range.size,
             operation = rule.operation,
             notifyTypeList = rule.notifyTypeList,
