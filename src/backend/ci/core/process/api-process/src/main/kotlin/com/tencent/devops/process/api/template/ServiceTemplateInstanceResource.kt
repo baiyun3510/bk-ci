@@ -37,6 +37,7 @@ import com.tencent.devops.process.pojo.template.TemplateInstancePage
 import com.tencent.devops.process.pojo.template.TemplateInstanceParams
 import com.tencent.devops.process.pojo.template.TemplateOperationRet
 import com.tencent.devops.process.pojo.template.TemplateInstanceUpdate
+import com.tencent.devops.quality.api.v2.pojo.RuleTemplateRange
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -187,6 +188,17 @@ interface ServiceTemplateInstanceResource {
         @ApiParam("模板ID", required = true)
         templateIds: Collection<String>
     ): Result<Int>
+
+    @ApiOperation("根据项目id和模板id查询流水线模板实例数")
+    @POST
+    @Path("/project/{projectId}/templateInstanceCount")
+    fun getTemplateInstancesCount(
+        @ApiParam("项目ID", required = true)
+        @PathParam("projectId")
+        projectId: String,
+        @ApiParam("模板ID", required = true)
+        templateIds: Collection<String>
+    ): Result<RuleTemplateRange>
 
     @ApiOperation("查询流水线模板实例总数")
     @POST
