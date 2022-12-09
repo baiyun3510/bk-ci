@@ -33,8 +33,7 @@ import com.tencent.devops.common.pipeline.enums.BuildStatus
 import com.tencent.devops.model.process.tables.TPipelineBuildRecordContainer
 import com.tencent.devops.model.process.tables.records.TPipelineBuildRecordContainerRecord
 import com.tencent.devops.process.pojo.pipeline.record.BuildRecordContainer
-import com.tencent.devops.process.pojo.pipeline.record.time.BuildRecordTimeCost
-import com.tencent.devops.process.pojo.pipeline.record.time.BuildRecordTimeStamp
+import com.tencent.devops.common.pipeline.enums.BuildRecordTimeStamp
 import org.jooq.DSLContext
 import org.jooq.RecordMapper
 import org.springframework.stereotype.Repository
@@ -76,20 +75,18 @@ class BuildRecordContainerDao {
         executeCount: Int,
         containerVar: Map<String, Any>,
         buildStatus: BuildStatus?,
-        timestamps: List<BuildRecordTimeStamp>?,
-        timeCost: BuildRecordTimeCost?
+        timestamps: List<BuildRecordTimeStamp>?
     ) {
         logger.info(
             "RECORD|updateContainer|$projectId|$pipelineId|$buildId|$containerId|$executeCount" +
                 "|containerVar=$containerVar|buildStatus=$buildStatus" +
-                "|timestamps=$timestamps|timeCost=$timeCost"
+                "|timestamps=$timestamps"
         )
         with(TPipelineBuildRecordContainer.T_PIPELINE_BUILD_RECORD_CONTAINER) {
             val update = dslContext.update(this)
                 .set(CONTAINER_VAR, JsonUtil.toJson(containerVar, false))
             buildStatus?.let { update.set(STATUS, buildStatus.name) }
             timestamps?.let { update.set(TIMESTAMPS, JsonUtil.toJson(timestamps, false)) }
-            timeCost?.let { update.set(TIME_COST, JsonUtil.toJson(timeCost, false)) }
             update.where(
                 BUILD_ID.eq(buildId)
                     .and(PROJECT_ID.eq(projectId))
@@ -178,10 +175,7 @@ class BuildRecordContainerDao {
                     matrixGroupId = matrixGroupId,
                     timestamps = timestamps?.let {
                         JsonUtil.getObjectMapper().readValue(it) as List<BuildRecordTimeStamp>
-                    } ?: emptyList(),
-                    timeCost = timeCost?.let {
-                        JsonUtil.getObjectMapper().readValue(it, BuildRecordTimeCost::class.java)
-                    }
+                    } ?: emptyList()
                 )
             }
         }
