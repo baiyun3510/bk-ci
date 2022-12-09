@@ -1904,7 +1904,7 @@ class TemplateFacadeService @Autowired constructor(
             templateIds = templateIds
         )
         val map: MutableMap<String, Int> = java.util.HashMap()
-        map["count"] = 1
+        map["count"] = count
         logger.info("serviceCountTemplateInstances count: [$count], map:[$map]")
         return map
     }
