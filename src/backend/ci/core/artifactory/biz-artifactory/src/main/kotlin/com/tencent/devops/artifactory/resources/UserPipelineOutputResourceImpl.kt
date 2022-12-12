@@ -5,9 +5,10 @@ import com.tencent.devops.artifactory.pojo.PipelineOutput
 import com.tencent.devops.artifactory.pojo.PipelineOutputSearchOption
 import com.tencent.devops.artifactory.service.BkRepoPipelineOutputService
 import com.tencent.devops.common.api.pojo.Result
+import com.tencent.devops.common.web.RestResource
 import org.springframework.web.bind.annotation.RestController
 
-@RestController
+@RestResource
 class UserPipelineOutputResourceImpl(
     private val bkRepoPipelineOutputService: BkRepoPipelineOutputService
 ) : UserPipelineOutputResource {
