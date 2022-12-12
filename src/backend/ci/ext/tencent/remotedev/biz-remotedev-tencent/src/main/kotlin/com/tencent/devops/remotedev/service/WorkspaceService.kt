@@ -27,6 +27,8 @@
 
 package com.tencent.devops.remotedev.service
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.tencent.devops.common.api.exception.CustomException
 import com.tencent.devops.common.api.pojo.Page
 import com.tencent.devops.common.api.util.JsonUtil
@@ -77,9 +79,21 @@ class WorkspaceService @Autowired constructor(
     private val client: Client
 ) {
 
+    private val devfileCache = CacheBuilder.newBuilder()
+        .maximumSize(10)
+        .expireAfterWrite(5, TimeUnit.MINUTES)
+        .build(
+            object : CacheLoader<String, String>() {
+                override fun load(key: String): String {
+                    return redisOperation.get(key) ?: ""
+                }
+            }
+        )
+
     companion object {
         private val logger = LoggerFactory.getLogger(WorkspaceService::class.java)
         private const val REDIS_CALL_LIMIT_KEY = "remotedev:calllimit"
+        private const val REDIS_OFFICIAL_DEVFILE = "remotedev:devfile"
         private val expiredTimeInSeconds = TimeUnit.MINUTES.toSeconds(1)
     }
 
@@ -122,7 +136,7 @@ class WorkspaceService @Autowired constructor(
     }
 
     fun createWorkspace(userId: String, workspaceCreate: WorkspaceCreate): String {
-        logger.info("$userId create workspace ${JsonUtil.toJson(workspaceCreate)}")
+        logger.info("$userId create workspace ${JsonUtil.toJson(workspaceCreate, false)}")
 
         val yaml = if (workspaceCreate.useOfficialDevfile == false) {
             kotlin.runCatching {
@@ -136,7 +150,13 @@ class WorkspaceService @Autowired constructor(
                 logger.warn("get yaml failed ${it.message}")
                 throw CustomException(Response.Status.BAD_REQUEST, "获取 devfile 异常 ${it.message}")
             }
-        } else TODO("官方devfile")
+        } else devfileCache.get(REDIS_OFFICIAL_DEVFILE)
+
+        if (yaml.isBlank()) {
+            logger.warn("create workspace get devfile blank,return." +
+                "|useOfficialDevfile=${workspaceCreate.useOfficialDevfile}")
+            throw CustomException(Response.Status.BAD_REQUEST, "devfile 为空，请确认。")
+        }
 
         val userInfo = kotlin.runCatching {
             client.get(ServiceTxUserResource::class).get(userId)
@@ -158,6 +178,8 @@ class WorkspaceService @Autowired constructor(
             )
         }
 
+        val devfile = DevfileUtil.parseDevfile(yaml)
+
         val workspaceId = workspaceDao.createWorkspace(
             userId = userId,
             workspace = workspace,
@@ -165,8 +187,6 @@ class WorkspaceService @Autowired constructor(
             dslContext = dslContext,
             userInfo = userInfo
         )
-
-        val devfile = DevfileUtil.parseDevfile(yaml)
 
         kotlin.runCatching {
             client.get(ServiceRemoteDevResource::class).createWorkspace(
