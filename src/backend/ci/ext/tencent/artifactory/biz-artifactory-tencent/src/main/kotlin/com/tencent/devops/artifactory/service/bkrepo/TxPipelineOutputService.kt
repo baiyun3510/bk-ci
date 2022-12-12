@@ -33,8 +33,8 @@ class TxPipelineOutputService(
             val searchProps = SearchProps(
                 fileNames = emptyList(),
                 props = mapOf(
-                    pipelineId to pipelineId,
-                    buildId to buildId
+                    "pipelineId" to pipelineId,
+                    "buildId" to buildId
                 )
             )
             artifacts.addAll(
