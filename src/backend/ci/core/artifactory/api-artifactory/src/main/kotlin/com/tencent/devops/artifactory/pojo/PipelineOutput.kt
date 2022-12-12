@@ -1,6 +1,6 @@
 package com.tencent.devops.artifactory.pojo
 
-import com.tencent.devops.process.pojo.TaskReport
+import com.tencent.devops.common.archive.pojo.TaskReport
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
