@@ -9,6 +9,6 @@ interface BkRepoPipelineOutputService {
         projectId: String,
         pipelineId: String,
         buildId: String,
-        option: PipelineOutputSearchOption
+        option: PipelineOutputSearchOption?
     ): PipelineOutput
 }

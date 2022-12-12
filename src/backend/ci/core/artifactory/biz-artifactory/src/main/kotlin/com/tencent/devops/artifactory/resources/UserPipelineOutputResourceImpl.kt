@@ -6,7 +6,6 @@ import com.tencent.devops.artifactory.pojo.PipelineOutputSearchOption
 import com.tencent.devops.artifactory.service.BkRepoPipelineOutputService
 import com.tencent.devops.common.api.pojo.Result
 import com.tencent.devops.common.web.RestResource
-import org.springframework.web.bind.annotation.RestController
 
 @RestResource
 class UserPipelineOutputResourceImpl(
@@ -17,7 +16,7 @@ class UserPipelineOutputResourceImpl(
         projectId: String,
         pipelineId: String,
         buildId: String,
-        option: PipelineOutputSearchOption
+        option: PipelineOutputSearchOption?
     ): Result<PipelineOutput> {
         return Result(bkRepoPipelineOutputService.search(userId, projectId, pipelineId, buildId, option))
     }

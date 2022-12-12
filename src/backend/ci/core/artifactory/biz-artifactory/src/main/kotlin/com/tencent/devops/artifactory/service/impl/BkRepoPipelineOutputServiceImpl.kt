@@ -22,11 +22,11 @@ class BkRepoPipelineOutputServiceImpl(
         projectId: String,
         pipelineId: String,
         buildId: String,
-        option: PipelineOutputSearchOption
+        option: PipelineOutputSearchOption?
     ): PipelineOutput {
         val artifacts = mutableListOf<FileInfo>()
         val reports = mutableListOf<TaskReport>()
-        if (option.pipelineOutputType == null || option.pipelineOutputType == PipelineOutputType.ARTIFACT) {
+        if (option?.pipelineOutputType == null || option.pipelineOutputType == PipelineOutputType.ARTIFACT) {
             val searchProps = SearchProps(
                 fileNames = emptyList(),
                 props = mapOf(
@@ -45,7 +45,7 @@ class BkRepoPipelineOutputServiceImpl(
             )
         }
 
-        if (option.pipelineOutputType == null || option.pipelineOutputType == PipelineOutputType.REPORT) {
+        if (option?.pipelineOutputType == null || option.pipelineOutputType == PipelineOutputType.REPORT) {
             val reportListDTO = ReportListDTO(
                 userId = userId,
                 projectId = projectId,

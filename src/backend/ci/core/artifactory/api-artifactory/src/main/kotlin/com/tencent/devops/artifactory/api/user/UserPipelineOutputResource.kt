@@ -39,8 +39,8 @@ interface UserPipelineOutputResource {
         @ApiParam("项目代码", required = true)
         @PathParam("buildId")
         buildId: String,
-        @ApiParam("搜索过滤条件")
-        option: PipelineOutputSearchOption
+        @ApiParam("搜索过滤条件", required = false)
+        option: PipelineOutputSearchOption?
     ): Result<PipelineOutput>
 
 }
