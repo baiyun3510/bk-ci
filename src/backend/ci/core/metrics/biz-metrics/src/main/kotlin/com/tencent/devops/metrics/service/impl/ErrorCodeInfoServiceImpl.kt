@@ -55,6 +55,7 @@ class ErrorCodeInfoServiceImpl @Autowired constructor(
             count = errorCodeInfoDao.getErrorCodeInfoCount(
                 dslContext,
                 QueryErrorCodeInfoQO(
+                    atomCode = queryErrorCodeInfoDTO.atomCode,
                     errorTypes = queryErrorCodeInfoDTO.errorTypes,
                     keyword = queryErrorCodeInfoDTO.keyword,
                     page = queryErrorCodeInfoDTO.page,
@@ -64,6 +65,7 @@ class ErrorCodeInfoServiceImpl @Autowired constructor(
             records = errorCodeInfoDao.getErrorCodeInfo(
                 dslContext,
                 QueryErrorCodeInfoQO(
+                    atomCode = queryErrorCodeInfoDTO.atomCode,
                     errorTypes = queryErrorCodeInfoDTO.errorTypes,
                     keyword = queryErrorCodeInfoDTO.keyword,
                     page = queryErrorCodeInfoDTO.page,
