@@ -8,8 +8,8 @@ import com.tencent.devops.artifactory.pojo.enums.PipelineOutputType
 import com.tencent.devops.artifactory.service.BkRepoPipelineOutputService
 import com.tencent.devops.common.client.Client
 import com.tencent.devops.process.api.service.ServiceReportResource
-import com.tencent.devops.process.pojo.ReportListDTO
-import com.tencent.devops.process.pojo.TaskReport
+import com.tencent.devops.common.archive.pojo.ReportListDTO
+import com.tencent.devops.common.archive.pojo.TaskReport
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
