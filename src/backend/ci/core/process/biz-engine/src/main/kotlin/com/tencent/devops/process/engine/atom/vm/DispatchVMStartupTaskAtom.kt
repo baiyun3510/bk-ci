@@ -257,7 +257,7 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
                 containerType = task.containerType,
                 customBuildEnv = param.customBuildEnv,
                 maxParallelInSingle = param.jobControlOption?.maxParallelInSingle,
-                maxParallelInAll = param.jobControlOption?.maxParallelInAll
+                maxParallelInAll = param.jobControlOption?.maxParallelInAll,
                 buildEnv = param.buildEnv
 
             )
