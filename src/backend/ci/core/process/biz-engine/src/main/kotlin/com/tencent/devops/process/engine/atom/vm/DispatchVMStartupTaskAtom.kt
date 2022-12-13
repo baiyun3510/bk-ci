@@ -88,7 +88,7 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
     private val containerBuildDetailService: ContainerBuildDetailService,
     private val pipelineRuntimeService: PipelineRuntimeService,
     private val buildVariableService: BuildVariableService,
-    private val pipelineEventDispatcher: MQRoutableEventDispatcher,
+    private val pipelineEventDispatcher: PipelineEventDispatcher,
     private val buildLogPrinter: BuildLogPrinter,
     private val dispatchTypeParser: DispatchTypeParser,
     private val pipelineAsCodeService: PipelineAsCodeService,
@@ -258,6 +258,8 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
                 customBuildEnv = param.customBuildEnv,
                 maxParallelInSingle = param.jobControlOption?.maxParallelInSingle,
                 maxParallelInAll = param.jobControlOption?.maxParallelInAll
+                buildEnv = param.buildEnv
+
             )
         )
     }
@@ -324,19 +326,13 @@ class DispatchVMStartupTaskAtom @Autowired constructor(
             val envId = param.thirdPartyAgentEnvId ?: ""
             val workspace = param.thirdPartyWorkspace ?: ""
             dispatchType = if (agentId.isNotBlank()) {
-                ThirdPartyAgentIDDispatchType(
-                    displayName = agentId,
-                    workspace = workspace,
-                    agentType = AgentType.ID,
-                    dockerInfo = null
-                )
+                ThirdPartyAgentIDDispatchType(displayName = agentId, workspace = workspace, agentType = AgentType.ID)
             } else if (envId.isNotBlank()) {
                 ThirdPartyAgentEnvDispatchType(
                     envName = envId,
                     envProjectId = null,
                     workspace = workspace,
-                    agentType = AgentType.ID,
-                    dockerInfo = null
+                    agentType = AgentType.ID
                 )
             } // docker建机指定版本(旧)
             else if (!param.dockerBuildVersion.isNullOrBlank()) {

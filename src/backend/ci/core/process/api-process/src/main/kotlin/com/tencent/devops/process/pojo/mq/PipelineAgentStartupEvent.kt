@@ -63,6 +63,7 @@ data class PipelineAgentStartupEvent(
     val atoms: Map<String, String> = mapOf(), // 用插件框架开发的插件信息 key为插件code，value为下载路径
     val executeCount: Int?,
     val customBuildEnv: Map<String, String>? = null,
+    val buildEnv: Map<String, String>? = null,
     val dockerRoutingType: String? = "VM",
     val maxParallelInSingle: Int? = 0,
     val maxParallelInAll: Int? = 0,
