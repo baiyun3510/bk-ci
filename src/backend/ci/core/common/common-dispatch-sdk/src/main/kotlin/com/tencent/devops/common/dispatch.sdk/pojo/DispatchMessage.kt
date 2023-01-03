@@ -54,5 +54,6 @@ data class DispatchMessage(
     val stageId: String? = null,
     val dispatchType: DispatchType?,
     val customBuildEnv: Map<String, String>? = null,
+    val buildEnv: Map<String, String>? = null,
     val dockerRoutingType: String? = "VM"
 )
