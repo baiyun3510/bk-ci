@@ -399,7 +399,7 @@ class PipelineBuildSummaryDao {
         if (sortType != null) {
             val sortTypeField = when (sortType) {
                 PipelineSortType.NAME -> {
-                    T_PIPELINE_INFO.PIPELINE_NAME_PINYIN.let {
+                    T_PIPELINE_INFO.PIPELINE_NAME.let {
                         if (collation == PipelineCollation.DEFAULT || collation == PipelineCollation.ASC) {
                             it.asc()
                         } else {
@@ -438,7 +438,7 @@ class PipelineBuildSummaryDao {
                     }
                 }
             }
-            baseStep.orderBy(sortTypeField, T_PIPELINE_INFO.PIPELINE_ID)
+            baseStep.orderBy(T_PIPELINE_INFO.DELETE.asc(), sortTypeField, T_PIPELINE_INFO.PIPELINE_ID)
         }
         return if (null != offset && null != limit && offset >= 0 && limit > 0) {
             baseStep.limit(limit).offset(offset).fetch()
