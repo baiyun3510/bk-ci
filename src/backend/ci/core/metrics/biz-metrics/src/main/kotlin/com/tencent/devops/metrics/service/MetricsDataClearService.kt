@@ -25,20 +25,27 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.devops.process.yaml.v2.models
+package com.tencent.devops.metrics.service
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
+import org.jooq.DSLContext
+import java.time.LocalDateTime
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class Concurrency(
-    val group: String?,
-    @JsonProperty("cancel-in-progress")
-    val cancelInProgress: Boolean?,
-    @JsonProperty("queue-length")
-    val queueLength: Int?,
-    @JsonProperty("queue-timeout-minutes")
-    val queueTimeoutMinutes: Int?
-)
+interface MetricsDataClearService {
+
+    /**
+     * metrics数据清理
+     * @param dslContext jooq上下文
+     * @param projectId 项目ID
+     * @param pipelineId 流水线ID
+     * @param statisticsTime 统计时间
+     * @param buildId 构建ID
+     * @return 布尔值
+     */
+    fun metricsDataClear(
+        dslContext: DSLContext,
+        projectId: String,
+        pipelineId: String,
+        statisticsTime: LocalDateTime,
+        buildId: String
+    ): Boolean
+}
