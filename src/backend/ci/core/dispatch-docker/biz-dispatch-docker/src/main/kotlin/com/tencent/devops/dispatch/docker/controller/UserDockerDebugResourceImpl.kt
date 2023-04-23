@@ -33,6 +33,7 @@ import com.tencent.devops.common.dispatch.sdk.pojo.docker.DockerRoutingType
 import com.tencent.devops.common.dispatch.sdk.service.DockerRoutingSdkService
 import com.tencent.devops.common.pipeline.type.BuildType
 import com.tencent.devops.common.service.prometheus.BkTimed
+import com.tencent.devops.common.service.utils.SpringContextUtil
 import com.tencent.devops.common.web.RestResource
 import com.tencent.devops.dispatch.docker.api.user.UserDockerDebugResource
 import com.tencent.devops.dispatch.docker.pojo.DebugResponse
@@ -55,7 +56,9 @@ class UserDockerDebugResourceImpl @Autowired constructor(
         if (!DebugServiceEnum
                 .values().toList()
                 .stream().map { it.name }.collect(Collectors.toList()).contains(debugStartParam.dispatchType)) {
-            val debugUrl = extDebugService.startDebug(
+            logger.info("BuildId is ${debugStartParam.buildId},and the cluster build type is ${debugStartParam.dispatchType} ")
+            val buildClusterService = getBuildClusterService(debugStartParam.dispatchType)
+            val debugUrl = buildClusterService.startDebug(
                 userId = userId,
                 projectId = debugStartParam.projectId,
                 pipelineId = debugStartParam.pipelineId,
@@ -139,6 +142,13 @@ class UserDockerDebugResourceImpl @Autowired constructor(
             DockerRoutingType.KUBERNETES -> Pair(BuildType.KUBERNETES, DockerRoutingType.KUBERNETES)
             else -> Pair(BuildType.DOCKER, DockerRoutingType.VM)
         }
+    }
+
+    private fun getBuildClusterService(dispatchType: String): ExtDebugService {
+        return SpringContextUtil.getBean(
+            clazz = ExtDebugService::class.java,
+            beanName = "${dispatchType}_BUILD_CLUSTER_RESULT"
+        )
     }
 
     companion object {
