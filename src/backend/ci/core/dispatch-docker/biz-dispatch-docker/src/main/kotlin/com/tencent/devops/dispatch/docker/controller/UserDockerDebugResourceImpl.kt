@@ -56,7 +56,7 @@ class UserDockerDebugResourceImpl @Autowired constructor(
         if (!DebugServiceEnum
                 .values().toList()
                 .stream().map { it.name }.collect(Collectors.toList()).contains(debugStartParam.dispatchType)) {
-            logger.info("BuildId is ${debugStartParam.buildId},and the cluster build type is ${debugStartParam.dispatchType} ")
+            logger.info("BuildId : ${debugStartParam.buildId} | pipelineId : ${debugStartParam.pipelineId}  Start debugging,and the cluster build type is ${debugStartParam.dispatchType} ")
             val buildClusterService = getBuildClusterService(debugStartParam.dispatchType)
             val debugUrl = buildClusterService.startDebug(
                 userId = userId,
@@ -110,13 +110,16 @@ class UserDockerDebugResourceImpl @Autowired constructor(
         if (!DebugServiceEnum
                 .values().toList()
                 .stream().map { it.name }.collect(Collectors.toList()).contains(dispatchType)) {
-            val result = extDebugService.stopDebug(
+            logger.info("PipelineId : $pipelineId  stop debugging,and the cluster build type is $dispatchType ")
+            val buildClusterService = getBuildClusterService(dispatchType!!)
+            val result = buildClusterService.stopDebug(
                 userId = userId,
                 projectId = projectId,
                 pipelineId = pipelineId,
                 vmSeqId = vmSeqId,
                 containerName = containerName ?: ""
             )
+            logger.info("PipelineId : $pipelineId  stop debugg succeed,and the cluster build type is $dispatchType")
 
             return Result(result)
         }
